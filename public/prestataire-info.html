@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Ma carte de visite</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="/profil">MON PROFIL</a>
+        <a href="index.html">ACCUEIL</a>
+    </nav>
+
+    <p id="msg-ok" style="display:none; text-align:center; color:#2e7d32; padding:12px; background:#e8f5e9; margin:0;">
+        ✓ Votre carte de visite est en ligne — les clients peuvent vous trouver près d'eux.
+    </p>
+
+    <div class="trust-card" id="ma-carte">
+        <p style="padding:40px;">Chargement...</p>
+    </div>
+
+    <div style="max-width:420px; margin:0 auto 40px; padding:0 20px;">
+        <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; text-align:center; margin-bottom:10px;">
+            Modifier ma fiche
+        </button>
+        <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; padding:12px;">
+            Retour profil
+        </button>
+    </div>
+
+    <script>
+        if (new URLSearchParams(location.search).get('inscription') === 'ok') {
+            document.getElementById('msg-ok').style.display = 'block';
+        }
+
+        fetch('/get-user-data').then(r => r.json()).then(data => {
+            if (!data.isPrestataire) {
+                window.location.href = '/prestataire';
+                return;
+            }
+            const nom = [data.prenom, data.nom].filter(Boolean).join(' ');
+            const avis = (data.commentaires || []).length
+                ? (data.commentaires || []).map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('')
+                : '<li>Vos futurs clients pourront laisser un avis ici.</li>';
+
+            document.getElementById('ma-carte').innerHTML = `
+                <div class="trust-card-header">
+                    <img src="${data.photo || ''}" alt="Votre photo">
+                    <h2 style="margin:0;">${nom}</h2>
+                    <p style="margin:8px 0 0;">⭐ ${data.etoiles ?? 0} / 5 · Profil Confiance</p>
+                </div>
+                <div class="trust-card-body">
+                    <p><strong>Âge :</strong> ${data.age || '-'}</p>
+                    <p><strong>Ville :</strong> ${data.ville || '-'}</p>
+                    <p><strong>Profession :</strong> ${data.profession || '-'}</p>
+                    <p><strong>Je propose :</strong> ${data.services || '-'}</p>
+                    <p style="font-style:italic;">"${data.bio || 'Ajoutez une courte présentation dans Modifier ma fiche.'}"</p>
+                    <h3>Commentaires</h3>
+                    <ul style="padding-left:20px;">${avis}</ul>
+                    <p style="font-size:0.85rem; color:#888; margin-top:16px;">
+                        Votre pièce d'identité reste privée — seuls votre visage et votre réputation sont visibles.
+                    </p>
+                </div>`;
+        });
+    </script>
+</body>
+</html>

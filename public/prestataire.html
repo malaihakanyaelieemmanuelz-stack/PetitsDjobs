@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Devenir Prestataire</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="/profil">MON PROFIL</a>
+        <a href="index.html">ACCUEIL</a>
+    </nav>
+
+    <div class="app-wrap">
+        <h1 class="page-title">Devenir prestataire</h1>
+        <p class="page-sub">3 minutes pour créer votre carte de visite numérique. Les clients vous choisissent pour <em>qui vous êtes</em>, pas seulement pour un service.</p>
+
+    <div class="login-card" style="max-width: 520px; margin: 0 auto 40px; background:white; padding:24px; border-radius:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align:left;">
+        <form id="form-presta" action="/devenir-prestataire" method="POST" enctype="multipart/form-data">
+            <p style="font-weight:bold; color:#5D4037; margin-top:0;">1. Qui êtes-vous ?</p>
+            <input type="text" name="nom" id="nom" placeholder="NOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <input type="text" name="prenom" id="prenom" placeholder="PRÉNOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <input type="text" name="age" placeholder="ÂGE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <input type="text" name="ville" placeholder="COMMUNE / VILLE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <input type="text" name="profession" placeholder="PROFESSION (ex: Cuisinière, Aide ménagère)" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <textarea name="bio" placeholder="Présentez-vous en 2 phrases (visible par les clients)" maxlength="200" style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; min-height:70px; border-radius:6px; border:1px solid #ccc;"></textarea>
+            <input type="hidden" name="lat" id="lat">
+            <input type="hidden" name="lon" id="lon">
+
+            <p style="font-weight:bold; color:#5D4037;">2. Ce que vous proposez</p>
+            <p style="font-size:0.9rem; color:#666;">Cochez le service <strong>et</strong> « Disponible » pour apparaître quand un client commande.</p>
+            <div style="text-align:left; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:5px; font-size:0.9rem;">
+                <label><input type="checkbox" name="services" value="Cuisine"> Cuisine</label>
+                <label><input type="checkbox" name="dispo_Cuisine" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Lavage"> Lavage</label>
+                <label><input type="checkbox" name="dispo_Lavage" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Vaisselle"> Vaisselle</label>
+                <label><input type="checkbox" name="dispo_Vaisselle" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Course"> Course</label>
+                <label><input type="checkbox" name="dispo_Course" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Chauffeur"> Chauffeur</label>
+                <label><input type="checkbox" name="dispo_Chauffeur" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Coiffure"> Coiffure</label>
+                <label><input type="checkbox" name="dispo_Coiffure" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Remplacement"> Remplacement</label>
+                <label><input type="checkbox" name="dispo_Remplacement" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Particulier"> Service particulier</label>
+                <label><input type="checkbox" name="dispo_Particulier" value="1"> Disponible</label><br>
+                <label><input type="checkbox" name="services" value="Tout"> Tout faire</label>
+                <label><input type="checkbox" name="dispo_Tout" value="1"> Disponible</label>
+            </div>
+
+            <p style="font-weight:bold; color:#5D4037;">3. Photo & vérification</p>
+            <p>Photo de profil (votre visage — ce que les clients voient) :</p>
+            <input type="file" name="photo_profil" accept="image/*" required>
+            <p>Pièce d'identité (Recto) — non affichée au public :</p>
+            <input type="file" name="piece_recto" accept="image/*" required>
+            <p>Pièce d'identité (Verso) :</p>
+            <input type="file" name="piece_verso" accept="image/*" required>
+
+            <p id="gps-p" style="font-size:0.85rem; color:#666;">Position GPS requise pour apparaître aux clients proches.</p>
+            <button type="submit" style="width:100%; padding:15px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>
+        </form>
+        <p style="text-align:center; margin-top:12px;"><a href="/profil">Retour profil</a></p>
+    </div>
+    </div>
+    <script>
+        const modifier = new URLSearchParams(location.search).get('modifier') === '1';
+        fetch('/get-user-data').then(r => r.json()).then(data => {
+            if (data.isPrestataire && !modifier) {
+                window.location.href = '/prestataire-info';
+                return;
+            }
+            if (data.nom) document.getElementById('nom').value = data.nom;
+            if (data.prenom) document.getElementById('prenom').value = data.prenom;
+            const bioEl = document.querySelector('[name=bio]');
+            if (bioEl && data.bio) bioEl.value = data.bio;
+        });
+
+        document.getElementById('form-presta').onsubmit = function(e) {
+            if (!document.getElementById('lat').value) {
+                alert('Autorisez la géolocalisation avant de valider.');
+                e.preventDefault();
+            }
+        };
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    document.getElementById('lat').value = pos.coords.latitude;
+                    document.getElementById('lon').value = pos.coords.longitude;
+                    document.getElementById('gps-p').innerText = 'GPS enregistré ✓';
+                },
+                () => { document.getElementById('gps-p').innerText = 'Activez le GPS pour être visible.'; }
+            );
+        }
+    </script>
+</body>
+</html>

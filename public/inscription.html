@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Inscription - PETITSDJOBS</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="index.html">ACCUEIL</a>
+        <a href="connexion.html">CONNEXION</a>
+    </nav>
+    <div class="auth-page" style="padding: 30px 20px;">
+    <div class="login-card" style="max-height: 90vh; overflow-y: auto;">
+        <h1>INSCRIPTION</h1>
+        <p style="font-size:0.9rem; color:#666;">Après inscription → <a href="index.html">accueil</a>. Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>.</p>
+        <p id="erreur-msg" style="color:#c62828; font-size:0.9rem; display:none;"></p>
+        <form id="regForm" action="/inscription" method="POST">
+            <input type="hidden" name="locAccepted" id="locAccepted" value="0">
+            <input type="hidden" name="polAccepted" id="polAccepted" value="0">
+            <input type="text" name="nom" placeholder="NOM" required>
+            <input type="text" name="prenom" placeholder="PRÉNOM" required>
+            <input type="email" name="email" id="email" placeholder="EMAIL" required>
+            <input type="date" name="date_naissance" required>
+            <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8">
+            <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required>
+
+            <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
+                <label style="display:block; margin-bottom: 5px;"><input type="checkbox" name="remember" style="width:auto;"> Rester connecté</label>
+                <label style="display:block; margin-bottom: 5px;"><input type="checkbox" id="loc" style="width:auto;"> Autoriser la localisation</label>
+                <label style="display:block; margin-bottom: 5px;">
+                    <input type="checkbox" id="pol" style="width:auto;"> J'accepte la <a href="/politique">politique de confidentialité</a>
+                </label>
+            </div>
+
+            <button type="submit">CRÉER MON COMPTE</button>
+        </form>
+        <p style="margin-top: 15px; font-size: 0.9rem;">
+            Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>
+        </p>
+        <a href="index.html" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
+    </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('erreur');
+        const msg = document.getElementById('erreur-msg');
+        if (err === 'deja_inscrit') {
+            msg.textContent = 'Cet email est déjà inscrit. Connectez-vous.';
+            msg.style.display = 'block';
+        }
+        if (err === 'mdp') {
+            msg.textContent = 'Les mots de passe ne correspondent pas.';
+            msg.style.display = 'block';
+        }
+        if (err === 'consentement') {
+            msg.textContent = 'Acceptez la localisation et la politique.';
+            msg.style.display = 'block';
+        }
+
+        fetch('/session-status').then(r => r.json()).then(s => {
+            if (s.loggedIn) window.location.href = 'index.html';
+        });
+
+        document.getElementById('regForm').onsubmit = function(e) {
+            if (document.getElementById('pass1').value !== document.getElementById('pass2').value) {
+                alert('Les mots de passe ne correspondent pas !');
+                e.preventDefault();
+                return;
+            }
+            if (!document.getElementById('loc').checked || !document.getElementById('pol').checked) {
+                alert('Vous devez accepter la localisation et la politique !');
+                e.preventDefault();
+                return;
+            }
+            document.getElementById('locAccepted').value = '1';
+            document.getElementById('polAccepted').value = '1';
+        };
+    </script>
+</body>
+</html>

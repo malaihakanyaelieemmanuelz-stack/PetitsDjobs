@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Connexion</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="index.html">ACCUEIL</a>
+        <a href="inscription.html">INSCRIPTION</a>
+    </nav>
+
+    <div class="auth-page" style="padding: 30px 20px;">
+        <div class="login-card" style="max-height: 90vh; overflow-y: auto;">
+            <h1>CONNEXION</h1>
+            <p id="msg-remember" style="display:none; color:#5D4037; font-size:0.9rem;">Session active — validez les cases ci-dessous pour continuer.</p>
+            <form id="loginForm" action="/connexion" method="POST">
+                <div id="champs-compte">
+                    <input type="email" name="email" id="email" placeholder="EMAIL">
+                    <input type="password" name="password" id="password" placeholder="MOT DE PASSE">
+                </div>
+                <input type="hidden" name="lat" id="lat">
+                <input type="hidden" name="lon" id="lon">
+                <input type="hidden" name="locAccepted" id="locAccepted" value="0">
+                <input type="hidden" name="polAccepted" id="polAccepted" value="0">
+
+                <div class="options" style="text-align: left; margin: 10px 0;">
+                    <label style="margin: 2px 0; display: block;">
+                        <input type="checkbox" name="remember" id="remember" style="width:auto; margin-right:5px;"> Rester connecté
+                    </label>
+                    <label style="margin: 2px 0; display: block;">
+                        <input type="checkbox" id="loc" style="width:auto; margin-right:5px;"> Autoriser la localisation
+                    </label>
+                    <label style="margin: 2px 0; display: block;">
+                        <input type="checkbox" id="pol" style="width:auto; margin-right:5px;">
+                        J'accepte la <a href="/politique">politique de confidentialité</a>
+                    </label>
+                </div>
+
+                <button type="submit" id="btn-connect">SE CONNECTER</button>
+            </form>
+            <p id="erreur-msg" style="color:#c62828; font-size:0.9rem; display:none;"></p>
+            <p style="margin-top: 15px; font-size: 0.9rem;">
+                Pas de compte ? <a href="inscription.html">Inscrivez-vous</a>
+            </p>
+            <a href="index.html" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const loc = document.getElementById('loc');
+        const pol = document.getElementById('pol');
+        const champs = document.getElementById('champs-compte');
+
+        loc.addEventListener('change', () => {
+            if (!loc.checked) return;
+            if (!navigator.geolocation) {
+                alert('Géolocalisation non supportée.');
+                loc.checked = false;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    document.getElementById('lat').value = pos.coords.latitude;
+                    document.getElementById('lon').value = pos.coords.longitude;
+                },
+                () => alert('Autorisez la localisation.')
+            );
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('erreur');
+        const msg = document.getElementById('erreur-msg');
+        if (err === 'mdp') msg.textContent = 'Mot de passe incorrect.';
+        if (err === 'consentement') msg.textContent = 'Acceptez la localisation et la politique.';
+        if (err === 'compte') msg.textContent = 'Compte introuvable. Inscrivez-vous d\'abord.';
+        if (err) msg.style.display = 'block';
+
+        fetch('/session-status').then(r => r.json()).then(s => {
+            if (s.loggedIn) window.location.href = 'index.html';
+            if (s.remember && s.loggedIn) {
+                champs.style.display = 'none';
+                document.getElementById('msg-remember').style.display = 'block';
+            }
+        }).catch(() => {});
+
+        form.onsubmit = function(e) {
+            if (!loc.checked || !pol.checked) {
+                alert('Vous devez autoriser la localisation et accepter la politique.');
+                e.preventDefault();
+                return;
+            }
+            document.getElementById('locAccepted').value = '1';
+            document.getElementById('polAccepted').value = '1';
+            if (champs.style.display !== 'none') {
+                if (!document.getElementById('email').value || !document.getElementById('password').value) {
+                    alert('Email et mot de passe requis.');
+                    e.preventDefault();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

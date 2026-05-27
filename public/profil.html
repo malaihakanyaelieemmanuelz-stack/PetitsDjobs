@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Mon Profil</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>MON PROFIL</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="index.html">ACCUEIL</a>
+    </nav>
+
+    <div class="app-wrap" style="max-width: 560px; margin: 30px auto; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <h2 style="color:#5D4037; margin-top:0;">Votre compte</h2>
+        <p><strong>Nom :</strong> <span id="nom">-</span></p>
+        <p><strong>Prénom :</strong> <span id="prenom">-</span></p>
+        <p><strong>Email :</strong> <span id="email">-</span></p>
+
+        <hr style="margin:24px 0;">
+
+        <h3 style="color:#5D4037;">Vous êtes client</h3>
+        <p style="color:#666; font-size:0.95rem;">Sur l'accueil, choisissez un service : le GPS vous montre qui est disponible autour de vous.</p>
+        <button onclick="window.location.href='index.html'" class="btn-primary-sm" style="width:100%; padding:12px; margin-top:8px;">
+            Commander un service
+        </button>
+
+        <hr style="margin:24px 0;">
+
+        <h3 style="color:#5D4037;">Vous voulez travailler ?</h3>
+        <p style="color:#666; font-size:0.95rem;">Créez votre carte de visite : photo, métiers, disponibilité. Les clients vous trouvent par géolocalisation.</p>
+        <button id="btn-devenir" onclick="window.location.href='/prestataire'" class="btn-outline" style="width:100%; text-align:center; margin-top:8px; padding:12px;">
+            Devenir prestataire
+        </button>
+        <button id="btn-espace" onclick="window.location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; padding:12px; margin-top:8px;">
+            Voir ma carte de visite
+        </button>
+    </div>
+
+    <script>
+        fetch('/get-user-data')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('nom').innerText = data.nom || '-';
+                document.getElementById('prenom').innerText = data.prenom || '-';
+                document.getElementById('email').innerText = data.email || '-';
+                if (data.isPrestataire) {
+                    document.getElementById('btn-devenir').style.display = 'none';
+                    document.getElementById('btn-espace').style.display = 'block';
+                }
+            });
+    </script>
+</body>
+</html>

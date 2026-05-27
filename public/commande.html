@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Confirmer la commande</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar">
+        <a href="index.html">ACCUEIL</a>
+    </nav>
+
+    <div class="app-wrap">
+        <div class="steps-bar">
+            <span class="done">1. Service</span>
+            <span class="done">2. Prestataire</span>
+            <span class="active">3. Confirmer</span>
+        </div>
+
+        <div class="checkout-card">
+            <h1 style="text-align:center; color:#5D4037; margin-top:0;">Récapitulatif</h1>
+
+            <div class="gps-banner" id="gps-status" style="margin-bottom:16px;">
+                <strong>📍 Votre position</strong>
+                Calcul de la distance avec le prestataire...
+            </div>
+
+            <div id="bloc-prestataire" class="provider-pick" style="display:none;">
+                <img id="photo-presta" src="" alt="">
+                <div>
+                    <strong id="nom-presta">-</strong><br>
+                    <small id="dist-presta" style="color:#2e7d32;"></small>
+                </div>
+            </div>
+
+            <div class="checkout-row"><span>Service</span><strong id="service-nom">-</strong></div>
+            <div class="checkout-row"><span>Prix du service</span><span id="prix-base">-</span> FCFA</div>
+            <div class="checkout-row"><span>Distance</span><span id="distance-km">-</span></div>
+            <div class="checkout-row"><span>Frais déplacement (200 F/km)</span><span id="frais-deplacement">-</span> FCFA</div>
+            <div class="checkout-row checkout-total">
+                <span>Total</span>
+                <span><span id="total-final">-</span> FCFA</span>
+            </div>
+
+            <button id="btn-choisir" class="btn-primary-sm" style="width:100%; padding:14px; margin-top:12px;">
+                Choisir un autre prestataire
+            </button>
+            <button id="btn-payer" disabled class="btn-primary-sm" style="width:100%; padding:16px; margin-top:10px; background:#007bff; opacity:0.5;">
+                Payer avec Wave
+            </button>
+            <p style="text-align:center; margin-top:14px;"><a href="index.html">Retour accueil</a></p>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        let service = params.get('service');
+        let prixBase = parseInt(params.get('prix'), 10) || 0;
+
+        function afficherTotal(cmd) {
+            service = service || cmd.service;
+            document.getElementById('service-nom').innerText = service || '-';
+            document.getElementById('prix-base').innerText = cmd.prixBase ?? prixBase;
+            document.getElementById('distance-km').innerText = cmd.distanceKm ? cmd.distanceKm + ' km' : '—';
+            document.getElementById('frais-deplacement').innerText = cmd.fraisDeplacement ?? '—';
+            document.getElementById('total-final').innerText = cmd.total ?? prixBase;
+
+            const gps = document.getElementById('gps-status');
+            if (cmd.prestataireNom && cmd.distanceM != null) {
+                const m = Math.round(cmd.distanceM);
+                const label = m < 1000 ? m + ' mètres' : cmd.distanceKm + ' km';
+                const nomComplet = [cmd.prestatairePrenom, cmd.prestataireNom].filter(Boolean).join(' ');
+                gps.innerHTML = `<strong>✓ Mise en relation directe</strong> Votre prestataire est à ${label} de vous.`;
+                document.getElementById('bloc-prestataire').style.display = 'flex';
+                document.getElementById('nom-presta').innerText = nomComplet || cmd.prestataireNom;
+                if (cmd.prestatairePhoto) document.getElementById('photo-presta').src = cmd.prestatairePhoto;
+                document.getElementById('dist-presta').innerText = '📍 À ' + label;
+                document.getElementById('btn-payer').disabled = false;
+                document.getElementById('btn-payer').style.opacity = '1';
+                document.getElementById('btn-choisir').style.display = 'none';
+            } else {
+                gps.innerHTML = '<strong>Étape suivante</strong> Choisissez d\'abord un prestataire proche de vous.';
+            }
+        }
+
+        async function init() {
+            const res = await fetch('/get-session-commande');
+            const cmd = await res.json();
+            if (cmd.service) service = cmd.service;
+            if (cmd.prixBase != null) prixBase = cmd.prixBase;
+
+            if (!cmd.prestataireNom) {
+                window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
+                return;
+            }
+
+            document.getElementById('service-nom').innerText = service || '-';
+            document.getElementById('prix-base').innerText = prixBase;
+            document.getElementById('total-final').innerText = prixBase;
+            afficherTotal(cmd);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async pos => {
+                    await fetch('/sauvegarder-position', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lat: pos.coords.latitude, lon: pos.coords.longitude })
+                    });
+                });
+            }
+        }
+
+        fetch('/preparer-commande', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service, prix: prixBase })
+        }).catch(() => {});
+
+        document.getElementById('btn-choisir').onclick = () => {
+            window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
+        };
+        document.getElementById('btn-payer').onclick = () => alert('Paiement Wave — bientôt connecté à votre compte.');
+
+        init();
+    </script>
+</body>
+</html>

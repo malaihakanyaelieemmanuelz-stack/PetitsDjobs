@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Profil prestataire</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <nav class="nav-bar"><a href="javascript:history.back()">← Retour</a></nav>
+
+    <div class="trust-card" id="carte">
+        <p style="padding:40px;">Chargement du profil...</p>
+    </div>
+
+    <script>
+        const id = new URLSearchParams(location.search).get('id');
+        if (!id) {
+            document.getElementById('carte').innerHTML = '<p>Profil introuvable.</p>';
+        } else {
+            fetch('/prestataire-public/' + id).then(r => r.json()).then(p => {
+                if (!p.nom) {
+                    document.getElementById('carte').innerHTML = '<p>Profil introuvable.</p>';
+                    return;
+                }
+                const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
+                const avis = (p.commentaires || []).map(c =>
+                    '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>'
+                ).join('') || '<li>Pas encore d\'avis — soyez le premier !</li>';
+
+                document.getElementById('carte').innerHTML = `
+                    <div class="trust-card-header">
+                        <img src="${p.photo || ''}" alt="">
+                        <h2 style="margin:0;">${nom}</h2>
+                        <p style="margin:8px 0 0; opacity:0.9;">⭐ ${p.etoiles || 0} / 5</p>
+                    </div>
+                    <div class="trust-card-body">
+                        <p><strong>Métier :</strong> ${p.profession || '-'}</p>
+                        <p><strong>Ville :</strong> ${p.ville || '-'}</p>
+                        <p><strong>Services :</strong> ${p.services || '-'}</p>
+                        <p style="font-style:italic; color:#555;">"${p.bio || 'Personne de confiance sur PetitsDjobs.'}"</p>
+                        <h3>Avis clients</h3>
+                        <ul style="padding-left:20px;">${avis}</ul>
+                        <button class="btn-primary-sm" style="width:100%; padding:14px; margin-top:16px;"
+                            onclick="choisir(${p.id})">Choisir cette personne</button>
+                    </div>`;
+            });
+        }
+
+        async function choisir(pid) {
+            const res = await fetch('/selectionner-prestataire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prestataireId: pid })
+            });
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else window.location.href = '/commande';
+        }
+    </script>
+</body>
+</html>
