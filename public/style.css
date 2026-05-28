@@ -13,6 +13,28 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; 
     border-radius: 6px; box-sizing: border-box; height: 48px; /* Taille uniforme */
 }
+/* --- Correction pour les cases à cocher (Taille réduite et alignement ligne) --- */
+.login-card input[type="checkbox"] {
+    width: 16px; 
+    height: 16px;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
+    cursor: pointer;
+    flex-shrink: 0; /* Empêche la case de se déformer si le texte est long */
+}
+
+/* Force l'alignement du texte et de la case sur la même ligne */
+.login-card label {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin: 8px 0;
+    width: 100%;
+}
+
 .login-card button { 
     width: 100%; padding: 15px; background-color: #333333; color: white; 
     border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-weight: bold; 
@@ -23,6 +45,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     border-color: #5D4037;
     outline: none;
     box-shadow: 0 0 5px rgba(93, 64, 55, 0.3);
+}
+/* Empêche les cases à cocher d'avoir la bordure rouge d'invalidation trop large */
+.login-card input[type="checkbox"]:invalid {
+    border-left: none;
 }
 .login-card input:invalid {
     border-left: 5px solid #ff5252;

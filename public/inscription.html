@@ -21,24 +21,24 @@
         <form id="regForm" action="/inscription" method="POST">
             <input type="hidden" name="locAccepted" id="locAccepted" value="0">
             <input type="hidden" name="polAccepted" id="polAccepted" value="0">
-            <input type="text" name="nom" placeholder="NOM" required>
-            <input type="text" name="prenom" placeholder="PRÉNOM" required>
-            <input type="email" name="email" id="email" placeholder="EMAIL" required>
-            <input type="text" name="date_naissance" placeholder="DATE DE NAISSANCE" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" required>
+            <input type="text" name="nom" placeholder="NOM" required autocomplete="family-name">
+            <input type="text" name="prenom" placeholder="PRÉNOM" required autocomplete="given-name">
+            <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="email">
+            <input type="text" name="date_naissance" placeholder="DATE DE NAISSANCE" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" required autocomplete="bday">
             <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;">
+                <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%" autocomplete="new-password">
                 <button type="button" class="toggle-password" data-target="pass1" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>
             </div>
             <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%;">
+                <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%" autocomplete="new-password">
                 <button type="button" class="toggle-password" data-target="pass2" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>
             </div>
 
             <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
-                <label style="display:block; margin-bottom: 5px;"><input type="checkbox" name="remember" style="width:auto;"> Rester connecté</label>
-                <label style="display:block; margin-bottom: 5px;"><input type="checkbox" id="loc" style="width:auto;"> Autoriser la localisation</label>
-                <label style="display:block; margin-bottom: 5px;">
-                    <input type="checkbox" id="pol" style="width:auto;"> J'accepte la <a href="/politique">politique de confidentialité</a>
+                <label><input type="checkbox" name="remember"> Rester connecté</label>
+                <label><input type="checkbox" id="loc"> Autoriser la localisation</label>
+                <label>
+                    <input type="checkbox" id="pol"> J'accepte la <a href="/politique">politique de confidentialité</a>
                 </label>
             </div>
 
@@ -75,6 +75,10 @@
         }
         if (err === 'consentement') {
             msg.textContent = 'Acceptez la localisation et la politique.';
+            msg.style.display = 'block';
+        }
+        if (err === 'serveur') {
+            msg.textContent = 'Erreur technique. Veuillez réessayer plus tard.';
             msg.style.display = 'block';
         }
 

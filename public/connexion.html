@@ -20,9 +20,9 @@
             <p id="msg-remember" style="display:none; color:#5D4037; font-size:0.9rem;">Session active — validez les cases ci-dessous pour continuer.</p>
             <form id="loginForm" action="/connexion" method="POST">
                 <div id="champs-compte">
-                    <input type="email" name="email" id="email" placeholder="EMAIL">
+                    <input type="email" name="email" id="email" placeholder="EMAIL" autocomplete="username">
                     <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                        <input type="password" name="password" id="password" placeholder="MOT DE PASSE" style="padding-right: 40px; margin: 0; width: 100%;">
+                        <input type="password" name="password" id="password" placeholder="MOT DE PASSE" style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="current-password">
                         <button type="button" id="togglePassword" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>
                     </div>
                 </div>
@@ -32,14 +32,14 @@
                 <input type="hidden" name="polAccepted" id="polAccepted" value="0">
 
                 <div class="options" style="text-align: left; margin: 10px 0;">
-                    <label style="margin: 2px 0; display: block;">
-                        <input type="checkbox" name="remember" id="remember" style="width:auto; margin-right:5px;"> Rester connecté
+                    <label>
+                        <input type="checkbox" name="remember" id="remember"> Rester connecté
                     </label>
-                    <label style="margin: 2px 0; display: block;">
-                        <input type="checkbox" id="loc" style="width:auto; margin-right:5px;"> Autoriser la localisation
+                    <label>
+                        <input type="checkbox" id="loc"> Autoriser la localisation
                     </label>
-                    <label style="margin: 2px 0; display: block;">
-                        <input type="checkbox" id="pol" style="width:auto; margin-right:5px;">
+                    <label>
+                        <input type="checkbox" id="pol">
                         J'accepte la <a href="/politique">politique de confidentialité</a>
                     </label>
                 </div>
@@ -91,6 +91,7 @@
         if (err === 'mdp') msg.textContent = 'Mot de passe incorrect.';
         if (err === 'consentement') msg.textContent = 'Acceptez la localisation et la politique.';
         if (err === 'compte') msg.textContent = 'Compte introuvable. Inscrivez-vous d\'abord.';
+        if (err === 'serveur') msg.textContent = 'Erreur technique. Veuillez réessayer.';
         if (err) msg.style.display = 'block';
 
         fetch('/session-status').then(r => r.json()).then(s => {
