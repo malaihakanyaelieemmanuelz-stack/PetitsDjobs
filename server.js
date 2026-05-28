@@ -6,12 +6,19 @@ const multer = require('multer');
 const path = require('path');
 const geolib = require('geolib');
 const bcrypt = require('bcrypt');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const upload = multer({ dest: 'public/uploads/' });
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
-// --- Stockage Local (Remplace MongoDB) ---
+// --- Initialisation de Supabase ---
+const supabase = createClient(
+  process.env.SUPABASE_URL, 
+  process.env.SUPABASE_KEY
+);
+
+// --- Stockage Local (Temporaire avant migration complète vers Supabase) ---
 let utilisateurs = [];
 
 const PRIX_PAR_KM = 200;
@@ -155,7 +162,11 @@ app.post('/deconnexion', (req, res) => {
 // --- API ---
 app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
-app.get('/get-all-prestataires', (req, res) => res.json(utilisateurs.filter(u => u.isPrestataire)));
+
+app.get('/get-all-prestataires', async (req, res) => {
+    // Prêt pour : const { data } = await supabase.from('utilisateurs').select('*').eq('isPrestataire', true);
+    res.json(utilisateurs.filter(u => u.isPrestataire));
+});
 
 app.get('/prestataires-autour', requireAuth, async (req, res) => {
     const lat = parseFloat(req.query.lat) || req.session.latClient;
@@ -168,7 +179,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
-app.get('/get-top-prestataires', (req, res) => {
+app.get('/get-top-prestataires', async (req, res) => {
     const top = utilisateurs
         .filter(u => u.isPrestataire)
         .sort((a, b) => (b.etoiles || 0) - (a.etoiles || 0))
@@ -229,7 +240,7 @@ app.post('/chercher-prestataires', async (req, res) => {
     res.json(result);
 });
 
-app.post('/selectionner-prestataire', (req, res) => {
+app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId } = req.body;
     const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
     if (!p || req.session.latClient == null) {
@@ -256,7 +267,7 @@ app.post('/selectionner-prestataire', (req, res) => {
     });
 });
 
-app.post('/calculer-distance', (req, res) => {
+app.post('/calculer-distance', async (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
     const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
     if (!p) return res.status(404).json({ error: 'Prestataire introuvable' });
@@ -270,7 +281,7 @@ app.post('/calculer-distance', (req, res) => {
     });
 });
 
-app.post('/calculer-commande', (req, res) => {
+app.post('/calculer-commande', async (req, res) => {
     const cmd = req.session.commande || {};
     const prixBase = parseInt(req.body.prixBase, 10) || cmd.prixBase || 0;
     const frais = cmd.fraisDeplacement ?? 0;
@@ -407,7 +418,7 @@ app.post('/devenir-prestataire', upload.fields([
     res.redirect('/prestataire-info?inscription=ok');
 });
 
-app.get('/prestataire-public/:id', (req, res) => {
+app.get('/prestataire-public/:id', async (req, res) => {
     const p = utilisateurs.find(u => u.id === parseInt(req.params.id, 10) && u.isPrestataire);
     if (!p) return res.status(404).json({});
     const pObj = { ...p };
@@ -415,7 +426,7 @@ app.get('/prestataire-public/:id', (req, res) => {
     res.json(pObj);
 });
 
-app.post('/proposer-prix-discuter', (req, res) => {
+app.post('/proposer-prix-discuter', async (req, res) => {
     const { prix, lat, lon } = req.body;
     const prixNum = parseInt(prix, 10);
     if (!prixNum || lat == null || lon == null) {
@@ -441,7 +452,7 @@ app.post('/proposer-prix-discuter', (req, res) => {
     res.json({ offreId: offre.id, envoyes: ids.length, message: ids.length ? 'Offre envoyée aux prestataires proches' : 'Aucun prestataire proche.' });
 });
 
-app.get('/statut-offre/:id', (req, res) => {
+app.get('/statut-offre/:id', async (req, res) => {
     const offre = offresDiscuter.find(o => o.id === parseInt(req.params.id, 10));
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
     if (offre.acceptations.length > 0) {
