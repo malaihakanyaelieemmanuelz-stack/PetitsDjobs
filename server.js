@@ -18,6 +18,17 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
+// --- Test de connexion pour les logs Render ---
+supabase.from('utilisateurs').select('id').limit(1)
+    .then(({ error }) => {
+        if (error) {
+            console.error('❌ Erreur de connexion Supabase :', error.message);
+        } else {
+            console.log('✅ Connexion à Supabase réussie !');
+        }
+    })
+    .catch(err => console.error('❌ Erreur fatale lors de l\'initialisation Supabase :', err));
+
 // --- Stockage Local (Temporaire avant migration complète vers Supabase) ---
 let utilisateurs = [];
 
