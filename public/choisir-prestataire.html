@@ -3,95 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <title>Choisir votre prestataire</title>
+    <title>Choisir Prestataire</title>
 </head>
-<body>
-    <header class="home-header">
-        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
-    </header>
-    <nav class="nav-bar">
-        <a href="index.html">ACCUEIL</a>
-        <a href="/profil">MON PROFIL</a>
-    </nav>
-
-    <div class="app-wrap">
-        <div class="steps-bar">
-            <span class="done">1. Service</span>
-            <span class="active">2. Choisir une personne</span>
-            <span>3. Confirmer</span>
-        </div>
-        <h1 class="page-title">Qui peut vous aider ?</h1>
-        <p class="page-sub" id="service-label">Prestataires disponibles près de vous</p>
-
-        <div class="gps-banner" id="gps-banner">
-            <strong>📍 Recherche de votre position...</strong>
-            Nous trouvons les personnes les plus proches, comme sur une course VTC.
-        </div>
-
-        <p id="info-rayon" style="text-align:center; color:#666; font-size:0.9rem;"></p>
-        <div id="liste-prestataires" class="provider-grid"></div>
-
-        <button id="btn-plus" class="btn-primary-sm" style="display:none; width:100%; max-width:400px; margin:20px auto; padding:14px;">
-            Voir 20 prestataires de plus
+<body class="auth-page">
+    <div style="max-width: 600px; margin: 30px auto; padding: 20px;">
+        <h1 style="color:#5D4037;">Prestataires les plus proches</h1>
+        <p id="info-rayon" style="color:#666; font-size:0.9rem;">Recherche GPS en cours (rayon élargi de 1 m en 1 m)...</p>
+        <div id="liste-prestataires"></div>
+        <button id="btn-plus" style="display:none; width:100%; padding:12px; margin-top:16px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">
+            VOIR 20 PRESTATAIRES DE PLUS
         </button>
-        <p style="text-align:center; margin-top:20px;"><a href="index.html">← Changer de service</a></p>
+        <p stylne="text-align:center; margin-top:16px;"><a href="/commande">Retour commande</a></p>
     </div>
-
     <script>
         const params = new URLSearchParams(window.location.search);
         const service = params.get('service') || '';
-        let offset = 0, lat, lon;
-
-        if (service) {
-            document.getElementById('service-label').innerText =
-                'Pour : ' + service + ' — Choisissez une personne de confiance';
-        }
+        let offset = 0;
+        let lat, lon;
 
         const container = document.getElementById('liste-prestataires');
         const info = document.getElementById('info-rayon');
         const btnPlus = document.getElementById('btn-plus');
-        const gpsBanner = document.getElementById('gps-banner');
-
-        function distanceLabel(m) {
-            if (m < 1000) return m + ' mètres';
-            return (m / 1000).toFixed(1) + ' km';
-        }
-
-        function cardHtml(p) {
-            const nomAffiche = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
-            const bio = p.bio || 'Prestataire motivé, prêt à vous aider.';
-            return `
-                <article class="provider-card">
-                    <div class="provider-card-top">
-                        <span class="badge-dispo">Disponible</span>
-                        <img src="${p.photo || ''}" alt="${nomAffiche}">
-                        <span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>
-                    </div>
-                    <div class="provider-card-body">
-                        <h3>${nomAffiche}</h3>
-                        <p class="prof">${p.profession || 'Professionnel'}</p>
-                        <p>⭐ ${p.etoiles || 0} · ${p.nbAvis || 0} avis · ${p.ville || ''}</p>
-                        <p class="bio">${bio}</p>
-                        <div class="provider-card-actions">
-                            <a href="/voir-prestataire?id=${p.id}" class="btn-outline">Voir le profil</a>
-                            <button type="button" class="btn-primary-sm btn-select" data-id="${p.id}">Choisir</button>
-                        </div>
-                    </div>
-                </article>`;
-        }
 
         function afficherListe(items, append) {
             if (!append) container.innerHTML = '';
             if (!items.length && !append) {
-                container.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;">Aucun prestataire disponible pour ce service à proximité. Élargissement automatique du rayon...</p>';
+                container.innerHTML = '<p>Aucun prestataire disponible pour ce service. Élargissement du rayon...</p>';
                 return;
             }
             items.forEach(p => {
-                const wrap = document.createElement('div');
-                wrap.innerHTML = cardHtml(p);
-                const card = wrap.firstElementChild;
-                card.querySelector('.btn-select').onclick = () => selectionner(p.id);
-                container.appendChild(card);
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px; margin:8px 0; background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+                div.innerHTML = `
+                    <img src="${p.photo || ''}" width="56" height="56" style="border-radius:50%; object-fit:cover;">
+                    <div style="flex:1;">
+                        <strong>${p.nom}</strong> — ${p.profession || ''}<br>
+                        <small>${p.distanceM} m · ⭐ ${p.etoiles || 0}</small>
+                    </div>
+                    <button type="button" data-id="${p.id}" class="btn-select" style="padding:8px 12px; background:#5D4037; color:#fff; border:none; border-radius:6px; cursor:pointer;">SÉLECTIONNER</button>
+                `;
+                container.appendChild(div);
+                div.querySelector('.btn-select').onclick = () => selectionner(p.id);
             });
         }
 
@@ -102,7 +54,10 @@
                 body: JSON.stringify({ prestataireId: id })
             });
             const data = await res.json();
-            if (data.error) { alert(data.error); return; }
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
             window.location.href = '/commande';
         }
 
@@ -114,30 +69,18 @@
             });
             const data = await res.json();
             if (data.error) {
-                gpsBanner.innerHTML = '<strong>GPS requis</strong>' + data.error;
+                info.innerText = data.error;
                 return;
             }
-            if (data.prestataires.length) {
-                const proche = data.prestataires[0];
-                gpsBanner.innerHTML = `
-                    <strong>✓ Prestataire le plus proche : ${distanceLabel(proche.distanceM)}</strong>
-                    ${data.prestataires.length} personne(s) trouvée(s) autour de vous`;
-            }
-            info.innerText = data.prestataires.length
-                ? `${data.prestataires.length} profil(s) affiché(s) (rayon ~${data.rayonMetres} m)`
-                : 'Recherche en cours...';
+            info.innerText = `Rayon atteint : ~${data.rayonMetres} m · ${data.prestataires.length} affiché(s)`;
             afficherListe(data.prestataires, append);
             btnPlus.style.display = data.hasMore ? 'block' : 'none';
         }
 
-        btnPlus.onclick = () => { offset += 20; charger(true); };
-
-        fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-            if (!service && cmd.service) {
-                document.getElementById('service-label').innerText =
-                    'Pour : ' + cmd.service + ' — Choisissez une personne de confiance';
-            }
-        });
+        btnPlus.onclick = () => {
+            offset += 20;
+            charger(true);
+        };
 
         navigator.geolocation.getCurrentPosition(
             async pos => {
@@ -151,8 +94,8 @@
                 await charger(false);
             },
             () => {
-                gpsBanner.innerHTML = '<strong>Activez la localisation</strong> sur votre téléphone pour voir qui est près de vous.';
-                container.innerHTML = '<p style="text-align:center;">Sans GPS, nous ne pouvons pas vous montrer les prestataires proches.</p>';
+                info.innerText = 'Activez le GPS pour voir les prestataires proches.';
+                container.innerHTML = '<p>Localisation refusée.</p>';
             }
         );
     </script>

@@ -24,7 +24,7 @@
             <input type="text" name="nom" placeholder="NOM" required>
             <input type="text" name="prenom" placeholder="PRÉNOM" required>
             <input type="email" name="email" id="email" placeholder="EMAIL" required>
-            <input type="date" name="date_naissance" required>
+            <input type="text" name="date_naissance" placeholder="DATE DE NAISSANCE" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" required>
             <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
                 <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;">
                 <button type="button" class="toggle-password" data-target="pass1" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>

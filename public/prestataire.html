@@ -31,26 +31,17 @@
             <input type="hidden" name="lon" id="lon">
 
             <p style="font-weight:bold; color:#5D4037;">2. Ce que vous proposez</p>
-            <p style="font-size:0.9rem; color:#666;">Cochez le service <strong>et</strong> « Disponible » pour apparaître quand un client commande.</p>
+            <p style="font-size:0.9rem; color:#666;">Cochez les services que vous proposez. Vous apparaîtrez automatiquement comme disponible pour ces derniers.</p>
             <div style="text-align:left; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:5px; font-size:0.9rem;">
-                <label><input type="checkbox" name="services" value="Cuisine"> Cuisine</label>
-                <label><input type="checkbox" name="dispo_Cuisine" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Lavage"> Lavage</label>
-                <label><input type="checkbox" name="dispo_Lavage" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Vaisselle"> Vaisselle</label>
-                <label><input type="checkbox" name="dispo_Vaisselle" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Course"> Course</label>
-                <label><input type="checkbox" name="dispo_Course" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Chauffeur"> Chauffeur</label>
-                <label><input type="checkbox" name="dispo_Chauffeur" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Coiffure"> Coiffure</label>
-                <label><input type="checkbox" name="dispo_Coiffure" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Remplacement"> Remplacement</label>
-                <label><input type="checkbox" name="dispo_Remplacement" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Particulier"> Service particulier</label>
-                <label><input type="checkbox" name="dispo_Particulier" value="1"> Disponible</label><br>
-                <label><input type="checkbox" name="services" value="Tout"> Tout faire</label>
-                <label><input type="checkbox" name="dispo_Tout" value="1"> Disponible</label>
+                <label><input type="checkbox" name="services" value="Cuisine"> Cuisine</label><br>
+                <label><input type="checkbox" name="services" value="Lavage"> Lavage</label><br>
+                <label><input type="checkbox" name="services" value="Vaisselle"> Vaisselle</label><br>
+                <label><input type="checkbox" name="services" value="Course"> Course</label><br>
+                <label><input type="checkbox" name="services" value="Chauffeur"> Chauffeur</label><br>
+                <label><input type="checkbox" name="services" value="Coiffure"> Coiffure</label><br>
+                <label><input type="checkbox" name="services" value="Remplacement"> Remplacement</label><br>
+                <label><input type="checkbox" name="services" value="Particulier"> Service particulier</label><br>
+                <label style="color:#5D4037; font-weight:bold; margin-top: 10px; display: block;"><input type="checkbox" id="select-all-services" name="services" value="Tout"> TOUT COCHER</label>
             </div>
 
             <p style="font-weight:bold; color:#5D4037;">3. Photo & vérification</p>
@@ -78,6 +69,13 @@
             if (data.prenom) document.getElementById('prenom').value = data.prenom;
             const bioEl = document.querySelector('[name=bio]');
             if (bioEl && data.bio) bioEl.value = data.bio;
+        });
+
+        // Logique "Tout sélectionner"
+        const checkToutServices = document.getElementById('select-all-services');
+
+        checkToutServices.addEventListener('change', function() {
+            document.querySelectorAll('input[name="services"]').forEach(cb => cb.checked = this.checked);
         });
 
         document.getElementById('form-presta').onsubmit = function(e) {

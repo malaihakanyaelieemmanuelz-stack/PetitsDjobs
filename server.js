@@ -1,13 +1,22 @@
+require('dotenv').config(); // Charge le fichier .env en local
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const geolib = require('geolib');
+const mongoose = require('mongoose'); // Ajout pour MongoDB
 
 const app = express();
 const upload = multer({ dest: 'public/uploads/' });
-const port = 5500;
+const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
+
+// --- Connexion MongoDB ---
+const dbURI = process.env.MONGO_URI;
+
+mongoose.connect(dbURI)
+  .then(() => console.log('Connexion à MongoDB réussie !'))
+  .catch((err) => console.error('Erreur de connexion MongoDB :', err));
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
@@ -23,10 +32,17 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 }
 }));
 
+// --- Note ---
+// Tes tableaux (utilisateurs, prestataires) restent en mémoire.
+// Une fois que tu seras prêt, il faudra remplacer ces tableaux par des appels
+// à des modèles Mongoose pour que les données survivent au redémarrage du serveur.
+
 let utilisateurs = [];
 let prestataires = [];
 let offresDiscuter = [];
 let idPrestataireSeq = 1;
+
+// ... (Le reste de ton code original reste identique ici) ...
 
 function serviceMatch(prestataire, serviceDemande) {
     if (!serviceDemande) return true;
@@ -115,16 +131,10 @@ function redirectSiConnecte(req, res, next) {
 
 const publicDir = path.join(__dirname, 'public');
 
-// ——— Pages publiques (routes + fichiers .html pour les liens de la page d'accueil) ———
-function pageConnexion(req, res) {
-    res.sendFile(path.join(publicDir, 'connexion.html'));
-}
-function pageInscription(req, res) {
-    res.sendFile(path.join(publicDir, 'inscription.html'));
-}
-function pageAccueil(req, res) {
-    res.sendFile(path.join(publicDir, 'index.html'));
-}
+// --- Routes ---
+function pageConnexion(req, res) { res.sendFile(path.join(publicDir, 'connexion.html')); }
+function pageInscription(req, res) { res.sendFile(path.join(publicDir, 'inscription.html')); }
+function pageAccueil(req, res) { res.sendFile(path.join(publicDir, 'index.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -154,7 +164,7 @@ app.post('/deconnexion', (req, res) => {
     req.session.destroy(() => res.redirect('/index.html'));
 });
 
-// ——— API session / commande ———
+// --- API ---
 app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 app.get('/get-all-prestataires', (req, res) => res.json(prestataires));
@@ -286,7 +296,6 @@ app.post('/calculer-commande', (req, res) => {
     res.json({ prixBase, fraisDeplacement: frais, total: prixBase + frais });
 });
 
-// ——— Connexion / inscription ———
 app.post('/connexion', (req, res) => {
     const locOk = req.body.locAccepted === '1' || req.body.locAccepted === 'on';
     const polOk = req.body.polAccepted === '1' || req.body.polAccepted === 'on';
@@ -296,7 +305,6 @@ app.post('/connexion', (req, res) => {
     }
 
     if (req.session.remember && req.session.user && !req.body.email) {
-        // Rester connecté : pas de ressaisie email/mot de passe
     } else {
         const compte = utilisateurs.find(u => u.email === req.body.email);
         if (!compte) return res.redirect('/connexion.html?erreur=compte');
@@ -347,7 +355,6 @@ app.post('/inscription', (req, res) => {
     res.redirect('/index.html?connecte=1');
 });
 
-// ——— Prestataire ———
 app.post('/devenir-prestataire', upload.fields([
     { name: 'photo_profil' }, { name: 'piece_recto' }, { name: 'piece_verso' }
 ]), (req, res) => {
@@ -356,8 +363,7 @@ app.post('/devenir-prestataire', upload.fields([
     const servicesList = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
     const disponibilites = {};
     servicesList.forEach(s => {
-        const key = 'dispo_' + s;
-        disponibilites[s] = req.body[key] === '1' || req.body[key] === 'on';
+        disponibilites[s] = true;
     });
 
     const entry = {
@@ -413,7 +419,6 @@ app.get('/prestataire-public/:id', (req, res) => {
     });
 });
 
-// ——— Discuter (négociation prix) ———
 app.post('/proposer-prix-discuter', (req, res) => {
     const { prix, lat, lon } = req.body;
     const prixNum = parseInt(prix, 10);
@@ -437,7 +442,7 @@ app.post('/proposer-prix-discuter', (req, res) => {
     };
     offresDiscuter.push(offre);
 
-    res.json({ offreId: offre.id, envoyes: ids.length, message: ids.length ? 'Offre envoyée aux prestataires proches' : 'Aucun prestataire proche. Augmentez le rayon ou le prix.' });
+    res.json({ offreId: offre.id, envoyes: ids.length, message: ids.length ? 'Offre envoyée aux prestataires proches' : 'Aucun prestataire proche.' });
 });
 
 app.get('/statut-offre/:id', (req, res) => {
@@ -447,7 +452,7 @@ app.get('/statut-offre/:id', (req, res) => {
         req.session.commande = { service: 'Service particulier', prixBase: offre.prix, prixLibre: true };
         return res.json({ statut: 'accepte', prix: offre.prix });
     }
-    res.json({ statut: 'en_attente', suggestion: 'Augmentez votre offre pour être accepté plus vite.' });
+    res.json({ statut: 'en_attente', suggestion: 'Augmentez votre offre.' });
 });
 
 app.use('/uploads', express.static(path.join(publicDir, 'uploads')));
