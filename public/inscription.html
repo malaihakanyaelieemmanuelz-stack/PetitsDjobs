@@ -25,8 +25,14 @@
             <input type="text" name="prenom" placeholder="PRÉNOM" required>
             <input type="email" name="email" id="email" placeholder="EMAIL" required>
             <input type="date" name="date_naissance" required>
-            <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8">
-            <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required>
+            <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
+                <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;">
+                <button type="button" class="toggle-password" data-target="pass1" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0;">👁️</button>
+            </div>
+            <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
+                <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%;">
+                <button type="button" class="toggle-password" data-target="pass2" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0;">👁️</button>
+            </div>
 
             <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
                 <label style="display:block; margin-bottom: 5px;"><input type="checkbox" name="remember" style="width:auto;"> Rester connecté</label>
@@ -46,6 +52,16 @@
     </div>
 
     <script>
+        // Gestion de la visibilité des mots de passe
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = document.getElementById(this.dataset.target);
+                const type = target.type === 'password' ? 'text' : 'password';
+                target.type = type;
+                this.textContent = type === 'password' ? '👁️' : '🙈';
+            });
+        });
+
         const params = new URLSearchParams(window.location.search);
         const err = params.get('erreur');
         const msg = document.getElementById('erreur-msg');
