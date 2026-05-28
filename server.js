@@ -5,43 +5,14 @@ const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const geolib = require('geolib');
-const mongoose = require('mongoose'); // Ajout pour MongoDB
 const bcrypt = require('bcrypt');
 
 const app = express();
 const upload = multer({ dest: 'public/uploads/' });
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
-// --- Connexion MongoDB ---
-const dbURI = process.env.MONGO_URI;
-
-mongoose.connect(dbURI)
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch((err) => console.error('Erreur de connexion MongoDB :', err));
-
-const userSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    nom: String,
-    prenom: String,
-    date_naissance: String,
-    isPrestataire: { type: Boolean, default: false },
-    id: Number, // Utilisé pour le matching prestataire (numérique)
-    bio: String,
-    age: String,
-    ville: String,
-    profession: String,
-    services: String,
-    disponibilites: mongoose.Schema.Types.Mixed,
-    lat: Number,
-    lon: Number,
-    photo: String,
-    pieceRecto: String,
-    pieceVerso: String,
-    etoiles: { type: Number, default: 0 },
-    commentaires: { type: Array, default: [] }
-});
-const User = mongoose.model('User', userSchema);
+// --- Stockage Local (Remplace MongoDB) ---
+let utilisateurs = [];
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
@@ -80,7 +51,7 @@ function distanceMetres(p, lat, lon) {
 }
 
 function prestatairesEligibles(service) {
-    return prestataires.filter(p => p.isPrestataire && serviceMatch(p, service));
+    return utilisateurs.filter(p => p.isPrestataire && serviceMatch(p, service));
 }
 
 function chercherParRayonCroissant(lat, lon, service, offset, limit) {
@@ -184,7 +155,7 @@ app.post('/deconnexion', (req, res) => {
 // --- API ---
 app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
-app.get('/get-all-prestataires', async (req, res) => res.json(await User.find({ isPrestataire: true })));
+app.get('/get-all-prestataires', (req, res) => res.json(utilisateurs.filter(u => u.isPrestataire)));
 
 app.get('/prestataires-autour', requireAuth, async (req, res) => {
     const lat = parseFloat(req.query.lat) || req.session.latClient;
@@ -193,14 +164,15 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     if (lat == null || lon == null) {
         return res.json({ prestataires: [], message: 'Activez le GPS pour voir qui est près de vous.' });
     }
-    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 6);
+    const result = chercherParRayonCroissant(lat, lon, service || null, 0, 6);
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
-app.get('/get-top-prestataires', async (req, res) => {
-    const top = await User.find({ isPrestataire: true })
-        .sort({ etoiles: -1 })
-        .limit(10);
+app.get('/get-top-prestataires', (req, res) => {
+    const top = utilisateurs
+        .filter(u => u.isPrestataire)
+        .sort((a, b) => (b.etoiles || 0) - (a.etoiles || 0))
+        .slice(0, 10);
     res.json(top.map(p => ({
         id: p.id, nom: p.nom, prenom: p.prenom, photo: p.photo,
         profession: p.profession, bio: p.bio, etoiles: p.etoiles || 0, ville: p.ville
@@ -249,7 +221,7 @@ app.post('/chercher-prestataires', async (req, res) => {
     req.session.latClient = parseFloat(latC);
     req.session.lonClient = parseFloat(lonC);
 
-    const result = await chercherParRayonCroissant(
+    const result = chercherParRayonCroissant(
         latC, lonC, svc,
         parseInt(offset, 10) || 0,
         BATCH_PRESTATAIRES
@@ -257,9 +229,9 @@ app.post('/chercher-prestataires', async (req, res) => {
     res.json(result);
 });
 
-app.post('/selectionner-prestataire', async (req, res) => {
+app.post('/selectionner-prestataire', (req, res) => {
     const { prestataireId } = req.body;
-    const p = await User.findOne({ id: parseInt(prestataireId, 10), isPrestataire: true });
+    const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
     if (!p || req.session.latClient == null) {
         return res.status(400).json({ error: 'Prestataire ou position introuvable' });
     }
@@ -284,9 +256,9 @@ app.post('/selectionner-prestataire', async (req, res) => {
     });
 });
 
-app.post('/calculer-distance', async (req, res) => {
+app.post('/calculer-distance', (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
-    const p = await User.findOne({ id: parseInt(prestataireId, 10), isPrestataire: true });
+    const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
     if (!p) return res.status(404).json({ error: 'Prestataire introuvable' });
     const distM = distanceMetres(p, latClient, lonClient);
     const prixDistance = prixDistanceFcfa(distM);
@@ -318,13 +290,13 @@ app.post('/connexion', async (req, res) => {
     } else {
         try {
             const email = (req.body.email || '').toLowerCase().trim();
-            const compte = await User.findOne({ email });
+            const compte = utilisateurs.find(u => u.email === email);
             if (!compte) return res.redirect('/connexion.html?erreur=compte');
             const mdpCorrect = await bcrypt.compare(req.body.password, compte.password);
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
-            req.session.user = compte.toObject();
+            req.session.user = { ...compte };
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -354,7 +326,7 @@ app.post('/inscription', async (req, res) => {
         return res.redirect('/inscription?erreur=mdp');
     }
     const email = (req.body.email || '').toLowerCase().trim();
-    if (await User.findOne({ email })) {
+    if (utilisateurs.find(u => u.email === email)) {
         return res.redirect('/inscription?erreur=deja_inscrit');
     }
 
@@ -366,10 +338,13 @@ app.post('/inscription', async (req, res) => {
             password: hashedPassword,
             nom: (req.body.nom || '').trim(),
             prenom: (req.body.prenom || '').trim(),
-            date_naissance: req.body.date_naissance
+            date_naissance: req.body.date_naissance,
+            isPrestataire: false,
+            etoiles: 0,
+            commentaires: []
         };
-        const newUser = await User.create(userData);
-        req.session.user = newUser.toObject();
+        utilisateurs.push(userData);
+        req.session.user = { ...userData };
         delete req.session.user.password;
         req.session.remember = !!req.body.remember;
         req.session.localisationAutorisee = locOk;
@@ -409,7 +384,10 @@ app.post('/devenir-prestataire', upload.fields([
         isPrestataire: true
     };
 
-    const user = await User.findOne({ email: req.session.user.email });
+    const index = utilisateurs.findIndex(u => u.email === req.session.user.email);
+    if (index === -1) return res.redirect('/connexion');
+    
+    const user = utilisateurs[index];
     if (!user.id) updateData.id = Date.now();
 
     if (req.files?.photo_profil?.[0]) {
@@ -422,22 +400,22 @@ app.post('/devenir-prestataire', upload.fields([
         updateData.pieceVerso = '/uploads/' + req.files.piece_verso[0].filename;
     }
 
-    const updatedUser = await User.findOneAndUpdate({ email: req.session.user.email }, updateData, { new: true });
-    req.session.user = updatedUser.toObject();
+    utilisateurs[index] = { ...utilisateurs[index], ...updateData };
+    req.session.user = { ...utilisateurs[index] };
     delete req.session.user.password;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
 
-app.get('/prestataire-public/:id', async (req, res) => {
-    const p = await User.findOne({ id: parseInt(req.params.id, 10), isPrestataire: true });
+app.get('/prestataire-public/:id', (req, res) => {
+    const p = utilisateurs.find(u => u.id === parseInt(req.params.id, 10) && u.isPrestataire);
     if (!p) return res.status(404).json({});
-    const pObj = p.toObject();
+    const pObj = { ...p };
     delete pObj.password;
     res.json(pObj);
 });
 
-app.post('/proposer-prix-discuter', async (req, res) => {
+app.post('/proposer-prix-discuter', (req, res) => {
     const { prix, lat, lon } = req.body;
     const prixNum = parseInt(prix, 10);
     if (!prixNum || lat == null || lon == null) {
