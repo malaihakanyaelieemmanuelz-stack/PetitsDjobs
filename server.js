@@ -29,9 +29,6 @@ supabase.from('utilisateurs').select('id').limit(1)
     })
     .catch(err => console.error('❌ Erreur fatale lors de l\'initialisation Supabase :', err));
 
-// --- Stockage Local (Temporaire avant migration complète vers Supabase) ---
-let utilisateurs = [];
-
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
@@ -45,8 +42,6 @@ app.use(session({
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 }
 }));
-
-let offresDiscuter = [];
 
 // ... (Le reste de ton code original reste identique ici) ...
 
@@ -175,8 +170,8 @@ app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 
 app.get('/get-all-prestataires', async (req, res) => {
-    // Prêt pour : const { data } = await supabase.from('utilisateurs').select('*').eq('isPrestataire', true);
-    res.json(utilisateurs.filter(u => u.isPrestataire));
+    const { data } = await supabase.from('profils_prestataires').select('*, utilisateurs(*)');
+    res.json(data || []);
 });
 
 app.get('/prestataires-autour', requireAuth, async (req, res) => {
@@ -186,18 +181,20 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     if (lat == null || lon == null) {
         return res.json({ prestataires: [], message: 'Activez le GPS pour voir qui est près de vous.' });
     }
-    const result = chercherParRayonCroissant(lat, lon, service || null, 0, 6);
+    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 6);
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    const top = utilisateurs
-        .filter(u => u.isPrestataire)
-        .sort((a, b) => (b.etoiles || 0) - (a.etoiles || 0))
-        .slice(0, 10);
+    const { data } = await supabase
+        .from('profils_prestataires')
+        .select('*, utilisateurs(*)')
+        .limit(10);
+
+    const top = (data || []);
     res.json(top.map(p => ({
-        id: p.id, nom: p.nom, prenom: p.prenom, photo: p.photo,
-        profession: p.profession, bio: p.bio, etoiles: p.etoiles || 0, ville: p.ville
+        id: p.user_id, nom: p.utilisateurs?.nom, prenom: p.utilisateurs?.prenom, photo: p.photo_profil_url,
+        profession: p.domaine, bio: p.description, etoiles: p.etoiles || 0
     })));
 });
 
@@ -243,7 +240,7 @@ app.post('/chercher-prestataires', async (req, res) => {
     req.session.latClient = parseFloat(latC);
     req.session.lonClient = parseFloat(lonC);
 
-    const result = chercherParRayonCroissant(
+    const result = await chercherParRayonCroissant(
         latC, lonC, svc,
         parseInt(offset, 10) || 0,
         BATCH_PRESTATAIRES
@@ -253,7 +250,13 @@ app.post('/chercher-prestataires', async (req, res) => {
 
 app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId } = req.body;
-    const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
+    
+    const { data: p } = await supabase
+        .from('profils_prestataires')
+        .select('*, utilisateurs(*)')
+        .eq('user_id', prestataireId)
+        .single();
+
     if (!p || req.session.latClient == null) {
         return res.status(400).json({ error: 'Prestataire ou position introuvable' });
     }
@@ -280,7 +283,13 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
 app.post('/calculer-distance', async (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
-    const p = utilisateurs.find(u => u.id === parseInt(prestataireId, 10) && u.isPrestataire);
+    
+    const { data: p } = await supabase
+        .from('profils_prestataires')
+        .select('*')
+        .eq('user_id', prestataireId)
+        .single();
+
     if (!p) return res.status(404).json({ error: 'Prestataire introuvable' });
     const distM = distanceMetres(p, latClient, lonClient);
     const prixDistance = prixDistanceFcfa(distM);
@@ -312,13 +321,19 @@ app.post('/connexion', async (req, res) => {
     } else {
         try {
             const email = (req.body.email || '').toLowerCase().trim();
-            const compte = utilisateurs.find(u => u.email === email);
+            const { data: compte } = await supabase
+                .from('utilisateurs')
+                .select('*, profils_prestataires(*)')
+                .eq('email', email)
+                .single();
+
             if (!compte) return res.redirect('/connexion.html?erreur=compte');
             const mdpCorrect = await bcrypt.compare(req.body.password, compte.password);
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
             req.session.user = { ...compte };
+            req.session.user.isPrestataire = !!compte.profils_prestataires;
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -348,7 +363,8 @@ app.post('/inscription', async (req, res) => {
         return res.redirect('/inscription?erreur=mdp');
     }
     const email = (req.body.email || '').toLowerCase().trim();
-    if (utilisateurs.find(u => u.email === email)) {
+    const { data: existant } = await supabase.from('utilisateurs').select('id').eq('email', email).single();
+    if (existant) {
         return res.redirect('/inscription?erreur=deja_inscrit');
     }
 
@@ -360,13 +376,14 @@ app.post('/inscription', async (req, res) => {
             password: hashedPassword,
             nom: (req.body.nom || '').trim(),
             prenom: (req.body.prenom || '').trim(),
-            date_naissance: req.body.date_naissance,
-            isPrestataire: false,
-            etoiles: 0,
-            commentaires: []
+            age: parseInt(req.body.age, 10)
         };
-        utilisateurs.push(userData);
-        req.session.user = { ...userData };
+        
+        const { data: newUser, error } = await supabase.from('utilisateurs').insert(userData).select().single();
+        if (error) throw error;
+
+        req.session.user = { ...newUser };
+        req.session.user.isPrestataire = false;
         delete req.session.user.password;
         req.session.remember = !!req.body.remember;
         req.session.localisationAutorisee = locOk;
@@ -382,59 +399,54 @@ app.post('/devenir-prestataire', upload.fields([
 ]), async (req, res) => {
     if (!req.session.user) return res.redirect('/connexion');
 
-    const servicesList = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
-    const disponibilites = {};
-    servicesList.forEach(s => {
-        disponibilites[s] = true;
-    });
-
-    const updateData = {
-        isPrestataire: true,
-        email: req.session.user.email,
-        nom: req.body.nom,
-        prenom: req.body.prenom,
-        bio: (req.body.bio || '').trim().slice(0, 200),
-        age: req.body.age,
-        ville: req.body.ville,
-        profession: req.body.profession,
-        services: servicesList.join(', '),
-        disponibilites,
-        lat: parseFloat(req.body.lat),
-        lon: parseFloat(req.body.lon),
-        etoiles: 0,
-        commentaires: [],
-        isPrestataire: true
+    const profileData = {
+        user_id: req.session.user.id,
+        description: (req.body.bio || '').trim(),
+        domaine: req.body.profession || req.body.services,
+        // Ajout de lat/lon pour la recherche géographique
+        lat: parseFloat(req.body.lat) || null,
+        lon: parseFloat(req.body.lon) || null
     };
 
-    const index = utilisateurs.findIndex(u => u.email === req.session.user.email);
-    if (index === -1) return res.redirect('/connexion');
-    
-    const user = utilisateurs[index];
-    if (!user.id) updateData.id = Date.now();
-
     if (req.files?.photo_profil?.[0]) {
-        updateData.photo = '/uploads/' + req.files.photo_profil[0].filename;
+        profileData.photo_profil_url = '/uploads/' + req.files.photo_profil[0].filename;
     }
     if (req.files?.piece_recto?.[0]) {
-        updateData.pieceRecto = '/uploads/' + req.files.piece_recto[0].filename;
-    }
-    if (req.files?.piece_verso?.[0]) {
-        updateData.pieceVerso = '/uploads/' + req.files.piece_verso[0].filename;
+        profileData.photo_ci_url = '/uploads/' + req.files.piece_recto[0].filename;
     }
 
-    utilisateurs[index] = { ...utilisateurs[index], ...updateData };
-    req.session.user = { ...utilisateurs[index] };
-    delete req.session.user.password;
+    const { error } = await supabase.from('profils_prestataires').upsert(profileData, { onConflict: 'user_id' });
+    if (error) {
+        console.error(error);
+        return res.redirect('/prestataire?erreur=serveur');
+    }
+
+    req.session.user.isPrestataire = true;
+    // Mise à jour locale pour la session
+    req.session.user.photo = profileData.photo_profil_url;
+    req.session.user.profession = profileData.domaine;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
 
 app.get('/prestataire-public/:id', async (req, res) => {
-    const p = utilisateurs.find(u => u.id === parseInt(req.params.id, 10) && u.isPrestataire);
+    const { data: p } = await supabase
+        .from('profils_prestataires')
+        .select('*, utilisateurs(*)')
+        .eq('user_id', req.params.id)
+        .single();
+
     if (!p) return res.status(404).json({});
-    const pObj = { ...p };
-    delete pObj.password;
-    res.json(pObj);
+    
+    res.json({
+        id: p.user_id,
+        nom: p.utilisateurs.nom,
+        prenom: p.utilisateurs.prenom,
+        profession: p.domaine,
+        bio: p.description,
+        photo: p.photo_profil_url,
+        etoiles: p.etoiles || 0
+    });
 });
 
 app.post('/proposer-prix-discuter', async (req, res) => {
