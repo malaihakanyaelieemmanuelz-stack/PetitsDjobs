@@ -45,10 +45,12 @@ app.use(session({
     secret: 'petit-secret-job-2026',
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Nécessaire pour Render
     cookie: { 
         maxAge: 1000 * 60 * 60 * 24 * 30,
         httpOnly: true,
-        secure: false // Garder à false tant que tu n'as pas de certificat SSL/HTTPS personnalisé
+        secure: process.env.NODE_ENV === 'production', // true en production (HTTPS), false en local
+        sameSite: 'lax'
     }
 }));
 
@@ -339,23 +341,25 @@ app.post('/connexion', async (req, res) => {
     } else {
         try {
             const email = (req.body.email || '').toLowerCase().trim();
-            const { data: compte } = await supabase
+            // On cherche l'utilisateur seul d'abord pour plus de fiabilité
+            const { data: compte, error: userError } = await supabase
                 .from('utilisateurs')
-                .select('*, profils_prestataires(*)')
+                .select('*')
                 .eq('email', email)
-                .single();
+                .maybeSingle();
 
-            if (!compte) return res.redirect('/connexion.html?erreur=compte');
+            if (userError || !compte) return res.redirect('/connexion.html?erreur=compte');
+
             const mdpCorrect = await bcrypt.compare(req.body.password, compte.password);
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
 
-            // Déterminer si c'est un prestataire (gère le cas où Supabase renvoie un tableau ou un objet)
-            const isPresta = compte.profils_prestataires ? (Array.isArray(compte.profils_prestataires) ? compte.profils_prestataires.length > 0 : true) : false;
+            // On vérifie séparément s'il est prestataire
+            const { data: profil } = await supabase.from('profils_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
-            req.session.user.isPrestataire = isPresta;
+            req.session.user.isPrestataire = !!profil;
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
