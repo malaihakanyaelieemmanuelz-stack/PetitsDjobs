@@ -427,6 +427,7 @@ app.post('/inscription', async (req, res) => {
 async function uploadToSupabase(file, bucketName) {
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
+    console.log("DEBUG: Tentative d'upload - Bucket: 'prestataires', Fichier: ", fileName);
     const { data, error } = await supabase.storage
         .from('prestataires') // Utilisation directe du nom pour être 100% sûr
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
