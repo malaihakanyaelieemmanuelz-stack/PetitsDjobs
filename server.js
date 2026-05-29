@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
+// Mise à jour structure table : synchronisation avec profils_prestataires
 const upload = multer({ dest: 'public/uploads/' });
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
@@ -38,9 +39,13 @@ app.use(express.json());
 
 app.use(session({
     secret: 'petit-secret-job-2026',
-    resave: true,
+    resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 }
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        httpOnly: true,
+        secure: false // Garder à false tant que tu n'as pas de certificat SSL/HTTPS personnalisé
+    }
 }));
 
 // ... (Le reste de ton code original reste identique ici) ...
