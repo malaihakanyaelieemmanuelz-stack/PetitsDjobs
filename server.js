@@ -38,7 +38,7 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires-photos';
+const BUCKET_NAME = 'PRESTATAIRES-INFOS';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
