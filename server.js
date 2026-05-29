@@ -38,6 +38,7 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
+const BUCKET_NAME = 'prestataires-photos';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -422,15 +423,17 @@ app.post('/inscription', async (req, res) => {
 });
 
 // Helper pour envoyer un fichier vers Supabase Storage
-async function uploadToSupabase(file, bucket) {
+async function uploadToSupabase(file, bucketName) {
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
     const { data, error } = await supabase.storage
-        .from(bucket)
+        .from(bucketName)
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
     
     if (error) throw error;
-    return supabase.storage.from(bucket).getPublicUrl(fileName).data.publicUrl;
+    // On récupère l'URL publique pour l'afficher plus tard sur le site
+    const { data: publicData } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+    return publicData.publicUrl;
 }
 
 app.post('/devenir-prestataire', upload.fields([
@@ -454,13 +457,13 @@ app.post('/devenir-prestataire', upload.fields([
 
     try {
         if (req.files?.photo_profil?.[0]) {
-            profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], 'prestataires-photos');
+            profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], BUCKET_NAME);
         }
         if (req.files?.piece_recto?.[0]) {
-            profileData.photo_ci_recto_url = await uploadToSupabase(req.files.piece_recto[0], 'prestataires-photos');
+            profileData.photo_ci_recto_url = await uploadToSupabase(req.files.piece_recto[0], BUCKET_NAME);
         }
         if (req.files?.piece_verso?.[0]) {
-            profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], 'prestataires-photos');
+            profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], BUCKET_NAME);
         }
     } catch (uploadErr) {
         console.error("Erreur lors de l'upload Storage:", uploadErr);
