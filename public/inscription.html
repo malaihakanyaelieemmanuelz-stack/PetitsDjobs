@@ -24,7 +24,9 @@
             <input type="text" name="nom" placeholder="NOM" required autocomplete="family-name">
             <input type="text" name="prenom" placeholder="PRÉNOM" required autocomplete="given-name">
             <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="email">
-            <input type="number" name="age" placeholder="VOTRE ÂGE" required min="18">
+            <select name="age" id="age-select" required style="width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; height: 48px; background: white;">
+                <option value="" disabled selected>VOTRE ÂGE (DÈS 14 ANS)</option>
+            </select>
             <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
                 <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%" autocomplete="new-password">
                 <button type="button" class="toggle-password" data-target="pass1" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>
@@ -52,6 +54,17 @@
     </div>
 
     <script>
+        // Génération automatique des options d'âge (14 à 99 ans) pour éviter la saisie
+        const ageSelect = document.getElementById('age-select');
+        if (ageSelect) {
+            for (let i = 14; i <= 99; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i + ' ans';
+                ageSelect.appendChild(opt);
+            }
+        }
+
         // Gestion de la visibilité des mots de passe
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', function() {

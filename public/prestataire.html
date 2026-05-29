@@ -23,7 +23,9 @@
             <p style="font-weight:bold; color:#5D4037; margin-top:0;">1. Qui êtes-vous ?</p>
             <input type="text" name="nom" id="nom" placeholder="NOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <input type="text" name="prenom" id="prenom" placeholder="PRÉNOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
-            <input type="text" name="age" placeholder="ÂGE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <select name="age" id="age-select-presta" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; height: 42px; border: 1px solid #ccc; border-radius: 6px; background: white;">
+                <option value="" disabled selected>VOTRE ÂGE (DÈS 14 ANS)</option>
+            </select>
             <input type="text" name="ville" placeholder="COMMUNE / VILLE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <input type="text" name="profession" placeholder="PROFESSION (ex: Cuisinière, Aide ménagère)" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <textarea name="bio" placeholder="Présentez-vous en 2 phrases (visible par les clients)" maxlength="200" style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; min-height:70px; border-radius:6px; border:1px solid #ccc;"></textarea>
@@ -59,6 +61,17 @@
     </div>
     </div>
     <script>
+        // Génération automatique des options d'âge (14 à 99 ans)
+        const ageSel = document.getElementById('age-select-presta');
+        if (ageSel) {
+            for (let i = 14; i <= 99; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = i + ' ans';
+                ageSel.appendChild(opt);
+            }
+        }
+
         const modifier = new URLSearchParams(location.search).get('modifier') === '1';
         fetch('/get-user-data').then(r => r.json()).then(data => {
             if (data.isPrestataire && !modifier) {
@@ -67,6 +80,7 @@
             }
             if (data.nom) document.getElementById('nom').value = data.nom;
             if (data.prenom) document.getElementById('prenom').value = data.prenom;
+            if (data.age) ageSel.value = data.age;
             const bioEl = document.querySelector('[name=bio]');
             if (bioEl && data.bio) bioEl.value = data.bio;
         });

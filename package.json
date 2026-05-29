@@ -1,16 +1,19 @@
 {
-  "dependencies": {
-    "@supabase/supabase-js": "^2.106.2",
-    "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.2",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0",
-    "geolib": "^3.3.14",
-    "mongoose": "^9.6.3",
-    "multer": "^2.1.1"
-  },
+  "name": "petitsdjobs",
+  "version": "1.0.0",
+  "description": "Plateforme de petits services",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "geolib": "^3.3.4",
+    "multer": "^1.4.5-lts.1"
   }
 }

@@ -47,12 +47,12 @@ app.use(session({
 
 function serviceMatch(prestataire, serviceDemande) {
     if (!serviceDemande) return true;
-    const svc = serviceDemande.trim();
-    const liste = (prestataire.services || '').split(',').map(s => s.trim());
-    const dispo = prestataire.disponibilites || {};
-    if (liste.includes('Tout')) return !!dispo.Tout;
-    if (!liste.some(s => s.toLowerCase() === svc.toLowerCase())) return false;
-    return !!dispo[svc] || liste.filter(s => s.toLowerCase() === svc.toLowerCase()).some(s => dispo[s]);
+    const svc = serviceDemande.trim().toLowerCase();
+    // On transforme la chaîne "Cuisine, Lavage" en tableau pour comparer
+    const servicesStr = prestataire.services || '';
+    const liste = servicesStr.split(',').map(s => s.trim().toLowerCase());
+    if (liste.includes('tout')) return true;
+    return liste.includes(svc);
 }
 
 function distanceMetres(p, lat, lon) {
@@ -63,13 +63,17 @@ function distanceMetres(p, lat, lon) {
     );
 }
 
-function prestatairesEligibles(service) {
-    return utilisateurs.filter(p => p.isPrestataire && serviceMatch(p, service));
-}
+async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
+    // On récupère les données fraîches de Supabase
+    const { data: prestataires } = await supabase
+        .from('profils_prestataires')
+        .select('*, utilisateurs(nom, prenom)');
 
-function chercherParRayonCroissant(lat, lon, service, offset, limit) {
-    const eligibles = prestatairesEligibles(service)
-        .map(p => ({ ...p, distanceM: distanceMetres(p, lat, lon) }))
+    if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+
+    const eligibles = prestataires
+        .filter(p => serviceMatch(p, service))
+        .map(p => ({ ...p, nom: p.utilisateurs.nom, prenom: p.utilisateurs.prenom, distanceM: distanceMetres(p, lat, lon) }))
         .filter(p => p.distanceM !== Infinity)
         .sort((a, b) => a.distanceM - b.distanceM);
 
@@ -93,13 +97,13 @@ function chercherParRayonCroissant(lat, lon, service, offset, limit) {
         prestataires: page.map(p => ({
             id: p.id,
             nom: p.nom,
-            prenom: p.prenom || '',
+            prenom: p.prenom,
             profession: p.profession,
-            bio: p.bio || '',
-            photo: p.photo,
+            bio: p.bio,
+            photo: p.photo_profil_url,
             ville: p.ville,
             services: p.services,
-            etoiles: p.etoiles || 0,
+            etoiles: p.etoiles,
             nbAvis: (p.commentaires || []).length,
             distanceM: Math.round(p.distanceM),
             distanceKm: (p.distanceM / 1000).toFixed(2),
@@ -191,10 +195,15 @@ app.get('/get-top-prestataires', async (req, res) => {
         .select('*, utilisateurs(*)')
         .limit(10);
 
-    const top = (data || []);
+    const top = data || [];
     res.json(top.map(p => ({
-        id: p.user_id, nom: p.utilisateurs?.nom, prenom: p.utilisateurs?.prenom, photo: p.photo_profil_url,
-        profession: p.domaine, bio: p.description, etoiles: p.etoiles || 0
+        id: p.user_id, 
+        nom: p.utilisateurs?.nom, 
+        prenom: p.utilisateurs?.prenom, 
+        photo: p.photo_profil_url,
+        profession: p.profession, 
+        bio: p.bio, 
+        etoiles: p.etoiles || 0
     })));
 });
 
@@ -263,8 +272,8 @@ app.post('/selectionner-prestataire', async (req, res) => {
     const distM = distanceMetres(p, req.session.latClient, req.session.lonClient);
     const frais = prixDistanceFcfa(distM);
     req.session.commande = req.session.commande || {};
-    req.session.commande.prestataireId = p.id;
-    req.session.commande.prestataireNom = p.nom;
+    req.session.commande.prestataireId = p.user_id;
+    req.session.commande.prestataireNom = p.utilisateurs.nom;
     req.session.commande.prestatairePrenom = p.prenom || '';
     req.session.commande.prestatairePhoto = p.photo || '';
     req.session.commande.distanceM = distM;
@@ -399,11 +408,16 @@ app.post('/devenir-prestataire', upload.fields([
 ]), async (req, res) => {
     if (!req.session.user) return res.redirect('/connexion');
 
+    // Gestion des services multiples venant du formulaire
+    const listeServices = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
+    const servicesEnTexte = listeServices.join(', '); 
+
     const profileData = {
         user_id: req.session.user.id,
-        description: (req.body.bio || '').trim(),
-        domaine: req.body.profession || req.body.services,
-        // Ajout de lat/lon pour la recherche géographique
+        profession: (req.body.profession || '').trim(),
+        bio: (req.body.bio || '').trim(),
+        ville: (req.body.ville || '').trim(),
+        services: servicesEnTexte,
         lat: parseFloat(req.body.lat) || null,
         lon: parseFloat(req.body.lon) || null
     };
@@ -412,7 +426,10 @@ app.post('/devenir-prestataire', upload.fields([
         profileData.photo_profil_url = '/uploads/' + req.files.photo_profil[0].filename;
     }
     if (req.files?.piece_recto?.[0]) {
-        profileData.photo_ci_url = '/uploads/' + req.files.piece_recto[0].filename;
+        profileData.photo_ci_recto_url = '/uploads/' + req.files.piece_recto[0].filename;
+    }
+    if (req.files?.piece_verso?.[0]) {
+        profileData.photo_ci_verso_url = '/uploads/' + req.files.piece_verso[0].filename;
     }
 
     const { error } = await supabase.from('profils_prestataires').upsert(profileData, { onConflict: 'user_id' });
@@ -424,7 +441,7 @@ app.post('/devenir-prestataire', upload.fields([
     req.session.user.isPrestataire = true;
     // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
-    req.session.user.profession = profileData.domaine;
+    req.session.user.profession = profileData.profession;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
@@ -442,8 +459,8 @@ app.get('/prestataire-public/:id', async (req, res) => {
         id: p.user_id,
         nom: p.utilisateurs.nom,
         prenom: p.utilisateurs.prenom,
-        profession: p.domaine,
-        bio: p.description,
+        profession: p.profession,
+        bio: p.bio,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0
     });
