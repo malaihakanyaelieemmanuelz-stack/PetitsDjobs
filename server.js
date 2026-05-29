@@ -6,10 +6,11 @@ const multer = require('multer');
 const path = require('path');
 const geolib = require('geolib');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-// Mise à jour structure table : synchronisation avec profils_prestataires
+// Mise à jour structure table : synchronisation avec infos_prestataires
 
 // AJOUT : Indispensable pour que Render accepte les cookies de session
 app.set('trust proxy', 1);
@@ -77,7 +78,7 @@ function distanceMetres(p, lat, lon) {
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     // On récupère les données fraîches de Supabase
     const { data: prestataires } = await supabase
-        .from('profils_prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(nom, prenom)');
 
     if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
@@ -185,7 +186,7 @@ app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 
 app.get('/get-all-prestataires', async (req, res) => {
-    const { data } = await supabase.from('profils_prestataires').select('*, utilisateurs(*)');
+    const { data } = await supabase.from('infos_prestataires').select('*, utilisateurs(*)');
     res.json(data || []);
 });
 
@@ -202,7 +203,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 
 app.get('/get-top-prestataires', async (req, res) => {
     const { data } = await supabase
-        .from('profils_prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .limit(10);
 
@@ -272,7 +273,7 @@ app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId } = req.body;
     
     const { data: p } = await supabase
-        .from('profils_prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .eq('user_id', prestataireId)
         .single();
@@ -305,7 +306,7 @@ app.post('/calculer-distance', async (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
     
     const { data: p } = await supabase
-        .from('profils_prestataires')
+        .from('infos_prestataires')
         .select('*')
         .eq('user_id', prestataireId)
         .single();
@@ -356,7 +357,7 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('profils_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
             req.session.user.isPrestataire = !!profil;
@@ -420,6 +421,18 @@ app.post('/inscription', async (req, res) => {
     }
 });
 
+// Helper pour envoyer un fichier vers Supabase Storage
+async function uploadToSupabase(file, bucket) {
+    const fileBuffer = fs.readFileSync(file.path);
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, fileBuffer, { contentType: file.mimetype });
+    
+    if (error) throw error;
+    return supabase.storage.from(bucket).getPublicUrl(fileName).data.publicUrl;
+}
+
 app.post('/devenir-prestataire', upload.fields([
     { name: 'photo_profil' }, { name: 'piece_recto' }, { name: 'piece_verso' }
 ]), async (req, res) => {
@@ -439,17 +452,22 @@ app.post('/devenir-prestataire', upload.fields([
         lon: parseFloat(req.body.lon) || null
     };
 
-    if (req.files?.photo_profil?.[0]) {
-        profileData.photo_profil_url = '/uploads/' + req.files.photo_profil[0].filename;
-    }
-    if (req.files?.piece_recto?.[0]) {
-        profileData.photo_ci_recto_url = '/uploads/' + req.files.piece_recto[0].filename;
-    }
-    if (req.files?.piece_verso?.[0]) {
-        profileData.photo_ci_verso_url = '/uploads/' + req.files.piece_verso[0].filename;
+    try {
+        if (req.files?.photo_profil?.[0]) {
+            profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], 'prestataires-photos');
+        }
+        if (req.files?.piece_recto?.[0]) {
+            profileData.photo_ci_recto_url = await uploadToSupabase(req.files.piece_recto[0], 'prestataires-photos');
+        }
+        if (req.files?.piece_verso?.[0]) {
+            profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], 'prestataires-photos');
+        }
+    } catch (uploadErr) {
+        console.error("Erreur lors de l'upload Storage:", uploadErr);
+        return res.redirect('/prestataire?erreur=serveur');
     }
 
-    const { error } = await supabase.from('profils_prestataires').upsert(profileData, { onConflict: 'user_id' });
+    const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
     if (error) {
         console.error(error);
         return res.redirect('/prestataire?erreur=serveur');
@@ -465,7 +483,7 @@ app.post('/devenir-prestataire', upload.fields([
 
 app.get('/prestataire-public/:id', async (req, res) => {
     const { data: p } = await supabase
-        .from('profils_prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .eq('user_id', req.params.id)
         .single();
