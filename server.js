@@ -10,6 +10,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 // Mise à jour structure table : synchronisation avec profils_prestataires
+
+// AJOUT : Indispensable pour que Render accepte les cookies de session
+app.set('trust proxy', 1);
+
 const upload = multer({ dest: 'public/uploads/' });
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
@@ -323,8 +327,8 @@ app.post('/calculer-commande', async (req, res) => {
 });
 
 app.post('/connexion', async (req, res) => {
-    const locOk = req.body.locAccepted === '1' || req.body.locAccepted === 'on';
-    const polOk = req.body.polAccepted === '1' || req.body.polAccepted === 'on';
+    const locOk = req.body.locAccepted === '1' || req.body.locAccepted === 'on' || req.body.loc === 'on';
+    const polOk = req.body.polAccepted === '1' || req.body.polAccepted === 'on' || req.body.pol === 'on';
 
     if (!locOk || !polOk) {
         return res.redirect('/connexion.html?erreur=consentement');
@@ -346,8 +350,12 @@ app.post('/connexion', async (req, res) => {
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
+
+            // Déterminer si c'est un prestataire (gère le cas où Supabase renvoie un tableau ou un objet)
+            const isPresta = compte.profils_prestataires ? (Array.isArray(compte.profils_prestataires) ? compte.profils_prestataires.length > 0 : true) : false;
+            
             req.session.user = { ...compte };
-            req.session.user.isPrestataire = !!compte.profils_prestataires;
+            req.session.user.isPrestataire = isPresta;
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
