@@ -5,7 +5,7 @@ const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const geolib = require('geolib');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
