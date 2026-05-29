@@ -10,7 +10,7 @@ const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-// Mise à jour structure table : synchronisation avec le bucket et la table 'prestataires'
+// Mise à jour structure table : synchronisation avec le bucket 'prestataires' et la table 'infos_prestataires'
 
 // AJOUT : Indispensable pour que Render accepte les cookies de session
 app.set('trust proxy', 1);
@@ -35,11 +35,10 @@ supabase.from('utilisateurs').select('id').limit(1)
     })
     .catch(err => console.error('❌ Erreur fatale lors de l\'initialisation Supabase :', err));
 
-const offresDiscuter = []; // Correction : variable manquante pour les offres
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires';
+const BUCKET_NAME = 'prestataires-photos';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -80,7 +79,7 @@ function distanceMetres(p, lat, lon) {
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     // On récupère les données fraîches de Supabase
     const { data: prestataires } = await supabase
-        .from('prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(nom, prenom)');
 
     if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
@@ -188,7 +187,7 @@ app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 
 app.get('/get-all-prestataires', async (req, res) => {
-    const { data } = await supabase.from('prestataires').select('*, utilisateurs(*)');
+    const { data } = await supabase.from('infos_prestataires').select('*, utilisateurs(*)');
     res.json(data || []);
 });
 
@@ -205,7 +204,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 
 app.get('/get-top-prestataires', async (req, res) => {
     const { data } = await supabase
-        .from('prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .limit(10);
 
@@ -275,7 +274,7 @@ app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId } = req.body;
     
     const { data: p } = await supabase
-        .from('prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .eq('user_id', prestataireId)
         .single();
@@ -308,7 +307,7 @@ app.post('/calculer-distance', async (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
     
     const { data: p } = await supabase
-        .from('prestataires')
+        .from('infos_prestataires')
         .select('*')
         .eq('user_id', prestataireId)
         .single();
@@ -359,7 +358,7 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
             req.session.user.isPrestataire = !!profil;
@@ -427,9 +426,8 @@ app.post('/inscription', async (req, res) => {
 async function uploadToSupabase(file, bucketName) {
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
-    console.log("DEBUG: Tentative d'upload - Bucket: 'prestataires', Fichier: ", fileName);
     const { data, error } = await supabase.storage
-        .from('prestataires') // Utilisation directe du nom pour être 100% sûr
+        .from(bucketName)
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
     
     if (error) throw error;
@@ -472,7 +470,7 @@ app.post('/devenir-prestataire', upload.fields([
         return res.redirect('/prestataire?erreur=serveur');
     }
 
-    const { error } = await supabase.from('prestataires').upsert(profileData, { onConflict: 'user_id' });
+    const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
     if (error) {
         console.error(error);
         return res.redirect('/prestataire?erreur=serveur');
@@ -488,7 +486,7 @@ app.post('/devenir-prestataire', upload.fields([
 
 app.get('/prestataire-public/:id', async (req, res) => {
     const { data: p } = await supabase
-        .from('prestataires')
+        .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .eq('user_id', req.params.id)
         .single();
@@ -517,7 +515,7 @@ app.post('/proposer-prix-discuter', async (req, res) => {
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = await chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
+    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
     const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
