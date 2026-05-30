@@ -38,8 +38,7 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires';
-const offresDiscuter = [];
+const BUCKET_NAME = 'prestataires-photos';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -207,6 +206,8 @@ app.get('/get-top-prestataires', async (req, res) => {
     const { data } = await supabase
         .from('infos_prestataires')
         .select('*, utilisateurs(*)')
+        .order('etoiles', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
         .limit(10);
 
     const top = data || [];
@@ -427,7 +428,6 @@ app.post('/inscription', async (req, res) => {
 async function uploadToSupabase(file, bucketName) {
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
-    console.log("Nom du bucket visé : ", bucketName);
     const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
@@ -517,7 +517,7 @@ app.post('/proposer-prix-discuter', async (req, res) => {
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = await chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
+    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
     const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
