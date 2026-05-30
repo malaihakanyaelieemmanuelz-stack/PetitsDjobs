@@ -642,14 +642,25 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     const offreId = parseInt(req.params.id, 10);
     const offre = offresDiscuter.find(o => o.id === offreId);
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
+    const prestataireId = req.session.user.id;
     if (!req.session.user.isPrestataire) return res.status(403).json({ error: 'Seuls les prestataires peuvent accepter.' });
     if (offre.clientId === prestataireId) return res.status(403).json({ error: 'Vous ne pouvez pas accepter votre propre tâche.' });
 
-    const prestataireId = req.session.user.id;
     if (!offre.acceptations.includes(prestataireId)) {
         offre.acceptations.push(prestataireId);
     }
     res.json({ ok: true, message: 'Offre acceptée ! Attendez le choix du client.' });
+});
+
+app.post('/annuler-job/:id', requireAuth, (req, res) => {
+    const offreId = parseInt(req.params.id, 10);
+    const index = offresDiscuter.findIndex(o => o.id === offreId);
+    if (index === -1) return res.status(404).json({ error: 'Offre introuvable' });
+    const offre = offresDiscuter[index];
+    if (offre.clientId !== req.session.user.id) return res.status(403).json({ error: 'Non autorisé' });
+    if (offre.acceptations.length > 0) return res.status(400).json({ error: 'Un prestataire a déjà accepté.' });
+    offresDiscuter.splice(index, 1);
+    res.json({ ok: true, message: 'Tâche annulée.' });
 });
 
 app.get('/statut-offre/:id', async (req, res) => {

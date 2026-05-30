@@ -27,6 +27,9 @@
         <button id="btn-augmenter" style="display:none; width:100%; padding:12px; margin-top:10px; background:#007bff; color:white; border:none; border-radius:8px;">
             AUGMENTER L'OFFRE
         </button>
+        <button id="btn-annuler" style="display:none; width:100%; padding:12px; margin-top:10px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer;">
+            ANNULER MA TÂCHE
+        </button>
         <p style="margin-top:16px; text-align:center;"><a href="/">Retour accueil</a></p>
     </div>
     <script>
@@ -60,11 +63,44 @@
                 if (data.offreId) {
                     offreId = data.offreId;
                     startTime = Date.now();
-                    document.getElementById('btn-augmenter').style.display = 'block';
+                    activerModeGestion();
                     pollTimer = setInterval(verifierOffre, 3000);
                 }
             }, () => alert('Autorisez la localisation.'));
         };
+
+        function activerModeGestion() {
+            document.getElementById('btn-envoyer').style.display = 'none';
+            document.getElementById('btn-augmenter').style.display = 'block';
+            document.getElementById('btn-annuler').style.display = 'block';
+        }
+
+        document.getElementById('btn-annuler').onclick = async () => {
+            if (!confirm("Voulez-vous vraiment annuler cette tâche ?")) return;
+            const res = await fetch('/annuler-job/' + offreId, { method: 'POST' });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Tâche annulée avec succès.");
+                window.location.href = '/';
+            } else {
+                alert(data.error || "Erreur lors de l'annulation");
+            }
+        };
+
+        // Charger une offre existante si l'ID est dans l'URL (mode "Gérer ma tâche")
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlOffreId = urlParams.get('offreId');
+        if (urlOffreId) {
+            offreId = parseInt(urlOffreId, 10);
+            fetch('/get-job-details/' + offreId).then(r => r.json()).then(data => {
+                if (data.id) {
+                    document.getElementById('description-job').value = data.description;
+                    document.getElementById('prix-propose').value = data.prix;
+                    activerModeGestion();
+                    pollTimer = setInterval(verifierOffre, 3000);
+                }
+            });
+        }
 
         document.getElementById('btn-augmenter').onclick = () => {
             const input = document.getElementById('prix-propose');
@@ -86,6 +122,7 @@
             const res = await fetch('/statut-offre/' + offreId);
             const data = await res.json();
             if (data.statut === 'accepte') {
+                document.getElementById('btn-annuler').style.display = 'none';
                 document.getElementById('liste-volontaires').style.display = 'block';
                 const container = document.getElementById('container-volontaires');
                 container.innerHTML = data.list.map(p => `
