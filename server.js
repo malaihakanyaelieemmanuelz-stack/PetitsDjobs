@@ -20,7 +20,11 @@ if (!fs.existsSync('public/uploads/')) {
     fs.mkdirSync('public/uploads/', { recursive: true });
 }
 
-const upload = multer({ dest: 'public/uploads/' });
+const upload = multer({ 
+    dest: 'public/uploads/',
+    limits: { fileSize: 5 * 1024 * 1024 } // Limite à 5Mo par fichier
+});
+
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
 // --- Initialisation de Supabase ---
@@ -507,22 +511,31 @@ app.post('/devenir-prestataire', upload.fields([
             lon: parseFloat(req.body.lon) || null
         };
 
-        console.log(`[LOG] Tentative d'inscription prestataire pour: ${user.email} (ID: ${user.id})`);
+        console.log(`[LOG] Inscription prestataire : Début upload photos pour ${user.email}`);
 
-        if (req.files?.photo_profil?.[0]) {
-            profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], BUCKET_NAME);
-        }
-        if (req.files?.piece_recto?.[0]) {
-            profileData.photo_ci_recto_url = await uploadToSupabase(req.files.piece_recto[0], BUCKET_NAME);
-        }
-        if (req.files?.piece_verso?.[0]) {
-            profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], BUCKET_NAME);
+        // Envoi asynchrone des photos vers Supabase
+        try {
+            if (req.files?.photo_profil?.[0]) {
+                profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], BUCKET_NAME);
+                // Suppression locale après upload pour libérer de l'espace
+                fs.unlinkSync(req.files.photo_profil[0].path);
+            }
+            if (req.files?.piece_recto?.[0]) {
+                profileData.photo_ci_recto_url = await uploadToSupabase(req.files.piece_recto[0], BUCKET_NAME);
+                fs.unlinkSync(req.files.piece_recto[0].path);
+            }
+            if (req.files?.piece_verso?.[0]) {
+                profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], BUCKET_NAME);
+                fs.unlinkSync(req.files.piece_verso[0].path);
+            }
+        } catch (uploadError) {
+            console.error("[ERREUR UPLOAD] Echec stockage Supabase:", uploadError.message);
+            return res.redirect('/prestataire?erreur=serveur');
         }
 
         const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
         
         if (error) {
-            console.error("[ERREUR SUPABASE] Upsert infos_prestataires:", error.message);
             return res.redirect('/prestataire?erreur=db');
         }
 
