@@ -223,6 +223,7 @@ app.get('/commande', requireAuth, (req, res) => res.sendFile(path.join(publicDir
 app.get('/discuter', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'discuter.html')));
 app.get('/voir-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'voir-prestataire.html')));
 app.get('/suivi', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'suivi.html')));
+app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 
 app.post('/deconnexion', (req, res) => {
     req.session.destroy(() => res.redirect('/index.html'));
@@ -717,6 +718,48 @@ app.get('/get-public-jobs', (req, res) => {
 
     res.json(jobs);
 });
+
+// --- Récupération de mot de passe ---
+app.post('/api/mot-de-passe-oublie', async (req, res) => {
+    const { email } = req.body;
+    const code = Math.floor(100000 + Math.random() * 900000).toString(); // Code à 6 chiffres
+    
+    // On stocke le code en base (il faudrait ajouter ces colonnes à ta table utilisateurs)
+    const { error } = await supabase.from('utilisateurs')
+        .update({ reset_code: code, reset_expires: new Date(Date.now() + 15*60000).toISOString() })
+        .eq('email', email.toLowerCase().trim());
+
+    if (error) return res.status(500).json({ error: "Erreur lors de la génération du code." });
+    
+    console.log(`[MAIL MOCK] Envoyer à ${email} : Votre code de récupération est ${code}`);
+    // Ici, tu intégreras Nodemailer plus tard pour l'envoi réel.
+    res.json({ ok: true, message: "Un code a été envoyé à votre adresse email." });
+});
+
+app.post('/api/reinitialiser-mdp', async (req, res) => {
+    const { email, code, password } = req.body;
+    
+    const { data: user } = await supabase.from('utilisateurs')
+        .select('reset_code, reset_expires')
+        .eq('email', email.toLowerCase().trim())
+        .single();
+
+    if (!user || user.reset_code !== code || new Date() > new Date(user.reset_expires)) {
+        return res.status(400).json({ error: "Code invalide ou expiré." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await supabase.from('utilisateurs')
+        .update({ 
+            password: hashedPassword, 
+            reset_code: null, 
+            reset_expires: null 
+        })
+        .eq('email', email.toLowerCase().trim());
+
+    res.json({ ok: true, message: "Mot de passe modifié avec succès !" });
+});
+
 
 // Route pour valider la fin de tâche avec mot de passe
 app.post('/valider-fin-tache', requireAuth, async (req, res) => {

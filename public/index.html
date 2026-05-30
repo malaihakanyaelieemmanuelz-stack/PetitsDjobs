@@ -246,11 +246,15 @@
                         // La fonction chargerProches a été retirée car elle ciblait un élément non existant ou non pertinent ici.
                     },
                     () => {
+                        // On charge quand même les jobs même si le GPS échoue pour que l'utilisateur voit SES tâches
+                        chargerJobsPublics();
                         document.getElementById('gps-accueil').innerHTML =
                             '<strong>GPS désactivé</strong> Activez la localisation pour voir qui est autour de vous.';
                     }
                 );
             }
+            // On lance le chargement des jobs dès qu'on a l'ID utilisateur
+            chargerJobsPublics();
         }).catch(() => {});
 
         function allerCommander(service, prix) {

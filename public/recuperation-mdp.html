@@ -23,12 +23,23 @@
         </div>
     </div>
     <script>
-        document.getElementById('recoveryForm').onsubmit = function(e) {
+        document.getElementById('recoveryForm').onsubmit = async function(e) {
             e.preventDefault();
+            const email = document.getElementById('recovery-email').value;
             const msg = document.getElementById('msg-retour');
-            msg.textContent = "Fonctionnalité bientôt disponible. Pour l'instant, contactez le support.";
-            msg.style.display = 'block';
-            this.style.display = 'none';
+            
+            const res = await fetch('/api/mot-de-passe-oublie', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email })
+            });
+            
+            if (res.ok) {
+                alert("Un code de vérification vous a été envoyé par email.");
+                window.location.href = `/reinitialiser-mdp?email=${encodeURIComponent(email)}`;
+            } else {
+                alert("Une erreur est survenue.");
+            }
         }
     </script>
 </body>
