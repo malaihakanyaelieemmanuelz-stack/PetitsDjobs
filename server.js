@@ -744,6 +744,45 @@ app.get('/get-job-details/:id', requireAuth, (req, res) => {
     res.json(offre);
 });
 
+// Route pour supprimer uniquement le profil prestataire (redevenir simple utilisateur)
+app.post('/supprimer-profil-prestataire', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { error } = await supabase.from('infos_prestataires').delete().eq('user_id', userId);
+        
+        if (error) throw error;
+
+        // Mise à jour de la session pour refléter le changement de statut
+        req.session.user.isPrestataire = false;
+        req.session.save(() => {
+            res.json({ ok: true, message: 'Votre profil prestataire a été supprimé.' });
+        });
+    } catch (err) {
+        console.error("Erreur suppression profil prestataire:", err);
+        res.status(500).json({ error: 'Impossible de supprimer le profil prestataire.' });
+    }
+});
+
+// Route pour supprimer définitivement le compte utilisateur
+app.post('/supprimer-compte', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+
+        // On supprime d'abord les infos prestataires puis l'utilisateur
+        await supabase.from('infos_prestataires').delete().eq('user_id', userId);
+        const { error } = await supabase.from('utilisateurs').delete().eq('id', userId);
+
+        if (error) throw error;
+
+        req.session.destroy(() => {
+            res.json({ ok: true, message: 'Compte supprimé avec succès.' });
+        });
+    } catch (err) {
+        console.error("Erreur suppression compte:", err);
+        res.status(500).json({ error: 'Une erreur est survenue lors de la suppression.' });
+    }
+});
+
 app.use('/uploads', express.static(path.join(publicDir, 'uploads')));
 app.use(express.static(publicDir, { index: false }));
 
