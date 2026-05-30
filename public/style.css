@@ -103,7 +103,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     padding: 20px 10px;
     width: 100%;               /* Prend toute la largeur */
     -webkit-overflow-scrolling: touch; /* Fluidité Android */
-    border: 5px solid red !important; /* Debug : Si tu vois du rouge, le container est bien là */
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;

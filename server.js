@@ -210,6 +210,8 @@ app.get('/get-top-prestataires', async (req, res) => {
         .order('created_at', { ascending: true })
         .limit(10);
 
+    console.log(`DEBUG RENDER: ${data?.length || 0} prestataires trouvés pour l'accueil`);
+
     const top = data || [];
     res.json(top.map(p => ({
         id: p.user_id, 
@@ -362,10 +364,21 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
-            req.session.user.isPrestataire = !!profil;
+            if (profil) {
+                req.session.user.isPrestataire = true;
+                req.session.user.profession = profil.profession;
+                req.session.user.bio = profil.bio;
+                req.session.user.ville = profil.ville;
+                req.session.user.services = profil.services;
+                req.session.user.photo = profil.photo_profil_url;
+                req.session.user.etoiles = profil.etoiles;
+                console.log("DEBUG RENDER: Profil chargé pour", email);
+            } else {
+                req.session.user.isPrestataire = false;
+            }
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -481,9 +494,14 @@ app.post('/devenir-prestataire', upload.fields([
     }
 
     req.session.user.isPrestataire = true;
-    // Mise à jour locale pour la session
+    // Mise à jour immédiate de la session pour l'affichage
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
+    req.session.user.bio = profileData.bio;
+    req.session.user.ville = profileData.ville;
+    req.session.user.services = profileData.services;
+
+    console.log("DEBUG RENDER: Nouveau prestataire enregistré:", req.session.user.email);
 
     res.redirect('/prestataire-info?inscription=ok');
 });
