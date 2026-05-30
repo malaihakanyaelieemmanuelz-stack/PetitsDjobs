@@ -38,8 +38,7 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires';
-const offresDiscuter = [];
+const BUCKET_NAME = 'prestataires-photos';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -78,33 +77,16 @@ function distanceMetres(p, lat, lon) {
 }
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
-    // 1. Récupération des prestataires uniquement
-    const { data: prestataires, error: pError } = await supabase
+    // On récupère les données fraîches de Supabase
+    const { data: prestataires } = await supabase
         .from('infos_prestataires')
-        .select('*');
+        .select('*, utilisateurs(nom, prenom)');
 
-    if (pError) {
-        console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant :", pError.message);
-        return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
-    }
-
-    // 2. Récupération manuelle des utilisateurs pour obtenir noms et prénoms
-    const userIds = prestataires.map(p => p.user_id);
-    const { data: users } = await supabase
-        .from('utilisateurs')
-        .select('id, nom, prenom')
-        .in('id', userIds);
-
-    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+    if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
     const eligibles = prestataires
         .filter(p => serviceMatch(p, service))
-        .map(p => ({ 
-            ...p, 
-            nom: userMap[p.user_id]?.nom || 'Prestataire', 
-            prenom: userMap[p.user_id]?.prenom || '', 
-            distanceM: distanceMetres(p, lat, lon) 
-        }))
+        .map(p => ({ ...p, nom: p.utilisateurs.nom, prenom: p.utilisateurs.prenom, distanceM: distanceMetres(p, lat, lon) }))
         .filter(p => p.distanceM !== Infinity)
         .sort((a, b) => a.distanceM - b.distanceM);
 
@@ -126,7 +108,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
 
     return {
         prestataires: page.map(p => ({
-            id: p.user_id, // Utilise l'ID utilisateur unique pour les liens
+            id: p.id,
             nom: p.nom,
             prenom: p.prenom,
             profession: p.profession,
@@ -216,7 +198,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     if (lat == null || lon == null) {
         return res.json({ prestataires: [], message: 'Activez le GPS pour voir qui est près de vous.' });
     }
-    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 2); // Limite à 2 pour les plus proches
+    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 6);
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
@@ -224,11 +206,12 @@ app.get('/get-top-prestataires', async (req, res) => {
     try {
         console.log("[DEBUG RENDER] Début requête /get-top-prestataires");
         
-        // 1. Récupération des prestataires uniquement
+        // 1. Récupération des prestataires avec tri (Notes puis Date d'arrivée)
         const { data: prestataires, error: pError } = await supabase
             .from('infos_prestataires')
             .select('*')
-            .order('etoiles', { ascending: false })
+            .order('etoiles', { ascending: false }) // Les mieux notés
+            .order('created_at', { ascending: true }) // Le pionnier d'abord
             .limit(10);
 
         if (pError) {
@@ -236,18 +219,16 @@ app.get('/get-top-prestataires', async (req, res) => {
             return res.status(500).json({ error: pError.message });
         }
 
-        console.log(`[DEBUG RENDER] Prestataires bruts trouvés: ${prestataires?.length || 0}`);
         if (!prestataires || prestataires.length === 0) return res.json([]);
 
         // 2. Récupération manuelle des noms d'utilisateurs
         const userIds = prestataires.map(p => p.user_id);
-        const { data: users, error: uError } = await supabase
+        const { data: users } = await supabase
             .from('utilisateurs')
             .select('id, nom, prenom')
             .in('id', userIds);
 
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-        console.log(`[DEBUG RENDER] Mapping utilisateurs réussi pour ${users?.length || 0} comptes`);
 
         const reponse = prestataires.map(p => ({
             id: p.user_id, 
@@ -405,21 +386,10 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
-            if (profil) {
-                req.session.user.isPrestataire = true;
-                req.session.user.profession = profil.profession;
-                req.session.user.bio = profil.bio;
-                req.session.user.ville = profil.ville;
-                req.session.user.services = profil.services;
-                req.session.user.photo = profil.photo_profil_url;
-                req.session.user.etoiles = profil.etoiles;
-                console.log("DEBUG RENDER: Profil complet chargé pour", email);
-            } else {
-                req.session.user.isPrestataire = false;
-            }
+            req.session.user.isPrestataire = !!profil;
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -535,14 +505,9 @@ app.post('/devenir-prestataire', upload.fields([
     }
 
     req.session.user.isPrestataire = true;
-    // Mise à jour immédiate de la session pour l'affichage
+    // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
-    req.session.user.bio = profileData.bio;
-    req.session.user.ville = profileData.ville;
-    req.session.user.services = profileData.services;
-
-    console.log("DEBUG RENDER: Nouveau prestataire enregistré:", req.session.user.email);
 
     res.redirect('/prestataire-info?inscription=ok');
 });
@@ -562,8 +527,6 @@ app.get('/prestataire-public/:id', async (req, res) => {
         prenom: p.utilisateurs.prenom,
         profession: p.profession,
         bio: p.bio,
-        ville: p.ville,
-        services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0
     });
@@ -580,7 +543,7 @@ app.post('/proposer-prix-discuter', async (req, res) => {
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = await chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
+    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
     const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
