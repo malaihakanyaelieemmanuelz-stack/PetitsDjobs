@@ -201,6 +201,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
 
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
+    .auth-page { display: block; min-height: auto; padding: 0; }
     .home-header { padding: 20px 10px; }
     .home-header h1 { font-size: 1.8rem; padding: 10px 20px; }
     

@@ -88,7 +88,7 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     try {
-        console.log(`[LOG] Recherche: Svc=${service}, Lat=${lat}, Lon=${lon}`);
+        console.log(`[LOG] Recherche: Svc=${service || 'Tous'}, Lat=${lat ?? 'N/A'}, Lon=${lon ?? 'N/A'}`);
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
@@ -381,6 +381,7 @@ app.post('/connexion', async (req, res) => {
     } else {
         try {
             const email = (req.body.email || '').toLowerCase().trim();
+            console.log(`[AUTH] Tentative de connexion pour: ${email}`);
             // On cherche l'utilisateur seul d'abord pour plus de fiabilité
             const { data: compte, error: userError } = await supabase
                 .from('utilisateurs')
@@ -388,7 +389,10 @@ app.post('/connexion', async (req, res) => {
                 .eq('email', email)
                 .maybeSingle();
 
-            if (userError || !compte) return res.redirect('/connexion.html?erreur=compte');
+            if (userError || !compte) {
+                console.error(`[AUTH ERR] Utilisateur non trouvé ou erreur Supabase pour ${email}:`, userError);
+                return res.redirect('/connexion.html?erreur=compte');
+            }
 
             const mdpCorrect = await bcrypt.compare(req.body.password, compte.password);
             if (!mdpCorrect) {
@@ -421,14 +425,20 @@ app.post('/connexion', async (req, res) => {
     req.session.remember = !!req.body.remember;
     req.session.localisationAutorisee = locOk;
 
-    if (req.body.lat && req.body.lon) {
+    if (req.body.lat && !isNaN(parseFloat(req.body.lat))) {
         req.session.latClient = parseFloat(req.body.lat);
+    }
+    if (req.body.lon && !isNaN(parseFloat(req.body.lon))) {
         req.session.lonClient = parseFloat(req.body.lon);
+    }
+    if (req.session.user) {
         req.session.user.lat = req.session.latClient;
         req.session.user.lon = req.session.lonClient;
     }
 
-    res.redirect('/index.html?connecte=1');
+    req.session.save(() => {
+        res.redirect('/index.html?connecte=1');
+    });
 });
 
 app.post('/inscription', async (req, res) => {
@@ -441,8 +451,11 @@ app.post('/inscription', async (req, res) => {
         return res.redirect('/inscription?erreur=mdp');
     }
     const email = (req.body.email || '').toLowerCase().trim();
-    const { data: existant } = await supabase.from('utilisateurs').select('id').eq('email', email).single();
+    console.log(`[AUTH] Tentative d'inscription pour: ${email}`);
+    const { data: existant, error: searchError } = await supabase.from('utilisateurs').select('id').eq('email', email).maybeSingle();
+    
     if (existant) {
+        console.log(`[AUTH] Email déjà existant dans la base: ${email}`);
         return res.redirect('/inscription?erreur=deja_inscrit');
     }
 
@@ -465,7 +478,9 @@ app.post('/inscription', async (req, res) => {
         delete req.session.user.password;
         req.session.remember = !!req.body.remember;
         req.session.localisationAutorisee = locOk;
-        res.redirect('/index.html?connecte=1');
+        req.session.save(() => {
+            res.redirect('/index.html?connecte=1');
+        });
     } catch (err) {
         console.error("Erreur d'inscription :", err);
         res.redirect('/inscription?erreur=serveur');
@@ -542,16 +557,21 @@ app.post('/devenir-prestataire', upload.fields([
         const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
         
         if (error) {
-            console.error(`[DB ERR] Echec upsert prestataire:`, error.message);
+            console.error(`[PRESTA DB ERR] Echec upsert prestataire pour ${user.id}:`, error.message);
             return res.redirect('/prestataire?erreur=db');
         }
 
         // Mettre à jour la session
         req.session.user.isPrestataire = true;
         req.session.user.photo = profileData.photo_profil_url;
+        req.session.user.profession = profileData.profession;
+        req.session.user.services = profileData.services;
+        req.session.user.ville = profileData.ville;
+        req.session.user.bio = profileData.bio;
+        req.session.user.telephone = profileData.telephone;
         
         req.session.save((err) => {
-            if (err) console.error(`[SESSION ERR] Echec sauvegarde session:`, err);
+            if (err) console.error(`[PRESTA SESSION ERR] Echec sauvegarde session:`, err);
             res.redirect('/prestataire-info?inscription=ok');
         });
 
