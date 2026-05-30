@@ -39,6 +39,7 @@ const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
 const BUCKET_NAME = 'prestataires-photos';
+const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -77,38 +78,44 @@ function distanceMetres(p, lat, lon) {
 }
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
-    // On récupère les données fraîches de Supabase
-    const { data: prestataires } = await supabase
-        .from('infos_prestataires')
-        .select('*, utilisateurs(nom, prenom)');
+    try {
+        const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
+        if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
-    if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+        // Récupération manuelle des noms pour éviter l'erreur de relation
+        const userIds = prestataires.map(p => p.user_id);
+        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
+        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
 
-    const eligibles = prestataires
-        .filter(p => serviceMatch(p, service))
-        .map(p => ({ ...p, nom: p.utilisateurs.nom, prenom: p.utilisateurs.prenom, distanceM: distanceMetres(p, lat, lon) }))
-        .filter(p => p.distanceM !== Infinity)
-        .sort((a, b) => a.distanceM - b.distanceM);
+        const eligibles = prestataires
+            .filter(p => serviceMatch(p, service))
+            .map(p => {
+                const dist = distanceMetres(p, lat, lon);
+                return { 
+                    ...p, 
+                    nom: userMap[p.user_id]?.nom || 'Prestataire', 
+                    prenom: userMap[p.user_id]?.prenom || '', 
+                    distanceM: dist,
+                    // Tranche de 10m pour le tri (0-9m = 0, 10-19m = 10, etc.)
+                    tranche10m: Math.floor(dist / 10) * 10 
+                };
+            })
+            .filter(p => p.distanceM <= RAYON_MAX_METRES)
+            .sort((a, b) => {
+                // 1. D'abord par tranche de 10m
+                if (a.tranche10m !== b.tranche10m) return a.tranche10m - b.tranche10m;
+                // 2. Ensuite par étoiles (décroissant)
+                const etoilesA = a.etoiles || 0;
+                const etoilesB = b.etoiles || 0;
+                if (etoilesA !== etoilesB) return etoilesB - etoilesA;
+                // 3. Enfin par date d'inscription (croissant = plus ancien en premier)
+                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+            });
 
-    if (eligibles.length === 0) {
-        return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
-    }
-
-    let rayon = 1;
-    let dansRayon = [];
-    while (rayon <= RAYON_MAX_METRES && dansRayon.length < offset + limit) {
-        dansRayon = eligibles.filter(p => p.distanceM <= rayon);
-        if (dansRayon.length >= offset + limit) break;
-        if (dansRayon.length === eligibles.length) break;
-        rayon += 1;
-    }
-
-    const page = dansRayon.slice(offset, offset + limit);
-    const hasMore = dansRayon.length > offset + limit || eligibles.some(p => p.distanceM > rayon);
-
-    return {
-        prestataires: page.map(p => ({
-            id: p.id,
+        const page = eligibles.slice(offset, offset + limit);
+        return {
+            prestataires: page.map(p => ({
+            id: p.user_id,
             nom: p.nom,
             prenom: p.prenom,
             profession: p.profession,
@@ -121,11 +128,15 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             distanceM: Math.round(p.distanceM),
             distanceKm: (p.distanceM / 1000).toFixed(2),
             disponible: true
-        })),
-        rayonMetres: rayon,
-        hasMore,
-        total: eligibles.length
-    };
+            })),
+            rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
+            hasMore: eligibles.length > offset + limit,
+            total: eligibles.length
+        };
+    } catch (err) {
+        console.error("Erreur chercherParRayonCroissant:", err);
+        return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+    }
 }
 
 function prixDistanceFcfa(distanceMetres) {
@@ -203,49 +214,18 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    try {
-        console.log("[DEBUG RENDER] Début requête /get-top-prestataires");
-        
-        // 1. Récupération des prestataires avec tri (Notes puis Date d'arrivée)
-        const { data: prestataires, error: pError } = await supabase
-            .from('infos_prestataires')
-            .select('*')
-            .order('etoiles', { ascending: false }) // Les mieux notés
-            .order('created_at', { ascending: true }) // Le pionnier d'abord
-            .limit(10);
+    const lat = req.session.latClient;
+    const lon = req.session.lonClient;
 
-        if (pError) {
-            console.error("[DEBUG RENDER] Erreur Supabase Prestataires:", pError.message);
-            return res.status(500).json({ error: pError.message });
-        }
-
-        if (!prestataires || prestataires.length === 0) return res.json([]);
-
-        // 2. Récupération manuelle des noms d'utilisateurs
-        const userIds = prestataires.map(p => p.user_id);
-        const { data: users } = await supabase
-            .from('utilisateurs')
-            .select('id, nom, prenom')
-            .in('id', userIds);
-
-        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-
-        const reponse = prestataires.map(p => ({
-            id: p.user_id, 
-            nom: userMap[p.user_id]?.nom || 'Prestataire', 
-            prenom: userMap[p.user_id]?.prenom || '', 
-            photo: p.photo_profil_url,
-            profession: p.profession,
-            ville: p.ville,
-            services: p.services,
-            etoiles: p.etoiles || 0
-        }));
-
-        res.json(reponse);
-    } catch (err) {
-        console.error("[DEBUG RENDER] Erreur fatale /get-top-prestataires:", err);
-        res.status(500).json({ error: "Erreur interne" });
+    // Si pas de GPS, on fait un tri simple par étoiles et date
+    if (lat == null || lon == null) {
+        const { data } = await supabase.from('infos_prestataires').select('*').order('etoiles', {ascending: false}).limit(10);
+        return res.json(data || []);
     }
+
+    // Sinon on utilise la nouvelle logique 10m + étoiles
+    const result = await chercherParRayonCroissant(lat, lon, null, 0, 10);
+    res.json(result.prestataires);
 });
 
 app.get('/session-status', (req, res) => {
