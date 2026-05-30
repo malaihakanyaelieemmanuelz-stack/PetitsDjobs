@@ -97,9 +97,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     display: flex;
     overflow-x: auto;
     overflow-y: hidden;
-    gap: 20px;
-    padding: 10px 5px 25px;
-    white-space: nowrap; /* Force les éléments à rester sur une ligne */
+    gap: 15px;
+    padding: 10px 20px 25px;
+    margin: 0 -20px; /* Permet aux cartes de défiler jusqu'au bord de l'écran */
+    width: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; /* Défilement fluide sur iOS */
     scrollbar-width: none; /* Cache la barre de défilement pour un look moderne */
@@ -107,8 +108,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
 .provider-scroll-wrapper::-webkit-scrollbar { display: none; } /* Cache la barre sur Chrome/Android */
 
 .provider-scroll-wrapper .provider-card {
-    flex: 0 0 280px !important; /* Force la largeur fixe pour le scroll */
-    display: inline-block;
+    flex: 0 0 260px !important; /* Taille ajustée pour mieux voir la carte suivante */
     scroll-snap-align: start;
     margin-bottom: 0;
 }

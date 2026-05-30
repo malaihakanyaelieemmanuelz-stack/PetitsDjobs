@@ -108,7 +108,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
 
     return {
         prestataires: page.map(p => ({
-            id: p.id,
+            id: p.user_id, // Utilise l'ID utilisateur unique pour les liens
             nom: p.nom,
             prenom: p.prenom,
             profession: p.profession,
@@ -207,7 +207,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .order('etoiles', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: true }) // Le premier inscrit apparaît en premier
         .limit(10);
 
     const top = data || [];
@@ -372,6 +372,7 @@ app.post('/connexion', async (req, res) => {
                 req.session.user.ville = profil.ville;
                 req.session.user.services = profil.services;
                 req.session.user.photo = profil.photo_profil_url;
+                req.session.user.etoiles = profil.etoiles;
             } else {
                 req.session.user.isPrestataire = false;
             }
