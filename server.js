@@ -79,15 +79,16 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     // On récupère les données fraîches de Supabase
-    const { data: prestataires } = await supabase
+    const { data: prestataires, error } = await supabase
         .from('infos_prestataires')
         .select('*, utilisateurs(nom, prenom)');
 
+    if (error) console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant :", error.message);
     if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
     const eligibles = prestataires
         .filter(p => serviceMatch(p, service))
-        .map(p => ({ ...p, nom: p.utilisateurs.nom, prenom: p.utilisateurs.prenom, distanceM: distanceMetres(p, lat, lon) }))
+        .map(p => ({ ...p, nom: p.utilisateurs?.nom || 'Nom', prenom: p.utilisateurs?.prenom || '', distanceM: distanceMetres(p, lat, lon) }))
         .filter(p => p.distanceM !== Infinity)
         .sort((a, b) => a.distanceM - b.distanceM);
 
@@ -204,20 +205,23 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    const { data } = await supabase
+    // Requête simplifiée demandée : on récupère juste la table des prestataires sans la jointure
+    const { data, error } = await supabase
         .from('infos_prestataires')
-        .select('*, utilisateurs(*)')
-        .order('etoiles', { ascending: false, nullsFirst: false }) // Les mieux notés d'abord
-        .order('created_at', { ascending: true }) // Si notes égales, les plus anciens (pionniers)
-        .limit(10);
+        .select('*'); 
 
-    console.log(`DEBUG RENDER: ${data?.length || 0} prestataires trouvés pour l'accueil`);
+    if (error) {
+        console.error("DEBUG RENDER: Erreur de requête Supabase :", error);
+        return res.json([]);
+    }
 
-    const top = data || [];
-    res.json(top.map(p => ({
+    console.log("DEBUG RENDER: Nombre de prestataires bruts trouvés :", data ? data.length : 0);
+
+    // On renvoie les données brutes mappées correctement pour le front-end
+    res.json((data || []).map(p => ({
         id: p.user_id, 
-        nom: p.utilisateurs?.nom, 
-        prenom: p.utilisateurs?.prenom, 
+        nom: p.nom || 'Prestataire', 
+        prenom: p.prenom || '', 
         photo: p.photo_profil_url,
         profession: p.profession,
         bio: p.bio,
@@ -225,7 +229,6 @@ app.get('/get-top-prestataires', async (req, res) => {
         services: p.services,
         etoiles: p.etoiles || 0
     })));
-    console.log("[DEBUG RENDER] Données envoyées au client pour le carrousel");
 });
 
 app.get('/session-status', (req, res) => {
@@ -541,7 +544,7 @@ app.post('/proposer-prix-discuter', async (req, res) => {
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
+    const { prestataires: proches } = await chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
     const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
