@@ -82,19 +82,27 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
-        // Récupération manuelle des noms pour éviter l'erreur de relation
+        // Récupération des noms et du dernier accès
         const userIds = prestataires.map(p => p.user_id);
-        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
+        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+
+        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // 5 minutes
 
         const eligibles = prestataires
             .filter(p => serviceMatch(p, service))
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
+                const user = userMap[p.user_id];
+                const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
+                const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
+
                 return { 
                     ...p, 
                     nom: userMap[p.user_id]?.nom || 'Prestataire', 
                     prenom: userMap[p.user_id]?.prenom || '', 
+                    enLigne: enLigne,
+                    dernier_acces: user?.dernier_acces,
                     distanceM: dist,
                     // Tranche de 10m pour le tri (0-9m = 0, 10-19m = 10, etc.)
                     tranche10m: Math.floor(dist / 10) * 10 
@@ -102,17 +110,21 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             })
             .filter(p => p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. D'abord par tranche de 10m
+                // 1. Priorité absolue aux prestataires EN LIGNE
+                if (a.enLigne !== b.enLigne) return b.enLigne ? 1 : -1;
+                // 2. Ensuite par tranche de 10m
                 if (a.tranche10m !== b.tranche10m) return a.tranche10m - b.tranche10m;
-                // 2. Ensuite par étoiles (décroissant)
+                // 3. Ensuite par étoiles
                 const etoilesA = a.etoiles || 0;
                 const etoilesB = b.etoiles || 0;
                 if (etoilesA !== etoilesB) return etoilesB - etoilesA;
-                // 3. Enfin par date d'inscription (croissant = plus ancien en premier)
                 return new Date(a.created_at || 0) - new Date(b.created_at || 0);
             });
 
-        const page = eligibles.slice(offset, offset + limit);
+        // On prend les 20 premiers (Online d'abord, puis Offline si besoin)
+        const limitFixe = 20;
+        const page = eligibles.slice(offset, offset + limitFixe);
+
         return {
             prestataires: page.map(p => ({
             id: p.user_id,
@@ -127,10 +139,12 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             nbAvis: (p.commentaires || []).length,
             distanceM: Math.round(p.distanceM),
             distanceKm: (p.distanceM / 1000).toFixed(2),
-            disponible: true
+            disponible: p.enLigne,
+            dernierAcces: p.dernier_acces,
+            telephone: p.autorise_numero_deconnexion ? p.telephone : null
             })),
             rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
-            hasMore: eligibles.length > offset + limit,
+            hasMore: eligibles.length > offset + finalLimit,
             total: eligibles.length
         };
     } catch (err) {
@@ -379,6 +393,10 @@ app.post('/connexion', async (req, res) => {
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
+            
+            // Mise à jour de l'activité
+            await supabase.from('utilisateurs').update({ dernier_acces: new Date().toISOString() }).eq('id', compte.id);
+
             // On vérifie séparément s'il est prestataire
             const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
             req.session.user = { ...compte };
@@ -470,7 +488,7 @@ async function uploadToSupabase(file, bucketName) {
 app.post('/devenir-prestataire', upload.fields([
     { name: 'photo_profil' }, { name: 'piece_recto' }, { name: 'piece_verso' }
 ]), async (req, res) => {
-    if (!req.session.user) return res.redirect('/connexion');
+    if (!req.session.user || !req.session.user.id) return res.redirect('/connexion');
 
     // Gestion des services multiples venant du formulaire
     const listeServices = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
@@ -482,6 +500,8 @@ app.post('/devenir-prestataire', upload.fields([
         bio: (req.body.bio || '').trim(),
         ville: (req.body.ville || '').trim(),
         services: servicesEnTexte,
+        telephone: (req.body.telephone || '').trim(),
+        autorise_numero_deconnexion: req.body.autorise_numero === 'on',
         lat: parseFloat(req.body.lat) || null,
         lon: parseFloat(req.body.lon) || null
     };
@@ -534,6 +554,19 @@ app.get('/prestataire-public/:id', async (req, res) => {
         etoiles: p.etoiles || 0,
         commentaires: p.commentaires || []
     });
+});
+
+// Nouvelle route pour la récupération sécurisée du contact
+app.get('/get-prestataire-contact/:id', requireAuth, async (req, res) => {
+    const { data: p } = await supabase.from('infos_prestataires')
+        .select('telephone, autorise_numero_deconnexion')
+        .eq('user_id', req.params.id)
+        .maybeSingle();
+    
+    if (p && p.autorise_numero_deconnexion) {
+        return res.json({ telephone: p.telephone });
+    }
+    res.status(403).json({ error: "Non autorisé" });
 });
 
 app.post('/proposer-prix-discuter', async (req, res) => {

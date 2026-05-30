@@ -140,6 +140,18 @@
                 </article>`;
         }
 
+        function afficherContactHorsLigne(id, nom) {
+            fetch('/get-prestataire-contact/' + id)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.telephone) {
+                        alert(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté mais a autorisé la transmission de son numéro : ${data.telephone}\n\n⚠️ IMPORTANT : Cet appel doit rester strictement professionnel. Toute entente directe pour effectuer le service en dehors du site à cette étape est passible de poursuites judiciaires.`);
+                    } else {
+                        alert(`${nom} est hors ligne et n'a pas laissé de numéro de secours. Réessayez plus tard.`);
+                    }
+                });
+        }
+
         function chargerProches(lat, lon) {
             fetch('/prestataires-autour?lat=' + lat + '&lon=' + lon)
                 .then(r => r.json())

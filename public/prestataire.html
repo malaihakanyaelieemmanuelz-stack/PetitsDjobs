@@ -30,9 +30,13 @@
             <input type="text" name="ville" placeholder="COMMUNE / VILLE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <input type="text" name="profession" placeholder="PROFESSION (ex: Cuisinière, Aide ménagère)" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <textarea name="bio" placeholder="Présentez-vous en 2 phrases (visible par les clients)" maxlength="200" style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; min-height:70px; border-radius:6px; border:1px solid #ccc;"></textarea>
+            <input type="tel" name="telephone" placeholder="VOTRE NUMÉRO DE TÉLÉPHONE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
+            <label style="font-size:0.8rem; color:#5D4037; display:flex; align-items:flex-start; gap:8px;">
+                <input type="checkbox" name="autorise_numero" style="width:auto; height:auto; margin-top:3px;">
+                <span>Votre numéro sera transmis à l'employeur en cas de déconnexion si vous êtes à proximité.</span>
+            </label>
             <input type="hidden" name="lat" id="lat">
             <input type="hidden" name="lon" id="lon">
-
             <p style="font-weight:bold; color:#5D4037;">2. Ce que vous proposez</p>
             <p style="font-size:0.9rem; color:#666;">Cochez les services que vous proposez. Vous apparaîtrez automatiquement comme disponible pour ces derniers.</p>
             <div style="text-align:left; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:5px; font-size:0.9rem;">
