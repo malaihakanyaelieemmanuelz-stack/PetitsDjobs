@@ -225,6 +225,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         services: p.services,
         etoiles: p.etoiles || 0
     })));
+    console.log("[DEBUG RENDER] Données envoyées au client pour le carrousel");
 });
 
 app.get('/session-status', (req, res) => {
