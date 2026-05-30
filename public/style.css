@@ -7,12 +7,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     background: white; padding: 40px; border-radius: 12px; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
     text-align: center; border-top: 6px solid #333333; 
-    box-sizing: border-box;
 }
-
-/* Ajustement pour les conteneurs de pages comme prestataire.html */
-.auth-page-container { width: 100%; display: flex; justify-content: center; padding: 20px 0; }
-
 .login-card h1 { color: #333333; font-size: 2.5rem; margin-bottom: 25px; text-transform: uppercase; }
 .login-card input { 
     width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; 
@@ -39,6 +34,16 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     margin: 8px 0;
     width: 100%;
 }
+
+.forgot-password {
+    display: block;
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #666;
+    text-decoration: none;
+    cursor: pointer;
+}
+.forgot-password:hover { text-decoration: underline; }
 
 .login-card button { 
     width: 100%; padding: 15px; background-color: #333333; color: white; 
@@ -213,12 +218,13 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     .card h3 { font-size: 0.9rem; }
 
     .login-card { 
-        max-width: 100%; 
-        border-radius: 0; 
-        box-shadow: none; 
-        border-top: none;
-        padding: 20px;
-        margin: 0;
+        width: 100% !important;
+        max-width: 100% !important; 
+        border-radius: 0 !important; 
+        box-shadow: none !important; 
+        border-top: none !important;
+        padding: 20px !important;
+        margin: 0 !important;
     }
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
 }

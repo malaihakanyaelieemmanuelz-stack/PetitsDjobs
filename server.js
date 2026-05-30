@@ -88,6 +88,7 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     try {
+        console.log(`[LOG] Recherche: Svc=${service}, Lat=${lat}, Lon=${lon}`);
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
@@ -473,13 +474,18 @@ app.post('/inscription', async (req, res) => {
 
 // Helper pour envoyer un fichier vers Supabase Storage
 async function uploadToSupabase(file, bucketName) {
+    console.log(`[STORAGE] Début upload: ${file.originalname} (${file.size} octets)`);
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
     const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
     
-    if (error) throw error;
+    if (error) {
+        console.error(`[STORAGE ERR] Echec pour ${file.originalname}:`, error.message);
+        throw error;
+    }
+    console.log(`[STORAGE OK] Fichier envoyé: ${fileName}`);
     // On récupère l'URL publique pour l'afficher plus tard sur le site
     const { data: publicData } = supabase.storage.from(bucketName).getPublicUrl(fileName);
     return publicData.publicUrl;
@@ -511,7 +517,7 @@ app.post('/devenir-prestataire', upload.fields([
             lon: parseFloat(req.body.lon) || null
         };
 
-        console.log(`[LOG] Inscription prestataire : Début upload photos pour ${user.email}`);
+        console.log(`[LOG] Début inscription prestataire pour ${user.email} (ID: ${user.id})`);
 
         // Envoi asynchrone des photos vers Supabase
         try {
@@ -536,6 +542,7 @@ app.post('/devenir-prestataire', upload.fields([
         const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
         
         if (error) {
+            console.error(`[DB ERR] Echec upsert prestataire:`, error.message);
             return res.redirect('/prestataire?erreur=db');
         }
 
@@ -543,7 +550,8 @@ app.post('/devenir-prestataire', upload.fields([
         req.session.user.isPrestataire = true;
         req.session.user.photo = profileData.photo_profil_url;
         
-        req.session.save(() => {
+        req.session.save((err) => {
+            if (err) console.error(`[SESSION ERR] Echec sauvegarde session:`, err);
             res.redirect('/prestataire-info?inscription=ok');
         });
 
