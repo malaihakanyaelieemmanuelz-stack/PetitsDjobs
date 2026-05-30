@@ -10,7 +10,7 @@ const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-// Mise à jour structure table : synchronisation avec le bucket 'prestataires' et la table 'infos_prestataires'
+// Mise à jour structure table : synchronisation avec infos_prestataires
 
 // AJOUT : Indispensable pour que Render accepte les cookies de session
 app.set('trust proxy', 1);
@@ -38,7 +38,8 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires-photos';
+const BUCKET_NAME = 'prestataires';
+const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -426,6 +427,7 @@ app.post('/inscription', async (req, res) => {
 async function uploadToSupabase(file, bucketName) {
     const fileBuffer = fs.readFileSync(file.path);
     const fileName = `${Date.now()}-${file.originalname}`;
+    console.log("Nom du bucket visé : ", bucketName);
     const { data, error } = await supabase.storage
         .from(bucketName)
         .upload(fileName, fileBuffer, { contentType: file.mimetype });
@@ -515,7 +517,7 @@ app.post('/proposer-prix-discuter', async (req, res) => {
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
+    const { prestataires: proches } = await chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
     const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
