@@ -114,19 +114,24 @@
 
         function miniCard(p) {
             const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
-            // On limite l'affichage des services pour ne pas trop allonger la carte
-            const servicesAffiche = p.services ? p.services.split(',').slice(0, 2).join(', ') + (p.services.split(',').length > 2 ? '...' : '') : 'Services divers';
+            
+            // FIX: Correction de p.p.services en p.services + gestion sécurisée du texte
+            let servicesAffiche = 'Services divers';
+            if (p.services && typeof p.services === 'string') {
+                const liste = p.services.split(',');
+                servicesAffiche = liste.slice(0, 2).join(', ') + (liste.length > 2 ? '...' : '');
+            }
             
             return `
                 <article class="profile-card" style="cursor:pointer" onclick="location.href='/voir-prestataire?id=${p.id}'">
                     <div class="provider-card-top">
                         <span class="badge-dispo">Disponible</span>
-                        <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='cuisine.jpg.jpg'">
+                        <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='default-profile.png'">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>
                     <div class="provider-card-body">
                         <h3>${nom}</h3>
-                        <p class="prof">${p.profession || 'Prestataire'}</p>
+                        <p class="prof">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
                         <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>
                         <p style="margin-top:8px;">⭐ ${p.etoiles || 0} / 5</p>

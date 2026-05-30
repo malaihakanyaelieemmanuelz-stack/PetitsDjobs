@@ -221,39 +221,50 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    // 1. Récupération des prestataires triés
-    const { data: prestataires, error: pError } = await supabase
-        .from('infos_prestataires')
-        .select('*')
-        .order('etoiles', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: true })
-        .limit(10);
+    try {
+        console.log("[DEBUG RENDER] Début requête /get-top-prestataires");
+        
+        // 1. Récupération des prestataires uniquement
+        const { data: prestataires, error: pError } = await supabase
+            .from('infos_prestataires')
+            .select('*')
+            .order('etoiles', { ascending: false })
+            .limit(10);
 
-    if (pError) {
-        console.error("DEBUG RENDER: Erreur Supabase :", pError);
-        return res.json([]);
+        if (pError) {
+            console.error("[DEBUG RENDER] Erreur Supabase Prestataires:", pError.message);
+            return res.status(500).json({ error: pError.message });
+        }
+
+        console.log(`[DEBUG RENDER] Prestataires bruts trouvés: ${prestataires?.length || 0}`);
+        if (!prestataires || prestataires.length === 0) return res.json([]);
+
+        // 2. Récupération manuelle des noms d'utilisateurs
+        const userIds = prestataires.map(p => p.user_id);
+        const { data: users, error: uError } = await supabase
+            .from('utilisateurs')
+            .select('id, nom, prenom')
+            .in('id', userIds);
+
+        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+        console.log(`[DEBUG RENDER] Mapping utilisateurs réussi pour ${users?.length || 0} comptes`);
+
+        const reponse = prestataires.map(p => ({
+            id: p.user_id, 
+            nom: userMap[p.user_id]?.nom || 'Prestataire', 
+            prenom: userMap[p.user_id]?.prenom || '', 
+            photo: p.photo_profil_url,
+            profession: p.profession,
+            ville: p.ville,
+            services: p.services,
+            etoiles: p.etoiles || 0
+        }));
+
+        res.json(reponse);
+    } catch (err) {
+        console.error("[DEBUG RENDER] Erreur fatale /get-top-prestataires:", err);
+        res.status(500).json({ error: "Erreur interne" });
     }
-
-    // 2. Récupération manuelle des utilisateurs
-    const userIds = prestataires.map(p => p.user_id);
-    const { data: users } = await supabase
-        .from('utilisateurs')
-        .select('id, nom, prenom')
-        .in('id', userIds);
-
-    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-
-    res.json(prestataires.map(p => ({
-        id: p.user_id, 
-        nom: userMap[p.user_id]?.nom || 'Prestataire', 
-        prenom: userMap[p.user_id]?.prenom || '', 
-        photo: p.photo_profil_url,
-        profession: p.profession,
-        bio: p.bio,
-        ville: p.ville,
-        services: p.services,
-        etoiles: p.etoiles || 0
-    })));
 });
 
 app.get('/session-status', (req, res) => {
