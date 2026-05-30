@@ -38,7 +38,8 @@
                 alert("Un code de vérification vous a été envoyé par email.");
                 window.location.href = `/reinitialiser-mdp?email=${encodeURIComponent(email)}`;
             } else {
-                alert("Une erreur est survenue.");
+                const errData = await res.json();
+                alert("Erreur: " + (errData.error || "Une erreur est survenue."));
             }
         }
     </script>

@@ -8,6 +8,7 @@ const geolib = require('geolib');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 
 const app = express();
 // Mise à jour structure table : synchronisation avec infos_prestataires
@@ -32,6 +33,15 @@ const supabase = createClient(
   process.env.SUPABASE_URL, 
   process.env.SUPABASE_KEY
 );
+
+// --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, // Ton adresse Gmail
+        pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
+    }
+});
 
 // --- Test de connexion pour les logs Render ---
 supabase.from('utilisateurs').select('id').limit(1)
@@ -723,17 +733,35 @@ app.get('/get-public-jobs', (req, res) => {
 // --- Récupération de mot de passe ---
 app.post('/api/mot-de-passe-oublie', async (req, res) => {
     const { email } = req.body;
+    const emailClean = (email || '').toLowerCase().trim();
+
+    // Vérifier si l'utilisateur existe
+    const { data: user } = await supabase.from('utilisateurs').select('id').eq('email', emailClean).maybeSingle();
+    if (!user) {
+        return res.status(404).json({ error: "Cet email n'existe pas dans notre base." });
+    }
+
     const code = Math.floor(100000 + Math.random() * 900000).toString(); // Code à 6 chiffres
     
-    // On stocke le code en base (il faudrait ajouter ces colonnes à ta table utilisateurs)
     const { error } = await supabase.from('utilisateurs')
         .update({ reset_code: code, reset_expires: new Date(Date.now() + 15*60000).toISOString() })
-        .eq('email', email.toLowerCase().trim());
+        .eq('email', emailClean);
 
-    if (error) return res.status(500).json({ error: "Erreur lors de la génération du code." });
+    if (error) {
+        console.error("Erreur Supabase (Colonnes reset_code manquantes ?):", error.message);
+        return res.status(500).json({ error: "Erreur technique. Vérifiez les colonnes reset_code et reset_expires." });
+    }
     
-    console.log(`[MAIL MOCK] Envoyer à ${email} : Votre code de récupération est ${code}`);
-    // Ici, tu intégreras Nodemailer plus tard pour l'envoi réel.
+    // ENVOI RÉEL DU CODE PAR EMAIL
+    const mailOptions = {
+        from: '"PetitsDjobs Support" <' + process.env.EMAIL_USER + '>',
+        to: emailClean,
+        subject: 'Votre code de récupération PetitsDjobs',
+        text: `Votre code de récupération est : ${code}. Il expire dans 15 minutes.`
+    };
+
+    transporter.sendMail(mailOptions).catch(err => console.error("Erreur mail récupération:", err));
+
     res.json({ ok: true, message: "Un code a été envoyé à votre adresse email." });
 });
 
@@ -779,8 +807,47 @@ app.post('/valider-fin-tache', requireAuth, async (req, res) => {
 // Route SOS
 app.post('/alerte-sos', requireAuth, async (req, res) => {
     const user = req.session.user;
-    console.error(`!!! ALERTE SOS !!! Le prestataire ${user.prenom} ${user.nom} (ID: ${user.id}) a déclenché l'alerte danger.`);
-    // Ici, on pourrait envoyer un SMS ou un email d'urgence à l'admin
+    const lat = req.body.lat || req.session.latClient || "Inconnue";
+    const lon = req.body.lon || req.session.lonClient || "Inconnue";
+    const mapsUrl = (lat !== "Inconnue") ? `https://www.google.com/maps?q=${lat},${lon}` : "Lien indisponible";
+
+    // Récupération des détails complets du prestataire en base de données
+    const { data: p } = await supabase.from('infos_prestataires').select('*').eq('user_id', user.id).maybeSingle();
+
+    const alerteTexte = `
+🚨 ALERTE DANGER IMMÉDIAT - PETITSDJOBS 🚨
+--------------------------------------------------
+IDENTITÉ DU PRESTATAIRE :
+Nom complet : ${user.prenom} ${user.nom}
+Email : ${user.email}
+ID Utilisateur : ${user.id}
+Âge : ${user.age || 'N/A'} ans
+Téléphone : ${p?.telephone || 'Non renseigné'}
+
+INFORMATIONS PROFESSIONNELLES :
+Profession : ${p?.profession || 'N/A'}
+Services : ${p?.services || 'N/A'}
+Ville d'origine : ${p?.ville || 'N/A'}
+Bio : ${p?.bio || 'N/A'}
+
+LOCALISATION DE L'URGENCE :
+Coordonnées : Latitude ${lat}, Longitude ${lon}
+LIEN GOOGLE MAPS : ${mapsUrl}
+--------------------------------------------------
+Note : Cette alerte a été déclenchée manuellement par le prestataire depuis son interface de suivi.`;
+
+    console.error(alerteTexte);
+
+    // ENVOI D'UN EMAIL D'URGENCE À L'ADMINISTRATEUR
+    const mailOptions = {
+        from: '"ALERTE SÉCURITÉ PetitsDjobs" <' + process.env.EMAIL_USER + '>',
+        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, // Ton email perso
+        subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
+        text: alerteTexte
+    };
+
+    transporter.sendMail(mailOptions).catch(err => console.error("Erreur mail SOS:", err));
+
     res.json({ ok: true, message: "Alerte envoyée aux services de sécurité de PetitsDjobs." });
 });
 

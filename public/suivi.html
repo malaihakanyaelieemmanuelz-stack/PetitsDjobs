@@ -51,6 +51,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map, marker;
+        let lastLat = null;
+        let lastLon = null;
 
         // Initialisation de la carte (vue par défaut sur une position neutre)
         function initMap() {
@@ -77,7 +79,11 @@
 
         function declencherSOS() {
             if(confirm("DÉCLENCHER L'ALERTE ? Une notification d'urgence sera envoyée avec votre position.")) {
-                fetch('/alerte-sos', { method: 'POST' })
+                fetch('/alerte-sos', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: lastLat, lon: lastLon })
+                })
                     .then(r => r.json())
                     .then(data => alert(data.message));
             }
@@ -110,6 +116,8 @@
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
                 const { latitude, longitude } = pos.coords;
+                lastLat = latitude;
+                lastLon = longitude;
                 
                 // Mise à jour de la carte
                 const newPos = [latitude, longitude];
