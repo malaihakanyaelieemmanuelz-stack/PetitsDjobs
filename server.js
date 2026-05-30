@@ -108,7 +108,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
 
     return {
         prestataires: page.map(p => ({
-            id: p.user_id, // Utilise l'ID utilisateur unique pour les liens
+            id: p.id,
             nom: p.nom,
             prenom: p.prenom,
             profession: p.profession,
@@ -207,7 +207,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         .from('infos_prestataires')
         .select('*, utilisateurs(*)')
         .order('etoiles', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: true }) // Le premier inscrit apparaît en premier
+        .order('created_at', { ascending: true })
         .limit(10);
 
     const top = data || [];
@@ -216,7 +216,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         nom: p.utilisateurs?.nom, 
         prenom: p.utilisateurs?.prenom, 
         photo: p.photo_profil_url,
-        profession: p.profession, 
+        profession: p.profession,
         bio: p.bio,
         ville: p.ville,
         services: p.services,
@@ -494,9 +494,6 @@ app.post('/devenir-prestataire', upload.fields([
     // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
-    req.session.user.bio = profileData.bio;
-    req.session.user.ville = profileData.ville;
-    req.session.user.services = profileData.services;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
@@ -516,8 +513,6 @@ app.get('/prestataire-public/:id', async (req, res) => {
         prenom: p.utilisateurs.prenom,
         profession: p.profession,
         bio: p.bio,
-        ville: p.ville,
-        services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0
     });
