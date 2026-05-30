@@ -235,4 +235,24 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
         text-align: center !important;
     }
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
+
+    /* --- Ajustements pour Mon Profil et Ma Carte de Visite --- */
+    .trust-card, .card-presta-mobile, .checkout-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 10px 0 !important;
+        border-radius: 12px !important;
+        box-shadow: none !important;
+        border: 1px solid #eee !important;
+        box-sizing: border-box;
+    }
+
+    .trust-card-header img {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .trust-card-body, .card-presta-mobile, .checkout-card {
+        padding: 15px !important;
+    }
 }
