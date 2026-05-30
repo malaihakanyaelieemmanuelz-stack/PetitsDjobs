@@ -35,11 +35,11 @@ supabase.from('utilisateurs').select('id').limit(1)
     })
     .catch(err => console.error('❌ Erreur fatale lors de l\'initialisation Supabase :', err));
 
+const offresDiscuter = [];
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
 const BUCKET_NAME = 'prestataires';
-const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -218,7 +218,9 @@ app.get('/get-top-prestataires', async (req, res) => {
         prenom: p.utilisateurs?.prenom, 
         photo: p.photo_profil_url,
         profession: p.profession, 
-        bio: p.bio, 
+        bio: p.bio,
+        ville: p.ville,
+        services: p.services,
         etoiles: p.etoiles || 0
     })));
 });
@@ -372,7 +374,6 @@ app.post('/connexion', async (req, res) => {
                 req.session.user.services = profil.services;
                 req.session.user.photo = profil.photo_profil_url;
                 req.session.user.etoiles = profil.etoiles;
-                req.session.user.commentaires = profil.commentaires;
             } else {
                 req.session.user.isPrestataire = false;
             }
@@ -494,6 +495,9 @@ app.post('/devenir-prestataire', upload.fields([
     // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
+    req.session.user.bio = profileData.bio;
+    req.session.user.ville = profileData.ville;
+    req.session.user.services = profileData.services;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
@@ -513,6 +517,8 @@ app.get('/prestataire-public/:id', async (req, res) => {
         prenom: p.utilisateurs.prenom,
         profession: p.profession,
         bio: p.bio,
+        ville: p.ville,
+        services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0
     });

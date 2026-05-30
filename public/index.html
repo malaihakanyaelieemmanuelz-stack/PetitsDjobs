@@ -203,7 +203,7 @@
         fetch('/get-top-prestataires').then(res => res.json()).then(data => {
             const container = document.getElementById('prestataires-list');
             if (!data.length) {
-                container.innerHTML = '<p style="grid-column:1/-1;">Les premiers prestataires apparaîtront ici.</p>';
+                container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Les premiers prestataires apparaîtront ici.</p>';
                 return;
             }
             container.innerHTML = data.map(p => miniCard(p)).join('');
