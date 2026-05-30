@@ -116,6 +116,15 @@
         function miniCard(p) {
             const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
             
+            let statusBadge = `<span class="badge-dispo">En ligne</span>`;
+            let cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
+            
+            if (!p.disponible) {
+                const date = p.dernierAcces ? new Date(p.dernierAcces).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Inconnue';
+                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (vu à ${date})</span>`;
+                cardAction = `afficherContactHorsLigne('${p.id}', '${nom}')`;
+            }
+            
             // FIX: Correction de p.p.services en p.services + gestion sécurisée du texte
             let servicesAffiche = 'Services divers';
             if (p.services && typeof p.services === 'string') {
@@ -124,9 +133,9 @@
             }
             
             return `
-                <article class="profile-card" style="cursor:pointer" onclick="location.href='/voir-prestataire?id=${p.id}'">
+                <article class="profile-card" style="cursor:pointer" onclick="${cardAction}">
                     <div class="provider-card-top">
-                        <span class="badge-dispo">Disponible</span>
+                        ${statusBadge}
                         <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='default-profile.png'">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>

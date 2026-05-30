@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Récupération de mot de passe - PETITSDJOBS</title>
+</head>
+<body>
+    <header class="home-header">
+        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
+    </header>
+    <div class="auth-page" style="padding: 50px 20px;">
+        <div class="login-card">
+            <h1>RÉCUPÉRATION</h1>
+            <p style="color:#666; margin-bottom:20px;">Saisissez votre email pour recevoir un lien de réinitialisation.</p>
+            <form id="recoveryForm">
+                <input type="email" name="email" placeholder="VOTRE EMAIL" required>
+                <button type="submit">ENVOYER LE LIEN</button>
+            </form>
+            <p id="msg-retour" style="margin-top:20px; display:none; color:#2e7d32; font-weight:bold;"></p>
+            <a href="connexion.html" style="display:block; margin-top:20px; color:#5D4037; font-weight:bold;">← Retour à la connexion</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('recoveryForm').onsubmit = function(e) {
+            e.preventDefault();
+            const msg = document.getElementById('msg-retour');
+            msg.textContent = "Fonctionnalité bientôt disponible. Pour l'instant, contactez le support.";
+            msg.style.display = 'block';
+            this.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

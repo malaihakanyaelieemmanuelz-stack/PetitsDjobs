@@ -79,15 +79,16 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     try {
+        console.log(`[DEBUG RENDER] Recherche: Service="${service}", Lat=${lat}, Lon=${lon}, Offset=${offset}`);
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
-        // Récupération des noms et du dernier accès
+        console.log(`[DEBUG RENDER] Total prestataires en base: ${prestataires.length}`);
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
 
-        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // 5 minutes
+        const SEUIL_EN_LIGNE_MS = 10 * 60 * 1000; // 10 minutes pour être considéré en ligne
 
         const eligibles = prestataires
             .filter(p => serviceMatch(p, service))
@@ -104,32 +105,29 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
                     enLigne: enLigne,
                     dernier_acces: user?.dernier_acces,
                     distanceM: dist,
-                    // Tranche de 10m pour le tri (0-9m = 0, 10-19m = 10, etc.)
-                    tranche10m: Math.floor(dist / 10) * 10 
                 };
             })
-            .filter(p => p.distanceM <= RAYON_MAX_METRES)
+            .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. Priorité aux connectés (true avant false)
-                if (a.enLigne !== b.enLigne) {
-                    return b.enLigne - a.enLigne; // true - false = 1 (b vient avant a), false - true = -1 (a vient avant b)
-                }
-
-                // Si même statut (tous en ligne ou tous hors ligne)
-                // 2. Par étoiles (décroissant)
+                // 1. D'abord ceux en ligne
+                if (a.enLigne !== b.enLigne) return b.enLigne ? 1 : -1;
+                
+                // 2. Ensuite par étoiles (décroissant)
                 const etoilesA = a.etoiles || 0;
                 const etoilesB = b.etoiles || 0;
                 if (etoilesA !== etoilesB) return etoilesB - etoilesA;
-                // 3. Par date d'inscription (croissant = plus ancien en premier)
-                if (a.created_at !== b.created_at) {
-                    return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+
+                // 3. Enfin par date d'inscription (plus ancien en premier)
+                if (a.created_at && b.created_at) {
+                    return new Date(a.created_at) - new Date(b.created_at);
                 }
-                // 4. Enfin par distance (croissant)
+
                 return a.distanceM - b.distanceM;
             });
 
-        // On prend les 20 premiers (Online d'abord, puis Offline si besoin)
-        const limitFixe = 20;
+        console.log(`[DEBUG RENDER] Eligibles après filtre: ${eligibles.length}`);
+        
+        const limitFixe = 20; // On veut toujours un pool de 20
         const page = eligibles.slice(offset, offset + limitFixe);
 
         return {
@@ -151,11 +149,11 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             telephone: p.autorise_numero_deconnexion ? p.telephone : null
             })),
             rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
-            hasMore: eligibles.length > offset + limitFixe, // Vérifie s'il y a plus de résultats au-delà de la page actuelle
+            hasMore: eligibles.length > offset + limitFixe,
             total: eligibles.length
         };
     } catch (err) {
-        console.error("Erreur chercherParRayonCroissant:", err);
+        console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant:", err);
         return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
     }
 }
@@ -486,7 +484,12 @@ async function uploadToSupabase(file, bucketName) {
 app.post('/devenir-prestataire', upload.fields([
     { name: 'photo_profil' }, { name: 'piece_recto' }, { name: 'piece_verso' }
 ]), async (req, res) => {
-    if (!req.session.user || !req.session.user.id) return res.redirect('/connexion');
+    // Correction : On vérifie l'ID de l'utilisateur en session plus précisément
+    const userId = req.session.user?.id || req.session.user?.email; 
+    if (!userId) {
+        console.error("[DEBUG RENDER] Tentative de devenir prestataire sans session ID");
+        return res.redirect('/connexion');
+    }
 
     // Gestion des services multiples venant du formulaire
     const listeServices = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
