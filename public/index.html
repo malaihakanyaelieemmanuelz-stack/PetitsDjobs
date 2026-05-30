@@ -161,22 +161,6 @@
                 });
         }
 
-        function chargerProches(lat, lon) {
-            fetch('/prestataires-autour?lat=' + lat + '&lon=' + lon)
-                .then(r => r.json())
-                .then(data => {
-                    const el = document.getElementById('proches-list');
-                    const banner = document.getElementById('gps-accueil');
-                    if (!data.prestataires.length) {
-                        el.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#666;">Aucun prestataire tout près pour l\'instant. Inscrivez-vous en prestataire ou élargissez en commandant un service.</p>';
-                        banner.innerHTML = '<strong>📍 Position enregistrée</strong> Commandez un service pour trouver la bonne personne.';
-                        return;
-                    }
-                    banner.innerHTML = `<strong>✓ ${data.prestataires.length} personne(s) trouvée(s)</strong> Le plus proche à ${distanceLabel(data.prestataires[0].distanceM)}`;
-                    el.innerHTML = data.prestataires.map(miniCard).join('');
-                });
-        }
-
         if (new URLSearchParams(location.search).get('connecte') === '1') {
             document.getElementById('bandeau-connecte').style.display = 'block';
         }

@@ -79,11 +79,9 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
     try {
-        console.log(`[DEBUG RENDER] Recherche: Service="${service}", Lat=${lat}, Lon=${lon}, Offset=${offset}`);
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
-        console.log(`[DEBUG RENDER] Total prestataires en base: ${prestataires.length}`);
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
@@ -125,8 +123,6 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
                 return a.distanceM - b.distanceM;
             });
 
-        console.log(`[DEBUG RENDER] Eligibles après filtre: ${eligibles.length}`);
-        
         const limitFixe = 20; // On veut toujours un pool de 20
         const page = eligibles.slice(offset, offset + limitFixe);
 
@@ -153,7 +149,6 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             total: eligibles.length
         };
     } catch (err) {
-        console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant:", err);
         return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
     }
 }
@@ -487,7 +482,6 @@ app.post('/devenir-prestataire', upload.fields([
     // Correction : On vérifie l'ID de l'utilisateur en session plus précisément
     const userId = req.session.user?.id || req.session.user?.email; 
     if (!userId) {
-        console.error("[DEBUG RENDER] Tentative de devenir prestataire sans session ID");
         return res.redirect('/connexion');
     }
 
