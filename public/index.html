@@ -168,6 +168,51 @@
                 });
         }
 
+        async function chargerJobsPublics() {
+            let url = '/get-public-jobs';
+            
+            // On essaie d'ajouter la position de l'utilisateur pour calculer sa distance propre
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const { latitude, longitude } = pos.coords;
+                    executerChargementJobs(`${url}?lat=${latitude}&lon=${longitude}`);
+                }, () => executerChargementJobs(url));
+            } else {
+                executerChargementJobs(url);
+            }
+        }
+
+        function executerChargementJobs(fetchUrl) {
+            fetch(fetchUrl)
+                .then(r => r.json())
+                .then(jobs => {
+                    const container = document.getElementById('container-jobs');
+                    if (jobs && jobs.length > 0) {
+                        document.getElementById('section-jobs').style.display = 'block';
+                        container.innerHTML = jobs.map(j => `
+                            <div style="flex:0 0 220px; background:white; border-radius:10px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,0.1); font-size:0.85rem; border:1px solid #ddd;">
+                                ${j.photo ? `<img src="${j.photo}" style="width:100%; height:110px; object-fit:cover; border-radius:6px;">` : ''}
+                                <div style="margin-top:8px;">
+                                    <strong style="color:#5D4037; font-size:1.1rem; display:block; margin-bottom:4px;">${j.prix} FCFA</strong>
+                                    <p style="margin:5px 0; color:#333; font-weight:bold; height:2.4em; overflow:hidden; line-height:1.2;">Nature: ${j.description}</p>
+                                    ${j.distanceM != null ? `<p style="color:#2e7d32; font-size:0.75rem; margin:4px 0;">📍 À ${distanceLabel(j.distanceM)} de vous</p>` : ''}
+                                    <button onclick="accepterJobPublic(${j.id})" style="width:100%; border:none; background:#333; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">ACCEPTER</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        document.getElementById('section-jobs').style.display = 'none';
+                    }
+                });
+        }
+
+        async function accepterJobPublic(id) {
+            if (!connecte) { window.location.href = '/connexion.html'; return; }
+            const res = await fetch('/accepter-job/' + id, { method: 'POST' });
+            const data = await res.json();
+            alert(data.message || data.error);
+        }
+
         if (new URLSearchParams(location.search).get('connecte') === '1') {
             document.getElementById('bandeau-connecte').style.display = 'block';
         }
@@ -237,6 +282,10 @@
             document.getElementById('container-prestataires').innerHTML =
                 '<p>Erreur de connexion au serveur.</p>';
         });
+
+        // Initialisation des travaux demandés
+        chargerJobsPublics();
+        setInterval(chargerJobsPublics, 20000); // Rafraîchir toutes les 20 secondes
     </script>
 </body>
 </html>

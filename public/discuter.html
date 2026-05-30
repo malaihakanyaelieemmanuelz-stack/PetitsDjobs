@@ -32,23 +32,34 @@
     <script>
         let offreId = null;
         let pollTimer = null;
+        let startTime = null;
 
         document.getElementById('btn-envoyer').onclick = () => {
             const prix = document.getElementById('prix-propose').value;
+            const desc = document.getElementById('description-job').value;
+            const photoInput = document.getElementById('photo-job');
+
             if (!prix) return alert('Indiquez un prix.');
+            if (!desc) return alert('Précisez la nature du service.');
             if (!navigator.geolocation) return alert('GPS requis.');
 
             navigator.geolocation.getCurrentPosition(async pos => {
-                const desc = document.getElementById('description-job').value;
+                const formData = new FormData();
+                formData.append('prix', prix);
+                formData.append('description', desc);
+                formData.append('lat', pos.coords.latitude);
+                formData.append('lon', pos.coords.longitude);
+                if (photoInput.files[0]) formData.append('photo_job', photoInput.files[0]);
+
                 const res = await fetch('/proposer-prix-discuter', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }, // Note: si tu envoies une photo, il faudra utiliser FormData
-                    body: JSON.stringify({ prix, description: desc, lat: pos.coords.latitude, lon: pos.coords.longitude })
+                    body: formData
                 });
                 const data = await res.json();
                 document.getElementById('statut').innerText = data.message || '';
                 if (data.offreId) {
                     offreId = data.offreId;
+                    startTime = Date.now();
                     document.getElementById('btn-augmenter').style.display = 'block';
                     pollTimer = setInterval(verifierOffre, 3000);
                 }
@@ -63,6 +74,15 @@
 
         async function verifierOffre() {
             if (!offreId) return;
+            
+            // Vérification du délai de 2 minutes (120 000 ms)
+            if (startTime && (Date.now() - startTime > 120000)) {
+                const statusEl = document.getElementById('statut');
+                if (!statusEl.innerHTML.includes('red')) {
+                    statusEl.innerHTML += '<br><span style="color:red; font-weight:bold;">⚠️ Cela fait 2 min. Toujours pas d\'acceptation ? Augmentez le prix pour attirer les prestataires !</span>';
+                }
+            }
+
             const res = await fetch('/statut-offre/' + offreId);
             const data = await res.json();
             if (data.statut === 'accepte') {

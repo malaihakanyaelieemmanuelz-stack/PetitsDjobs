@@ -599,22 +599,41 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
 
     offresDiscuter.push(offre);
     
-    // LOGIQUE 10 MINUTES : Relance par mail
+    // LOGIQUE 2 MINUTES : Relance par mail s'il n'y a pas d'acceptation
     setTimeout(() => {
         const o = offresDiscuter.find(item => item.id === offre.id);
         if (o && o.statut === 'en_attente' && o.acceptations.length === 0) {
-            console.log(`[ALERTE MAIL] Envoi à ${o.emailClient} : Personne n'a accepté votre offre de ${o.prix} FCFA après 10min. Veuillez augmenter le prix.`);
+            console.log(`[ALERTE MAIL] Envoi à ${o.emailClient} : Personne n'a accepté votre offre de ${o.prix} FCFA après 2min. Veuillez augmenter le prix.`);
             // Ici tu devrais appeler ton service de mail (Nodemailer, etc.)
         }
-    }, 10 * 60 * 1000); 
+    }, 2 * 60 * 1000); 
 
     res.json({ offreId: offre.id, message: 'Offre publiée ! Elle est visible par les prestataires proches.' });
 });
 
 // Route pour afficher les offres sur l'accueil
 app.get('/get-public-jobs', (req, res) => {
-    // On renvoie les 5 dernières offres en attente
-    const jobs = offresDiscuter.filter(o => o.statut === 'en_attente').slice(-5);
+    const lat = parseFloat(req.query.lat);
+    const lon = parseFloat(req.query.lon);
+    const RAYON_VISIBILITE_JOBS = 15000; // Rayon de 15 km pour ne pas surcharger
+
+    let jobs = offresDiscuter.filter(o => o.statut === 'en_attente');
+
+    if (!isNaN(lat) && !isNaN(lon)) {
+        jobs = jobs.map(j => {
+            const dist = geolib.getDistance(
+                { latitude: lat, longitude: lon },
+                { latitude: j.lat, longitude: j.lon }
+            );
+            return { ...j, distanceM: dist };
+        })
+        .filter(j => j.distanceM <= RAYON_VISIBILITE_JOBS) // Filtrage par rayon
+        .sort((a, b) => a.distanceM - b.distanceM); // Les plus proches en premier
+    } else {
+        // Si pas de GPS, on limite quand même pour ne pas surcharger
+        jobs = jobs.slice(-10);
+    }
+
     res.json(jobs);
 });
 
