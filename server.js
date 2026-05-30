@@ -564,40 +564,97 @@ app.get('/get-prestataire-contact/:id', requireAuth, async (req, res) => {
     res.status(403).json({ error: "Non autorisé" });
 });
 
-app.post('/proposer-prix-discuter', async (req, res) => {
-    const { prix, lat, lon } = req.body;
+// On utilise multer pour la photo du job
+app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res) => {
+    const { prix, lat, lon, description } = req.body;
     const prixNum = parseInt(prix, 10);
     if (!prixNum || lat == null || lon == null) {
         return res.status(400).json({ error: 'Prix et GPS requis' });
+    }
+
+    let photoUrl = null;
+    if (req.file) {
+        try {
+            photoUrl = await uploadToSupabase(req.file, BUCKET_NAME);
+        } catch (e) { console.error("Erreur upload photo job", e); }
     }
 
     req.session.latClient = parseFloat(lat);
     req.session.lonClient = parseFloat(lon);
     req.session.commande = { service: 'Service particulier', prixBase: prixNum, prixLibre: true };
 
-    const { prestataires: proches } = chercherParRayonCroissant(lat, lon, 'Particulier', 0, BATCH_PRESTATAIRES);
-    const ids = proches.map(p => p.id);
     const offre = {
         id: Date.now(),
+        clientNom: req.session.user?.nom || 'Client',
         emailClient: req.session.user?.email,
         prix: prixNum,
-        prestatairesIds: ids,
+        description: description || 'Besoin d\'un service particulier',
+        photo: photoUrl,
+        lat: parseFloat(lat),
+        lon: parseFloat(lon),
         acceptations: [],
-        statut: 'en_attente'
+        statut: 'en_attente',
+        timestamp: Date.now()
     };
-    offresDiscuter.push(offre);
 
-    res.json({ offreId: offre.id, envoyes: ids.length, message: ids.length ? 'Offre envoyée aux prestataires proches' : 'Aucun prestataire proche.' });
+    offresDiscuter.push(offre);
+    
+    // LOGIQUE 10 MINUTES : Relance par mail
+    setTimeout(() => {
+        const o = offresDiscuter.find(item => item.id === offre.id);
+        if (o && o.statut === 'en_attente' && o.acceptations.length === 0) {
+            console.log(`[ALERTE MAIL] Envoi à ${o.emailClient} : Personne n'a accepté votre offre de ${o.prix} FCFA après 10min. Veuillez augmenter le prix.`);
+            // Ici tu devrais appeler ton service de mail (Nodemailer, etc.)
+        }
+    }, 10 * 60 * 1000); 
+
+    res.json({ offreId: offre.id, message: 'Offre publiée ! Elle est visible par les prestataires proches.' });
+});
+
+// Route pour afficher les offres sur l'accueil
+app.get('/get-public-jobs', (req, res) => {
+    // On renvoie les 5 dernières offres en attente
+    const jobs = offresDiscuter.filter(o => o.statut === 'en_attente').slice(-5);
+    res.json(jobs);
+});
+
+app.post('/accepter-job/:id', requireAuth, async (req, res) => {
+    const offreId = parseInt(req.params.id, 10);
+    const offre = offresDiscuter.find(o => o.id === offreId);
+    if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
+    if (!req.session.user.isPrestataire) return res.status(403).json({ error: 'Seuls les prestataires peuvent accepter.' });
+
+    const prestataireId = req.session.user.id;
+    if (!offre.acceptations.includes(prestataireId)) {
+        offre.acceptations.push(prestataireId);
+    }
+    res.json({ ok: true, message: 'Offre acceptée ! Attendez le choix du client.' });
 });
 
 app.get('/statut-offre/:id', async (req, res) => {
     const offre = offresDiscuter.find(o => o.id === parseInt(req.params.id, 10));
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
+
     if (offre.acceptations.length > 0) {
-        req.session.commande = { service: 'Service particulier', prixBase: offre.prix, prixLibre: true };
-        return res.json({ statut: 'accepte', prix: offre.prix });
+        // Récupérer les infos des prestataires qui ont accepté
+        const { data: pInfos } = await supabase.from('infos_prestataires').select('user_id, photo_profil_url, etoiles, profession').in('user_id', offre.acceptations);
+        const { data: uInfos } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', offre.acceptations);
+
+        const detailAcceptations = (pInfos || []).map(p => {
+            const u = uInfos.find(user => user.id === p.user_id);
+            return {
+                id: p.user_id,
+                nom: u?.nom || 'Prestataire',
+                prenom: u?.prenom || '',
+                photo: p.photo_profil_url,
+                etoiles: p.etoiles,
+                profession: p.profession
+            };
+        });
+
+        return res.json({ statut: 'accepte', list: detailAcceptations, prix: offre.prix });
     }
-    res.json({ statut: 'en_attente', suggestion: 'Augmentez votre offre.' });
+    res.json({ statut: 'en_attente', suggestion: 'Personne n\'a encore accepté.' });
 });
 
 app.use('/uploads', express.static(path.join(publicDir, 'uploads')));

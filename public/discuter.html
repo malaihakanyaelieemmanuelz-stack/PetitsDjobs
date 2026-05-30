@@ -6,19 +6,26 @@
     <title>Discuter le prix - PETITSDJOBS</title>
 </head>
 <body class="auth-page">
-    <div class="login-card" style="max-width: 420px;">
+    <div class="login-card" style="max-width: 480px;">
         <h1>NÉGOCIER UN PRIX</h1>
-        <p style="font-size:0.9rem; color:#666;">Proposez un montant. Le cerveau l'envoie aux prestataires les plus proches (GPS). S'il n'y a pas d'acceptation, augmentez votre offre.</p>
-        <input type="number" id="prix-propose" placeholder="Votre prix en FCFA" min="100" required style="width:100%; padding:12px; margin:10px 0;">
+        <p style="font-size:0.9rem; color:#666;">Décrivez le travail et fixez votre prix. Les prestataires proches verront votre offre.</p>
+        
+        <textarea id="description-job" placeholder="Description brève du travail (ex: Nettoyer une cour de 20m2)" required style="width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd; min-height:80px;"></textarea>
+        <input type="number" id="prix-propose" placeholder="Prix proposé en FCFA" min="100" required style="width:100%; padding:12px; margin:10px 0;">
+        
+        <p style="text-align:left; font-size:0.8rem; margin:0;">Photo du travail (optionnel) :</p>
+        <input type="file" id="photo-job" accept="image/*" style="width:100%; margin:8px 0;">
+
         <p id="statut" style="font-size:0.85rem;"></p>
-        <button id="btn-envoyer" style="width:100%; padding:14px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">
+        <div id="liste-volontaires" style="margin-top:15px; display:none;">
+            <p style="font-weight:bold; color:#2e7d32;">Prestataires intéressés :</p>
+            <div id="container-volontaires"></div>
+        </div>
+        <button id="btn-envoyer" style="width:100%; padding:14px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:10px;">
             ENVOYER AUX PRESTATAIRES PROCHES
         </button>
         <button id="btn-augmenter" style="display:none; width:100%; padding:12px; margin-top:10px; background:#007bff; color:white; border:none; border-radius:8px;">
             AUGMENTER L'OFFRE
-        </button>
-        <button id="btn-commander" style="display:none; width:100%; padding:12px; margin-top:10px; background:green; color:white; border:none; border-radius:8px;">
-            COMMANDER À CE PRIX
         </button>
         <p style="margin-top:16px; text-align:center;"><a href="/">Retour accueil</a></p>
     </div>
@@ -32,14 +39,11 @@
             if (!navigator.geolocation) return alert('GPS requis.');
 
             navigator.geolocation.getCurrentPosition(async pos => {
+                const desc = document.getElementById('description-job').value;
                 const res = await fetch('/proposer-prix-discuter', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prix,
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude
-                    })
+                    headers: { 'Content-Type': 'application/json' }, // Note: si tu envoies une photo, il faudra utiliser FormData
+                    body: JSON.stringify({ prix, description: desc, lat: pos.coords.latitude, lon: pos.coords.longitude })
                 });
                 const data = await res.json();
                 document.getElementById('statut').innerText = data.message || '';
@@ -57,21 +61,36 @@
             document.getElementById('btn-envoyer').click();
         };
 
-        document.getElementById('btn-commander').onclick = () => {
-            window.location.href = '/commande?service=Service%20particulier&prix=' + document.getElementById('prix-propose').value;
-        };
-
         async function verifierOffre() {
             if (!offreId) return;
             const res = await fetch('/statut-offre/' + offreId);
             const data = await res.json();
             if (data.statut === 'accepte') {
-                clearInterval(pollTimer);
-                document.getElementById('statut').innerText = 'Un prestataire a accepté ' + data.prix + ' FCFA !';
-                document.getElementById('btn-commander').style.display = 'block';
+                document.getElementById('liste-volontaires').style.display = 'block';
+                const container = document.getElementById('container-volontaires');
+                container.innerHTML = data.list.map(p => `
+                    <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#f0f7f0; border-radius:8px; margin-bottom:8px; border:1px solid #c8e6c9;">
+                        <img src="${p.photo || 'default-profile.png'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+                        <div style="flex:1; text-align:left;">
+                            <div style="font-size:0.85rem; font-weight:bold;">${p.prenom} ${p.nom}</div>
+                            <div style="font-size:0.75rem;">⭐ ${p.etoiles}/5 · ${p.profession}</div>
+                        </div>
+                        <button onclick="finaliserChoix(${p.id}, ${data.prix})" style="padding:6px 12px; background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">CHOISIR</button>
+                    </div>
+                `).join('');
+                document.getElementById('statut').innerText = data.list.length + ' prestataire(s) ont accepté votre prix !';
             } else if (data.suggestion) {
                 document.getElementById('statut').innerText = data.suggestion;
             }
+        }
+
+        async function finaliserChoix(prestataireId, prix) {
+            const res = await fetch('/selectionner-prestataire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prestataireId })
+            });
+            if (res.ok) window.location.href = '/commande?service=Service%20particulier&prix=' + prix;
         }
     </script>
 </body>
