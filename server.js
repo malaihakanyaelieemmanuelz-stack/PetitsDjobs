@@ -39,6 +39,7 @@ const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
 const BUCKET_NAME = 'prestataires';
+const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -203,20 +204,22 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    const { data } = await supabase
+    // Requête simplifiée pour isoler le problème (test sans jointure)
+    const { data, error } = await supabase
         .from('infos_prestataires')
-        .select('*, utilisateurs(*)')
-        .order('etoiles', { ascending: false, nullsFirst: false })
-        .order('created_at', { ascending: true })
-        .limit(10);
+        .select('*'); 
 
-    console.log(`DEBUG RENDER: ${data?.length || 0} prestataires trouvés pour l'accueil`);
+    if (error) {
+        console.error("DEBUG RENDER: Erreur de requête Supabase :", error);
+        return res.json([]);
+    }
 
-    const top = data || [];
-    res.json(top.map(p => ({
+    console.log("DEBUG RENDER: Nombre de prestataires bruts trouvés :", data ? data.length : 0);
+
+    res.json((data || []).map(p => ({
         id: p.user_id, 
-        nom: p.utilisateurs?.nom, 
-        prenom: p.utilisateurs?.prenom, 
+        nom: 'Prestataire', // Remplaçant car on n'a pas chargé la table utilisateurs
+        prenom: '',
         photo: p.photo_profil_url,
         profession: p.profession,
         bio: p.bio,
@@ -376,6 +379,7 @@ app.post('/connexion', async (req, res) => {
                 req.session.user.photo = profil.photo_profil_url;
                 req.session.user.etoiles = profil.etoiles;
                 console.log("DEBUG RENDER: Profil chargé pour", email);
+                console.log("DEBUG RENDER: Profil complet chargé pour", email);
             } else {
                 req.session.user.isPrestataire = false;
             }
@@ -495,6 +499,7 @@ app.post('/devenir-prestataire', upload.fields([
 
     req.session.user.isPrestataire = true;
     // Mise à jour immédiate de la session pour l'affichage
+    // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
     req.session.user.bio = profileData.bio;
