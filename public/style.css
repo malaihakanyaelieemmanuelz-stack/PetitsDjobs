@@ -208,5 +208,5 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     .card h3 { font-size: 0.9rem; }
 
     .login-card { padding: 25px 20px; }
-    .provider-scroll-wrapper .provider-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
+    .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
 }

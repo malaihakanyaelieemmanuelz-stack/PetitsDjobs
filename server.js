@@ -38,7 +38,8 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires-photos';
+const BUCKET_NAME = 'prestataires';
+const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -108,7 +109,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
 
     return {
         prestataires: page.map(p => ({
-            id: p.id,
+            id: p.user_id, // Utilise l'ID utilisateur unique pour les liens
             nom: p.nom,
             prenom: p.prenom,
             profession: p.profession,
@@ -198,7 +199,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     if (lat == null || lon == null) {
         return res.json({ prestataires: [], message: 'Activez le GPS pour voir qui est près de vous.' });
     }
-    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 2);
+    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 2); // Limite à 2 pour les plus proches
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
@@ -206,7 +207,11 @@ app.get('/get-top-prestataires', async (req, res) => {
     const { data } = await supabase
         .from('infos_prestataires')
         .select('*, utilisateurs(*)')
+        .order('etoiles', { ascending: false, nullsFirst: false }) // Les mieux notés d'abord
+        .order('created_at', { ascending: true }) // Si notes égales, les plus anciens (pionniers)
         .limit(10);
+
+    console.log(`DEBUG RENDER: ${data?.length || 0} prestataires trouvés pour l'accueil`);
 
     const top = data || [];
     res.json(top.map(p => ({
@@ -214,7 +219,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         nom: p.utilisateurs?.nom, 
         prenom: p.utilisateurs?.prenom, 
         photo: p.photo_profil_url,
-        profession: p.profession, 
+        profession: p.profession,
         bio: p.bio,
         ville: p.ville,
         services: p.services,
@@ -371,6 +376,7 @@ app.post('/connexion', async (req, res) => {
                 req.session.user.services = profil.services;
                 req.session.user.photo = profil.photo_profil_url;
                 req.session.user.etoiles = profil.etoiles;
+                console.log("DEBUG RENDER: Profil complet chargé pour", email);
             } else {
                 req.session.user.isPrestataire = false;
             }
@@ -489,9 +495,14 @@ app.post('/devenir-prestataire', upload.fields([
     }
 
     req.session.user.isPrestataire = true;
-    // Mise à jour locale pour la session
+    // Mise à jour immédiate de la session pour l'affichage
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
+    req.session.user.bio = profileData.bio;
+    req.session.user.ville = profileData.ville;
+    req.session.user.services = profileData.services;
+
+    console.log("DEBUG RENDER: Nouveau prestataire enregistré:", req.session.user.email);
 
     res.redirect('/prestataire-info?inscription=ok');
 });
@@ -511,6 +522,8 @@ app.get('/prestataire-public/:id', async (req, res) => {
         prenom: p.utilisateurs.prenom,
         profession: p.profession,
         bio: p.bio,
+        ville: p.ville,
+        services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0
     });
