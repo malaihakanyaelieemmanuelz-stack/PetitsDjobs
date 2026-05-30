@@ -96,7 +96,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
         const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
 
-        const SEUIL_EN_LIGNE_MS = 10 * 60 * 1000; // 10 minutes pour être considéré en ligne
+        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
 
         const eligibles = prestataires
             .filter(p => serviceMatch(p, service) && userMap[p.user_id])
@@ -117,10 +117,20 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             })
             .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. D'abord ceux en ligne
-                if (a.enLigne !== b.enLigne) return b.enLigne ? 1 : -1;
+                // 1. Priorité absolue : En ligne ET à moins de 10 mètres
+                const aProcheEnLigne = a.enLigne && a.distanceM <= 10;
+                const bProcheEnLigne = b.enLigne && b.distanceM <= 10;
+                if (aProcheEnLigne !== bProcheEnLigne) return aProcheEnLigne ? -1 : 1;
+
+                // 2. Si aucun des deux n'est "proche en ligne", on trie par statut En Ligne
+                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 
-                // 2. Ensuite par étoiles (décroissant)
+                // 3. Pour les hors-ligne, priorité au plus récemment connecté
+                if (!a.enLigne && !b.enLigne) {
+                    return new Date(b.dernier_acces) - new Date(a.dernier_acces);
+                }
+
+                // 4. Ensuite par étoiles
                 const etoilesA = a.etoiles || 0;
                 const etoilesB = b.etoiles || 0;
                 if (etoilesA !== etoilesB) return etoilesB - etoilesA;
@@ -212,6 +222,7 @@ app.get('/choisir-prestataire', requireAuth, (req, res) => res.sendFile(path.joi
 app.get('/commande', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'commande.html')));
 app.get('/discuter', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'discuter.html')));
 app.get('/voir-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'voir-prestataire.html')));
+app.get('/suivi', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'suivi.html')));
 
 app.post('/deconnexion', (req, res) => {
     req.session.destroy(() => res.redirect('/index.html'));
@@ -252,10 +263,10 @@ app.get('/get-top-prestataires', async (req, res) => {
     try {
         const lat = req.session.latClient;
         const lon = req.session.lonClient;
-        // Utilise toujours chercherParRayonCroissant pour un tri et un statut en ligne cohérents.
-        // Si lat/lon sont nuls, la distance sera Infinity, les poussant à la fin du tri par distance.
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 10); // Limite à 10 pour la section des meilleurs prestataires
-        res.json(result.prestataires);
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50);
+        // FILTRE : On ne garde que ceux qui sont EN LIGNE pour le défilement
+        const enLigneUniquement = result.prestataires.filter(p => p.disponible);
+        res.json(enLigneUniquement);
     } catch (err) {
         console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
         res.json([]);
@@ -280,13 +291,31 @@ app.post('/preparer-commande', (req, res) => {
     res.json({ ok: true });
 });
 
-app.post('/sauvegarder-position', (req, res) => {
+// Route pour simuler la réussite d'un paiement (Mode Test)
+app.post('/api/simuler-paiement', requireAuth, (req, res) => {
+    if (!req.session.commande) {
+        return res.status(400).json({ error: "Aucune commande en cours." });
+    }
+    // On marque la commande comme payée en session
+    req.session.commande.paye = true;
+    req.session.commande.statut = 'en_route';
+    res.json({ ok: true, message: "Paiement simulé avec succès !" });
+});
+
+app.post('/sauvegarder-position', async (req, res) => {
     const { lat, lon } = req.body;
     if (lat != null && lon != null) {
         req.session.latClient = parseFloat(lat);
         req.session.lonClient = parseFloat(lon);
-        if (req.session.user) req.session.user.lat = parseFloat(lat);
-        if (req.session.user) req.session.user.lon = parseFloat(lon);
+        if (req.session.user) {
+            req.session.user.lat = parseFloat(lat);
+            req.session.user.lon = parseFloat(lon);
+            
+            // MISE À JOUR BASE DE DONNÉES : Pour garantir le statut "En ligne"
+            await supabase.from('utilisateurs')
+                .update({ dernier_acces: new Date().toISOString() })
+                .eq('id', req.session.user.id);
+        }
     }
     res.json({ ok: true, lat: req.session.latClient, lon: req.session.lonClient });
 });
@@ -687,6 +716,28 @@ app.get('/get-public-jobs', (req, res) => {
     }
 
     res.json(jobs);
+});
+
+// Route pour valider la fin de tâche avec mot de passe
+app.post('/valider-fin-tache', requireAuth, async (req, res) => {
+    const { password } = req.body;
+    const { data: user } = await supabase.from('utilisateurs').select('password').eq('id', req.session.user.id).single();
+    
+    const mdpCorrect = await bcrypt.compare(password, user.password);
+    if (mdpCorrect) {
+        // Logique de clôture de mission ici (ex: libérer le paiement)
+        res.json({ ok: true, message: "Tâche terminée. Vous êtes marqué en sécurité." });
+    } else {
+        res.status(403).json({ error: "Mot de passe incorrect. Validation refusée." });
+    }
+});
+
+// Route SOS
+app.post('/alerte-sos', requireAuth, async (req, res) => {
+    const user = req.session.user;
+    console.error(`!!! ALERTE SOS !!! Le prestataire ${user.prenom} ${user.nom} (ID: ${user.id}) a déclenché l'alerte danger.`);
+    // Ici, on pourrait envoyer un SMS ou un email d'urgence à l'admin
+    res.json({ ok: true, message: "Alerte envoyée aux services de sécurité de PetitsDjobs." });
 });
 
 app.post('/accepter-job/:id', requireAuth, async (req, res) => {

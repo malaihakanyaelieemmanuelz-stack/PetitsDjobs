@@ -122,7 +122,26 @@
         document.getElementById('btn-choisir').onclick = () => {
             window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
         };
-        document.getElementById('btn-payer').onclick = () => alert('Paiement Wave — bientôt connecté à votre compte.');
+
+        document.getElementById('btn-payer').onclick = async () => {
+            const btn = document.getElementById('btn-payer');
+            btn.innerText = "CONNEXION À WAVE...";
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+
+            // Simulation d'une attente réseau de 1.5 seconde
+            setTimeout(async () => {
+                const res = await fetch('/api/simuler-paiement', { method: 'POST' });
+                if (res.ok) {
+                    window.location.href = '/suivi';
+                } else {
+                    alert("Erreur lors de la simulation du paiement.");
+                    btn.innerText = "Payer avec Wave";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            }, 1500);
+        };
 
         init();
     </script>

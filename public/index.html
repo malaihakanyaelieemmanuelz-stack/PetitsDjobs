@@ -124,12 +124,12 @@
         function miniCard(p) {
             const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
             
-            let statusBadge = `<span class="badge-dispo">En ligne</span>`;
+            let statusBadge = `<span class="badge-dispo" style="background:#2e7d32">En ligne</span>`;
             let cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
             if (!p.disponible) {
-                const date = p.dernierAcces ? new Date(p.dernierAcces).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Inconnue';
-                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (vu à ${date})</span>`;
+                const date = p.dernierAcces ? new Date(p.dernierAcces).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (${date})</span>`;
                 cardAction = `afficherContactHorsLigne('${p.id}', '${nom}')`;
             }
             
