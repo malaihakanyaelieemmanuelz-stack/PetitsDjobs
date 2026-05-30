@@ -101,7 +101,7 @@
 
     <section class="app-wrap" style="padding: 40px 20px; text-align: center; background: #f9f9f9; margin-top: 20px;">
         <h2>Profils les mieux notés</h2>
-        <div id="prestataires-list" class="provider-scroll-wrapper"></div>
+        <div class="scroll-container" id="container-prestataires"></div>
     </section>
 
     <script>
@@ -118,7 +118,7 @@
             const servicesAffiche = p.services ? p.services.split(',').slice(0, 2).join(', ') + (p.services.split(',').length > 2 ? '...' : '') : 'Services divers';
             
             return `
-                <article class="provider-card" style="cursor:pointer" onclick="location.href='/voir-prestataire?id=${p.id}'">
+                <article class="profile-card" style="cursor:pointer" onclick="location.href='/voir-prestataire?id=${p.id}'">
                     <div class="provider-card-top">
                         <span class="badge-dispo">Disponible</span>
                         <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='cuisine.jpg.jpg'">
@@ -206,14 +206,14 @@
         });
 
         fetch('/get-top-prestataires').then(res => res.json()).then(data => {
-            const container = document.getElementById('prestataires-list');
+            const container = document.getElementById('container-prestataires');
             if (!data.length) {
                 container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Les premiers prestataires apparaîtront ici.</p>';
                 return;
             }
             container.innerHTML = data.map(p => miniCard(p)).join('');
         }).catch(() => {
-            document.getElementById('prestataires-list').innerHTML =
+            document.getElementById('container-prestataires').innerHTML =
                 '<p>Lancez <strong>node server.js</strong> puis ouvrez http://localhost:5500/index.html</p>';
         });
     </script>

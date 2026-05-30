@@ -93,25 +93,35 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
 }
 
 /* --- Nouveau : Conteneur pour défilement horizontal (Top Prestataires) --- */
-.provider-scroll-wrapper {
-    display: flex;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 20px;
-    padding: 10px 20px 25px;
-    margin: 0 -20px; /* Permet aux cartes de défiler jusqu'au bord de l'écran */
-    width: auto;
+.scroll-container {
+    display: flex;             /* Aligne tout en ligne */
+    flex-direction: row;       /* Force la ligne */
+    overflow-x: auto;          /* Active le défilement horizontal */
+    overflow-y: hidden;        /* Empêche le défilement vertical */
+    white-space: nowrap;       /* Empêche les cartes de passer à la ligne */
+    gap: 15px;                 /* Espace */
+    padding: 20px 10px;
+    width: 100%;               /* Prend toute la largeur */
+    -webkit-overflow-scrolling: touch; /* Fluidité Android */
+    border: 5px solid red !important; /* Debug : Si tu vois du rouge, le container est bien là */
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch; /* Défilement fluide sur iOS */
-    scrollbar-width: none; /* Cache la barre de défilement pour un look moderne */
+    scrollbar-width: none;
 }
-.provider-scroll-wrapper::-webkit-scrollbar { display: none; } /* Cache la barre sur Chrome/Android */
+.scroll-container::-webkit-scrollbar { display: none; }
 
-.provider-scroll-wrapper .provider-card {
-    flex: 0 0 280px; /* Largeur fixe pour forcer le scroll */
+.profile-card {
+    flex: 0 0 250px;           /* Largeur fixe, ne change JAMAIS */
+    width: 250px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: inline-block;     /* Sécurité pour le flex */
     scroll-snap-align: start;
-    margin-bottom: 0;
+    white-space: normal;       /* Permet au texte interne de revenir à la ligne */
+    vertical-align: top;
 }
 
 .provider-card {

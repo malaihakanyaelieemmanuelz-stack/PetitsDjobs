@@ -362,20 +362,10 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
-            if (profil) {
-                req.session.user.isPrestataire = true;
-                req.session.user.profession = profil.profession;
-                req.session.user.bio = profil.bio;
-                req.session.user.ville = profil.ville;
-                req.session.user.services = profil.services;
-                req.session.user.photo = profil.photo_profil_url;
-                req.session.user.etoiles = profil.etoiles;
-            } else {
-                req.session.user.isPrestataire = false;
-            }
+            req.session.user.isPrestataire = !!profil;
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
