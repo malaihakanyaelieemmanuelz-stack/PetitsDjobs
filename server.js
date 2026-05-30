@@ -586,6 +586,7 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
     const offre = {
         id: Date.now(),
         clientNom: req.session.user?.nom || 'Client',
+        clientId: req.session.user.id, // Ajout de l'ID du client qui a posté l'offre
         emailClient: req.session.user?.email,
         prix: prixNum,
         description: description || 'Besoin d\'un service particulier',
@@ -642,6 +643,7 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     const offre = offresDiscuter.find(o => o.id === offreId);
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
     if (!req.session.user.isPrestataire) return res.status(403).json({ error: 'Seuls les prestataires peuvent accepter.' });
+    if (offre.clientId === prestataireId) return res.status(403).json({ error: 'Vous ne pouvez pas accepter votre propre tâche.' });
 
     const prestataireId = req.session.user.id;
     if (!offre.acceptations.includes(prestataireId)) {
@@ -674,6 +676,13 @@ app.get('/statut-offre/:id', async (req, res) => {
         return res.json({ statut: 'accepte', list: detailAcceptations, prix: offre.prix });
     }
     res.json({ statut: 'en_attente', suggestion: 'Personne n\'a encore accepté.' });
+});
+
+app.get('/get-job-details/:id', requireAuth, (req, res) => {
+    const offreId = parseInt(req.params.id, 10);
+    const offre = offresDiscuter.find(o => o.id === offreId);
+    if (!offre || offre.clientId !== req.session.user.id) return res.status(404).json({ error: 'Offre introuvable ou non autorisée.' });
+    res.json(offre);
 });
 
 app.use('/uploads', express.static(path.join(publicDir, 'uploads')));

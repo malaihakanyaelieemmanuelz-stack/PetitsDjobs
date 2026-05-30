@@ -114,6 +114,7 @@
 
     <script>
         let connecte = false;
+        let currentUserId = null; // Pour stocker l'ID de l'utilisateur connecté
 
         function distanceLabel(m) {
             if (m < 1000) return m + ' m';
@@ -196,7 +197,11 @@
                                     <strong style="color:#5D4037; font-size:1.1rem; display:block; margin-bottom:4px;">${j.prix} FCFA</strong>
                                     <p style="margin:5px 0; color:#333; font-weight:bold; height:2.4em; overflow:hidden; line-height:1.2;">Nature: ${j.description}</p>
                                     ${j.distanceM != null ? `<p style="color:#2e7d32; font-size:0.75rem; margin:4px 0;">📍 À ${distanceLabel(j.distanceM)} de vous</p>` : ''}
-                                    <button onclick="accepterJobPublic(${j.id})" style="width:100%; border:none; background:#333; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">ACCEPTER</button>
+                                    ${j.clientId === currentUserId ? `
+                                        <button onclick="location.href='/discuter.html?offreId=${j.id}'" style="width:100%; border:none; background:#5D4037; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">GÉRER MA TÂCHE</button>
+                                    ` : `
+                                        <button onclick="accepterJobPublic(${j.id})" style="width:100%; border:none; background:#333; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">ACCEPTER</button>
+                                    `}
                                 </div>
                             </div>
                         `).join('');
@@ -205,7 +210,7 @@
                     }
                 });
         }
-
+        
         async function accepterJobPublic(id) {
             if (!connecte) { window.location.href = '/connexion.html'; return; }
             const res = await fetch('/accepter-job/' + id, { method: 'POST' });
@@ -217,8 +222,11 @@
             document.getElementById('bandeau-connecte').style.display = 'block';
         }
 
-        fetch('/session-status').then(r => r.json()).then(s => {
+        fetch('/session-status').then(r => r.json())
+        .then(s => {
             connecte = s.loggedIn;
+            return fetch('/get-user-data'); // Récupère les données de l'utilisateur si connecté
+        }).then(r => r.json()).then(userData => {
             if (!connecte) return;
             document.getElementById('nav-invite').style.display = 'none';
             document.getElementById('nav-connecte').style.display = 'block';
@@ -226,6 +234,7 @@
             document.getElementById('zone-client').style.display = 'block';
             document.getElementById('bandeau-connecte').style.display = 'block';
             if (navigator.geolocation) {
+                currentUserId = userData.id; // Stocke l'ID de l'utilisateur
                 navigator.geolocation.getCurrentPosition(
                     pos => {
                         const { latitude: lat, longitude: lon } = pos.coords;
