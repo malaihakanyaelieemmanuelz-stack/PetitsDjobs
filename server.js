@@ -198,8 +198,16 @@ app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 
 app.get('/get-all-prestataires', async (req, res) => {
-    const { data } = await supabase.from('infos_prestataires').select('*, utilisateurs(*)');
-    res.json(data || []);
+    const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
+    if (!prestataires) return res.json([]);
+    const userIds = prestataires.map(p => p.user_id);
+    const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
+    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+    res.json(prestataires.map(p => ({
+        ...p,
+        nom: userMap[p.user_id]?.nom || 'Prestataire',
+        prenom: userMap[p.user_id]?.prenom || ''
+    })));
 });
 
 app.get('/prestataires-autour', requireAuth, async (req, res) => {
@@ -214,18 +222,26 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    const lat = req.session.latClient;
-    const lon = req.session.lonClient;
-
-    // Si pas de GPS, on fait un tri simple par étoiles et date
-    if (lat == null || lon == null) {
-        const { data } = await supabase.from('infos_prestataires').select('*').order('etoiles', {ascending: false}).limit(10);
-        return res.json(data || []);
+    try {
+        const lat = req.session.latClient;
+        const lon = req.session.lonClient;
+        if (lat == null || lon == null) {
+            const { data: prestataires } = await supabase.from('infos_prestataires').select('*').order('etoiles', {ascending: false}).limit(10);
+            if (!prestataires) return res.json([]);
+            const userIds = prestataires.map(p => p.user_id);
+            const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
+            const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+            return res.json(prestataires.map(p => ({
+                id: p.user_id, nom: userMap[p.user_id]?.nom || 'Prestataire', prenom: userMap[p.user_id]?.prenom || '',
+                profession: p.profession, bio: p.bio, photo: p.photo_profil_url, ville: p.ville, services: p.services, etoiles: p.etoiles || 0
+            })));
+        }
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 10);
+        res.json(result.prestataires);
+    } catch (err) {
+        console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
+        res.json([]);
     }
-
-    // Sinon on utilise la nouvelle logique 10m + étoiles
-    const result = await chercherParRayonCroissant(lat, lon, null, 0, 10);
-    res.json(result.prestataires);
 });
 
 app.get('/session-status', (req, res) => {
@@ -280,23 +296,22 @@ app.post('/chercher-prestataires', async (req, res) => {
 
 app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId } = req.body;
-    
     const { data: p } = await supabase
         .from('infos_prestataires')
-        .select('*, utilisateurs(*)')
+        .select('*')
         .eq('user_id', prestataireId)
-        .single();
-
+        .maybeSingle();
     if (!p || req.session.latClient == null) {
         return res.status(400).json({ error: 'Prestataire ou position introuvable' });
     }
+    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
     const distM = distanceMetres(p, req.session.latClient, req.session.lonClient);
     const frais = prixDistanceFcfa(distM);
     req.session.commande = req.session.commande || {};
     req.session.commande.prestataireId = p.user_id;
-    req.session.commande.prestataireNom = p.utilisateurs.nom;
-    req.session.commande.prestatairePrenom = p.prenom || '';
-    req.session.commande.prestatairePhoto = p.photo || '';
+    req.session.commande.prestataireNom = user?.nom || 'Prestataire';
+    req.session.commande.prestatairePrenom = user?.prenom || '';
+    req.session.commande.prestatairePhoto = p.photo_profil_url || '';
     req.session.commande.distanceM = distM;
     req.session.commande.distanceKm = (distM / 1000).toFixed(2);
     req.session.commande.fraisDeplacement = frais;
@@ -364,12 +379,20 @@ app.post('/connexion', async (req, res) => {
             if (!mdpCorrect) {
                 return res.redirect('/connexion.html?erreur=mdp');
             }
-
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
-            
+            const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
             req.session.user = { ...compte };
-            req.session.user.isPrestataire = !!profil;
+            if (profil) {
+                req.session.user.isPrestataire = true;
+                req.session.user.profession = profil.profession;
+                req.session.user.bio = profil.bio;
+                req.session.user.ville = profil.ville;
+                req.session.user.services = profil.services;
+                req.session.user.photo = profil.photo_profil_url;
+                req.session.user.etoiles = profil.etoiles;
+            } else {
+                req.session.user.isPrestataire = false;
+            }
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
@@ -488,27 +511,28 @@ app.post('/devenir-prestataire', upload.fields([
     // Mise à jour locale pour la session
     req.session.user.photo = profileData.photo_profil_url;
     req.session.user.profession = profileData.profession;
+    req.session.user.bio = profileData.bio;
+    req.session.user.ville = profileData.ville;
+    req.session.user.services = profileData.services;
 
     res.redirect('/prestataire-info?inscription=ok');
 });
 
 app.get('/prestataire-public/:id', async (req, res) => {
-    const { data: p } = await supabase
-        .from('infos_prestataires')
-        .select('*, utilisateurs(*)')
-        .eq('user_id', req.params.id)
-        .single();
-
+    const { data: p } = await supabase.from('infos_prestataires').select('*').eq('user_id', req.params.id).maybeSingle();
     if (!p) return res.status(404).json({});
-    
+    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
     res.json({
         id: p.user_id,
-        nom: p.utilisateurs.nom,
-        prenom: p.utilisateurs.prenom,
+        nom: user?.nom || 'Prestataire',
+        prenom: user?.prenom || '',
         profession: p.profession,
         bio: p.bio,
+        ville: p.ville,
+        services: p.services,
         photo: p.photo_profil_url,
-        etoiles: p.etoiles || 0
+        etoiles: p.etoiles || 0,
+        commentaires: p.commentaires || []
     });
 });
 
