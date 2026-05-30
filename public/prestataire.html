@@ -17,6 +17,7 @@
 
     <div class="app-wrap">
         <h1 class="page-title">Votre Profil Prestataire</h1>
+        <p id="error-banner" style="display:none; background:#ffcdd2; color:#c62828; padding:12px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:20px;"></p>
         <p class="page-sub">Créez ou modifiez votre carte de visite numérique. C'est votre identité professionnelle sur PetitsDjobs.</p>
 
     <div class="login-card" style="max-width: 520px; margin: 0 auto 40px; background:white; padding:24px; border-radius:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align:left;">
@@ -60,12 +61,21 @@
             <input type="file" name="piece_verso" accept="image/*" required>
 
             <p id="gps-p" style="font-size:0.85rem; color:#666;">Position GPS requise pour apparaître aux clients proches.</p>
-            <button type="submit" style="width:100%; padding:15px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>
+            <button type="submit" id="btn-submit-presta" style="width:100%; padding:15px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>
         </form>
         <p style="text-align:center; margin-top:12px;"><a href="/profil">Retour profil</a></p>
     </div>
     </div>
     <script>
+        // Gestion des erreurs via l'URL
+        const urlErr = new URLSearchParams(location.search).get('erreur');
+        if (urlErr) {
+            const banner = document.getElementById('error-banner');
+            banner.style.display = 'block';
+            if (urlErr === 'serveur') banner.innerText = "Erreur serveur. Vos photos sont peut-être trop lourdes.";
+            if (urlErr === 'db') banner.innerText = "Erreur de base de données. Vérifiez vos informations.";
+        }
+
         const modifier = new URLSearchParams(location.search).get('modifier') === '1';
         // Si on modifie, les photos ne sont plus obligatoires
         if (modifier) {
@@ -115,10 +125,15 @@
         });
 
         document.getElementById('form-presta').onsubmit = function(e) {
+            const btn = document.getElementById('btn-submit-presta');
             if (!document.getElementById('lat').value) {
                 alert('Autorisez la géolocalisation avant de valider.');
                 e.preventDefault();
+                return;
             }
+            btn.innerText = "TRAITEMENT EN COURS... PATIENTEZ";
+            btn.style.opacity = "0.7";
+            btn.style.pointerEvents = "none";
         };
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(

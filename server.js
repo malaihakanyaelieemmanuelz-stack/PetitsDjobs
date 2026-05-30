@@ -15,6 +15,11 @@ const app = express();
 // AJOUT : Indispensable pour que Render accepte les cookies de session
 app.set('trust proxy', 1);
 
+// Sécurité : s'assurer que le dossier uploads existe
+if (!fs.existsSync('public/uploads/')) {
+    fs.mkdirSync('public/uploads/', { recursive: true });
+}
+
 const upload = multer({ dest: 'public/uploads/' });
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
@@ -479,29 +484,31 @@ async function uploadToSupabase(file, bucketName) {
 app.post('/devenir-prestataire', upload.fields([
     { name: 'photo_profil' }, { name: 'piece_recto' }, { name: 'piece_verso' }
 ]), async (req, res) => {
-    // Correction : On vérifie l'ID de l'utilisateur en session plus précisément
-    const userId = req.session.user?.id || req.session.user?.email; 
-    if (!userId) {
-        return res.redirect('/connexion');
-    }
-
-    // Gestion des services multiples venant du formulaire
-    const listeServices = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
-    const servicesEnTexte = listeServices.join(', '); 
-
-    const profileData = {
-        user_id: req.session.user.id,
-        profession: (req.body.profession || '').trim(),
-        bio: (req.body.bio || '').trim(),
-        ville: (req.body.ville || '').trim(),
-        services: servicesEnTexte,
-        telephone: (req.body.telephone || '').trim(),
-        autorise_numero_deconnexion: req.body.autorise_numero === 'on',
-        lat: parseFloat(req.body.lat) || null,
-        lon: parseFloat(req.body.lon) || null
-    };
-
     try {
+        const user = req.session.user;
+        if (!user || !user.id) {
+            console.error("[ERREUR PRESTATAIRE] Session invalide ou ID manquant:", user);
+            return res.redirect('/connexion');
+        }
+
+        // Gestion des services
+        const listeServices = Array.isArray(req.body.services) ? req.body.services : (req.body.services ? [req.body.services] : []);
+        const servicesEnTexte = listeServices.join(', '); 
+
+        const profileData = {
+            user_id: user.id,
+            profession: (req.body.profession || '').trim(),
+            bio: (req.body.bio || '').trim(),
+            ville: (req.body.ville || '').trim(),
+            services: servicesEnTexte,
+            telephone: (req.body.telephone || '').trim(),
+            autorise_numero_deconnexion: req.body.autorise_numero === 'on',
+            lat: parseFloat(req.body.lat) || null,
+            lon: parseFloat(req.body.lon) || null
+        };
+
+        console.log(`[LOG] Tentative d'inscription prestataire pour: ${user.email} (ID: ${user.id})`);
+
         if (req.files?.photo_profil?.[0]) {
             profileData.photo_profil_url = await uploadToSupabase(req.files.photo_profil[0], BUCKET_NAME);
         }
@@ -511,26 +518,26 @@ app.post('/devenir-prestataire', upload.fields([
         if (req.files?.piece_verso?.[0]) {
             profileData.photo_ci_verso_url = await uploadToSupabase(req.files.piece_verso[0], BUCKET_NAME);
         }
-    } catch (uploadErr) {
-        console.error("Erreur lors de l'upload Storage:", uploadErr);
-        return res.redirect('/prestataire?erreur=serveur');
+
+        const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
+        
+        if (error) {
+            console.error("[ERREUR SUPABASE] Upsert infos_prestataires:", error.message);
+            return res.redirect('/prestataire?erreur=db');
+        }
+
+        // Mettre à jour la session
+        req.session.user.isPrestataire = true;
+        req.session.user.photo = profileData.photo_profil_url;
+        
+        req.session.save(() => {
+            res.redirect('/prestataire-info?inscription=ok');
+        });
+
+    } catch (err) {
+        console.error("[ERREUR CRITIQUE] devenir-prestataire:", err.message);
+        res.redirect('/prestataire?erreur=serveur');
     }
-
-    const { error } = await supabase.from('infos_prestataires').upsert(profileData, { onConflict: 'user_id' });
-    if (error) {
-        console.error(error);
-        return res.redirect('/prestataire?erreur=serveur');
-    }
-
-    req.session.user.isPrestataire = true;
-    // Mise à jour locale pour la session
-    req.session.user.photo = profileData.photo_profil_url;
-    req.session.user.profession = profileData.profession;
-    req.session.user.bio = profileData.bio;
-    req.session.user.ville = profileData.ville;
-    req.session.user.services = profileData.services;
-
-    res.redirect('/prestataire-info?inscription=ok');
 });
 
 app.get('/prestataire-public/:id', async (req, res) => {
