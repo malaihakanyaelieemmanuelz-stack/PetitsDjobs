@@ -110,15 +110,22 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             })
             .filter(p => p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. Priorité absolue aux prestataires EN LIGNE
-                if (a.enLigne !== b.enLigne) return b.enLigne ? 1 : -1;
-                // 2. Ensuite par tranche de 10m
-                if (a.tranche10m !== b.tranche10m) return a.tranche10m - b.tranche10m;
-                // 3. Ensuite par étoiles
+                // 1. Priorité aux connectés (true avant false)
+                if (a.enLigne !== b.enLigne) {
+                    return b.enLigne - a.enLigne; // true - false = 1 (b vient avant a), false - true = -1 (a vient avant b)
+                }
+
+                // Si même statut (tous en ligne ou tous hors ligne)
+                // 2. Par étoiles (décroissant)
                 const etoilesA = a.etoiles || 0;
                 const etoilesB = b.etoiles || 0;
                 if (etoilesA !== etoilesB) return etoilesB - etoilesA;
-                return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                // 3. Par date d'inscription (croissant = plus ancien en premier)
+                if (a.created_at !== b.created_at) {
+                    return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+                }
+                // 4. Enfin par distance (croissant)
+                return a.distanceM - b.distanceM;
             });
 
         // On prend les 20 premiers (Online d'abord, puis Offline si besoin)
@@ -144,7 +151,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
             telephone: p.autorise_numero_deconnexion ? p.telephone : null
             })),
             rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
-            hasMore: eligibles.length > offset + finalLimit,
+            hasMore: eligibles.length > offset + limitFixe, // Vérifie s'il y a plus de résultats au-delà de la page actuelle
             total: eligibles.length
         };
     } catch (err) {
@@ -239,18 +246,9 @@ app.get('/get-top-prestataires', async (req, res) => {
     try {
         const lat = req.session.latClient;
         const lon = req.session.lonClient;
-        if (lat == null || lon == null) {
-            const { data: prestataires } = await supabase.from('infos_prestataires').select('*').order('etoiles', {ascending: false}).limit(10);
-            if (!prestataires) return res.json([]);
-            const userIds = prestataires.map(p => p.user_id);
-            const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
-            const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-            return res.json(prestataires.map(p => ({
-                id: p.user_id, nom: userMap[p.user_id]?.nom || 'Prestataire', prenom: userMap[p.user_id]?.prenom || '',
-                profession: p.profession, bio: p.bio, photo: p.photo_profil_url, ville: p.ville, services: p.services, etoiles: p.etoiles || 0
-            })));
-        }
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 10);
+        // Utilise toujours chercherParRayonCroissant pour un tri et un statut en ligne cohérents.
+        // Si lat/lon sont nuls, la distance sera Infinity, les poussant à la fin du tri par distance.
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 10); // Limite à 10 pour la section des meilleurs prestataires
         res.json(result.prestataires);
     } catch (err) {
         console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
