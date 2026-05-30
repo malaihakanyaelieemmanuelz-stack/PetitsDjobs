@@ -563,7 +563,7 @@ app.post('/devenir-prestataire', upload.fields([
 
         // Mettre à jour la session
         req.session.user.isPrestataire = true;
-        req.session.user.photo = profileData.photo_profil_url;
+        if (profileData.photo_profil_url) req.session.user.photo = profileData.photo_profil_url;
         req.session.user.profession = profileData.profession;
         req.session.user.services = profileData.services;
         req.session.user.ville = profileData.ville;
