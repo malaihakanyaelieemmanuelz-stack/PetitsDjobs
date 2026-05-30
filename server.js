@@ -78,17 +78,33 @@ function distanceMetres(p, lat, lon) {
 }
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
-    // On récupère les données fraîches de Supabase
-    const { data: prestataires, error } = await supabase
+    // 1. Récupération des prestataires uniquement
+    const { data: prestataires, error: pError } = await supabase
         .from('infos_prestataires')
-        .select('*, utilisateurs(nom, prenom)');
+        .select('*');
 
-    if (error) console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant :", error.message);
-    if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+    if (pError) {
+        console.error("[DEBUG RENDER] Erreur chercherParRayonCroissant :", pError.message);
+        return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+    }
+
+    // 2. Récupération manuelle des utilisateurs pour obtenir noms et prénoms
+    const userIds = prestataires.map(p => p.user_id);
+    const { data: users } = await supabase
+        .from('utilisateurs')
+        .select('id, nom, prenom')
+        .in('id', userIds);
+
+    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
 
     const eligibles = prestataires
         .filter(p => serviceMatch(p, service))
-        .map(p => ({ ...p, nom: p.utilisateurs?.nom || 'Nom', prenom: p.utilisateurs?.prenom || '', distanceM: distanceMetres(p, lat, lon) }))
+        .map(p => ({ 
+            ...p, 
+            nom: userMap[p.user_id]?.nom || 'Prestataire', 
+            prenom: userMap[p.user_id]?.prenom || '', 
+            distanceM: distanceMetres(p, lat, lon) 
+        }))
         .filter(p => p.distanceM !== Infinity)
         .sort((a, b) => a.distanceM - b.distanceM);
 
@@ -205,23 +221,32 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 });
 
 app.get('/get-top-prestataires', async (req, res) => {
-    // Requête simplifiée demandée : on récupère juste la table des prestataires sans la jointure
-    const { data, error } = await supabase
+    // 1. Récupération des prestataires triés
+    const { data: prestataires, error: pError } = await supabase
         .from('infos_prestataires')
-        .select('*'); 
+        .select('*')
+        .order('etoiles', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: true })
+        .limit(10);
 
-    if (error) {
-        console.error("DEBUG RENDER: Erreur de requête Supabase :", error);
+    if (pError) {
+        console.error("DEBUG RENDER: Erreur Supabase :", pError);
         return res.json([]);
     }
 
-    console.log("DEBUG RENDER: Nombre de prestataires bruts trouvés :", data ? data.length : 0);
+    // 2. Récupération manuelle des utilisateurs
+    const userIds = prestataires.map(p => p.user_id);
+    const { data: users } = await supabase
+        .from('utilisateurs')
+        .select('id, nom, prenom')
+        .in('id', userIds);
 
-    // On renvoie les données brutes mappées correctement pour le front-end
-    res.json((data || []).map(p => ({
+    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+
+    res.json(prestataires.map(p => ({
         id: p.user_id, 
-        nom: p.nom || 'Prestataire', 
-        prenom: p.prenom || '', 
+        nom: userMap[p.user_id]?.nom || 'Prestataire', 
+        prenom: userMap[p.user_id]?.prenom || '', 
         photo: p.photo_profil_url,
         profession: p.profession,
         bio: p.bio,
