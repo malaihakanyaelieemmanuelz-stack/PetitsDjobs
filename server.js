@@ -224,6 +224,7 @@ app.get('/discuter', requireAuth, (req, res) => res.sendFile(path.join(publicDir
 app.get('/voir-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'voir-prestataire.html')));
 app.get('/suivi', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'suivi.html')));
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
+app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
 
 app.post('/deconnexion', (req, res) => {
     req.session.destroy(() => res.redirect('/index.html'));
