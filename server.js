@@ -99,7 +99,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
         const SEUIL_EN_LIGNE_MS = 10 * 60 * 1000; // 10 minutes pour être considéré en ligne
 
         const eligibles = prestataires
-            .filter(p => serviceMatch(p, service))
+            .filter(p => serviceMatch(p, service) && userMap[p.user_id])
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
                 const user = userMap[p.user_id];
@@ -227,11 +227,14 @@ app.get('/get-all-prestataires', async (req, res) => {
     const userIds = prestataires.map(p => p.user_id);
     const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
     const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-    res.json(prestataires.map(p => ({
-        ...p,
-        nom: userMap[p.user_id]?.nom || 'Prestataire',
-        prenom: userMap[p.user_id]?.prenom || ''
-    })));
+    res.json(prestataires
+        .filter(p => userMap[p.user_id])
+        .map(p => ({
+            ...p,
+            nom: userMap[p.user_id].nom,
+            prenom: userMap[p.user_id].prenom
+        }))
+    );
 });
 
 app.get('/prestataires-autour', requireAuth, async (req, res) => {

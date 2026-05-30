@@ -29,6 +29,12 @@
         <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; padding:12px;">
             Retour profil
         </button>
+
+        <div style="margin-top: 30px; padding: 15px; background: #fff5f5; border-radius: 12px; border: 1px solid #ffcdd2; text-align: center;">
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Vous ne souhaitez plus être prestataire ?</p>
+            <button onclick="supprimerMaCarte()" class="btn-danger" style="width:100%; margin-bottom: 8px;">Supprimer ma carte de visite</button>
+            <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:0.8rem; cursor:pointer; text-decoration:underline;">Supprimer définitivement mon compte</button>
+        </div>
     </div>
 
     <script>
@@ -65,6 +71,25 @@
                     </p>
                 </div>`;
         });
+
+        async function supprimerMaCarte() {
+            if (confirm("Voulez-vous supprimer votre carte de visite ? Vous ne serez plus visible comme prestataire mais vous garderez votre compte client.")) {
+                const res = await fetch('/supprimer-profil-prestataire', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) { alert(data.message); window.location.href = '/profil'; }
+                else alert(data.error);
+            }
+        }
+
+        async function supprimerCompte() {
+            if (confirm("⚠️ ACTION IRRÉVERSIBLE : Voulez-vous supprimer votre compte entier (Client + Prestataire) ?")) {
+                const res = await fetch('/supprimer-compte', { method: 'POST' });
+                if (res.ok) {
+                    alert("Compte supprimé.");
+                    window.location.href = '/index.html';
+                }
+            }
+        }
     </script>
 </body>
 </html>

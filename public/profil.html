@@ -37,6 +37,17 @@
         <button id="btn-espace" onclick="window.location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; padding:12px; margin-top:8px;">
             Voir ma carte de visite
         </button>
+
+        <hr style="margin:24px 0;">
+        <div style="background: #fff5f5; padding: 16px; border-radius: 12px; border: 1px solid #ffcdd2;">
+            <h3 style="color:#c62828; margin-top:0; font-size: 1.1rem;">Zone de danger</h3>
+            <p style="color:#666; font-size:0.85rem; margin-bottom: 12px;">Gérez la visibilité de vos données ou fermez votre compte.</p>
+            
+            <button id="btn-supprimer-carte" onclick="supprimerMaCarte()" class="btn-danger" style="display:none; width:100%; margin-bottom: 10px; background-color: #f44336;">
+                Supprimer ma carte de visite
+            </button>
+            <button onclick="supprimerCompte()" class="btn-danger" style="width:100%;">Supprimer mon compte</button>
+        </div>
     </div>
 
     <script>
@@ -49,8 +60,27 @@
                 if (data.isPrestataire) {
                     document.getElementById('btn-devenir').style.display = 'none';
                     document.getElementById('btn-espace').style.display = 'block';
+                    document.getElementById('btn-supprimer-carte').style.display = 'block';
                 }
             });
+
+        async function supprimerMaCarte() {
+            if (confirm("Voulez-vous supprimer votre carte de visite ? Vous ne serez plus visible comme prestataire mais vous garderez votre compte client.")) {
+                const res = await fetch('/supprimer-profil-prestataire', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (res.ok) window.location.reload();
+            }
+        }
+
+        async function supprimerCompte() {
+            if (confirm("⚠️ Êtes-vous sûr ? Votre compte et vos données seront définitivement supprimés. Cette action est irréversible.")) {
+                const res = await fetch('/supprimer-compte', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || data.error);
+                if (res.ok) window.location.href = '/index.html';
+            }
+        }
     </script>
 </body>
 </html>
