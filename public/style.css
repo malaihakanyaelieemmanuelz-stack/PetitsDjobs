@@ -99,14 +99,16 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     overflow-y: hidden;
     gap: 20px;
     padding: 10px 5px 25px;
-    scroll-snap-type: x mandatory; /* Aimante les cartes lors du défilement */
+    white-space: nowrap; /* Force les éléments à rester sur une ligne */
+    scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; /* Défilement fluide sur iOS */
     scrollbar-width: none; /* Cache la barre de défilement pour un look moderne */
 }
 .provider-scroll-wrapper::-webkit-scrollbar { display: none; } /* Cache la barre sur Chrome/Android */
 
 .provider-scroll-wrapper .provider-card {
-    flex: 0 0 280px; /* Empêche les cartes de rétrécir */
+    flex: 0 0 280px !important; /* Force la largeur fixe pour le scroll */
+    display: inline-block;
     scroll-snap-align: start;
     margin-bottom: 0;
 }
