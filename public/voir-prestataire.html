@@ -26,9 +26,9 @@
                     return;
                 }
                 const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
-                const avis = (p.commentaires || []).map(c =>
-                    '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>'
-                ).join('') || '<li>Pas encore d\'avis — soyez le premier !</li>';
+                const avis = (p.commentaires && p.commentaires.length) 
+                    ? p.commentaires.map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('') 
+                    : '<li>Pas encore d\'avis — soyez le premier !</li>';
 
                 document.getElementById('carte').innerHTML = `
                     <div class="trust-card-header">

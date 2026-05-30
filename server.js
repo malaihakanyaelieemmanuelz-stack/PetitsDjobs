@@ -38,7 +38,8 @@ supabase.from('utilisateurs').select('id').limit(1)
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
 const RAYON_MAX_METRES = 50000;
-const BUCKET_NAME = 'prestataires-photos';
+const BUCKET_NAME = 'prestataires';
+const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -360,10 +361,21 @@ app.post('/connexion', async (req, res) => {
             }
 
             // On vérifie séparément s'il est prestataire
-            const { data: profil } = await supabase.from('infos_prestataires').select('user_id').eq('user_id', compte.id).maybeSingle();
+            const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
             
             req.session.user = { ...compte };
-            req.session.user.isPrestataire = !!profil;
+            if (profil) {
+                req.session.user.isPrestataire = true;
+                req.session.user.profession = profil.profession;
+                req.session.user.bio = profil.bio;
+                req.session.user.ville = profil.ville;
+                req.session.user.services = profil.services;
+                req.session.user.photo = profil.photo_profil_url;
+                req.session.user.etoiles = profil.etoiles;
+                req.session.user.commentaires = profil.commentaires;
+            } else {
+                req.session.user.isPrestataire = false;
+            }
             delete req.session.user.password;
         } catch (err) {
             console.error("Erreur de connexion :", err);
