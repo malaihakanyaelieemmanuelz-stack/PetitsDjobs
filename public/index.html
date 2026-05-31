@@ -128,7 +128,12 @@
             let cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
             const dateConnection = p.dernierAcces ? new Date(p.dernierAcces) : null;
-            const heureConnection = dateConnection ? dateConnection.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            // On force l'heure ivoirienne (Africa/Abidjan)
+            const heureConnection = dateConnection ? dateConnection.toLocaleTimeString('fr-FR', {
+                hour: '2-digit', 
+                minute: '2-digit', 
+                timeZone: 'Africa/Abidjan'
+            }) : '--:--';
 
             if (!p.disponible) {
                 statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (vu à ${heureConnection})</span>`;
@@ -163,7 +168,7 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.telephone) {
-                        if (confirm(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté actuellement.\n\nSouhaitez-vous le contacter directement au : ${data.telephone} ?\n\n⚠️ RAPPEL : Le service doit être déclaré sur la plateforme pour bénéficier de la protection.`)) {
+                        if (confirm(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté actuellement.\n\nSouhaitez-vous le contacter directement au : ${data.telephone} ?\n\n⚠️ RAPPEL : Toute rencontre en dehors du site et tout paiement pour ce service hors de ce site est passible de poursuites judiciaires.`)) {
                             window.location.href = "tel:" + data.telephone;
                         }
                     } 

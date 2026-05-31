@@ -244,8 +244,8 @@ app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 're
 
 app.post('/deconnexion', async (req, res) => {
     if (req.session.user) {
-        // On force le statut hors ligne en réglant le dernier accès à 10 minutes dans le passé
-        const horsLigneDate = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        // On enregistre l'heure exacte de la déconnexion
+        const horsLigneDate = new Date().toISOString();
         await supabase.from('utilisateurs').update({ dernier_acces: horsLigneDate }).eq('id', req.session.user.id);
     }
     req.session.destroy(() => res.redirect('/index.html'));
@@ -368,6 +368,26 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = 'en_attente_prestataire';
+
+        // NOTIFICATION DU PRESTATAIRE PAR EMAIL
+        const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
+        if (pUser && pUser.email) {
+            resend.emails.send({
+                from: 'PetitsDjobs <onboarding@resend.dev>',
+                to: pUser.email,
+                subject: '🚨 Nouvelle proposition de mission !',
+                html: `
+                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #5D4037;">Bonjour ${pUser.prenom},</h2>
+                        <p>Un client vient de vous solliciter pour un service de <strong>${cmd.service}</strong>.</p>
+                        <p>Veuillez vous rendre immédiatement sur <strong>votre carte de visite</strong> dans votre espace prestataire pour ACCEPTER ou REFUSER cette tâche.</p>
+                        <p style="color: #d32f2f; font-weight: bold;">⚠️ Vous avez moins d'une minute pour répondre avant que l'offre ne soit annulée.</p>
+                        <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 10px 20px; background: #5D4037; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Voir ma carte de visite</a>
+                    </div>
+                `
+            }).catch(e => console.error("Erreur notification mail prestataire:", e));
+        }
+
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
         console.error("❌ ERREUR CRITIQUE simuler-paiement:", err);
@@ -902,7 +922,29 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
         from: 'PetitsDjobs <onboarding@resend.dev>', 
         to: emailClean,
         subject: 'Votre code de récupération PetitsDjobs',
-        text: `Votre code de récupération est : ${code}. Il expire dans 15 minutes.`
+        html: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 20px auto; padding: 30px; border-radius: 15px; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #eee;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #5D4037; margin: 0; font-size: 24px; text-transform: uppercase;">PetitsDjobs</h1>
+                    <p style="color: #888; font-size: 14px;">La confiance au service de votre quotidien</p>
+                </div>
+                <div style="border-top: 4px solid #5D4037; padding-top: 20px;">
+                    <h2 style="color: #333; font-size: 18px; text-align: center;">Récupération de compte</h2>
+                    <p style="color: #555; line-height: 1.6;">Bonjour,</p>
+                    <p style="color: #555; line-height: 1.6;">Vous avez demandé la réinitialisation de votre mot de passe. Voici votre code de sécurité unique :</p>
+                    
+                    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 10px; margin: 25px 0; border: 1px dashed #5D4037;">
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">${code}</span>
+                    </div>
+
+                    <p style="color: #e53935; font-size: 13px; text-align: center; font-weight: bold;">⚠️ Ce code expire dans 15 minutes.</p>
+                </div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #aaa;">
+                    Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.<br>
+                    © 2026 PetitsDjobs. Tous droits réservés.
+                </div>
+            </div>
+        `
     });
 
     if (mailError) {

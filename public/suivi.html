@@ -92,7 +92,16 @@
         });
 
         function attendreAcceptationPrestataire() {
+            const debutAttente = Date.now();
             const timer = setInterval(async () => {
+                // Vérification du délai d'une minute (60 000 ms)
+                if (Date.now() - debutAttente > 60000) {
+                    clearInterval(timer);
+                    alert("Le prestataire n'a pas répondu dans le délai imparti (1 minute). Veuillez choisir un autre prestataire disponible.");
+                    window.location.href = '/choisir-prestataire';
+                    return;
+                }
+
                 const res = await fetch('/api/statut-mission');
                 const data = await res.json();
                 if (data.statut === 'en_route') {

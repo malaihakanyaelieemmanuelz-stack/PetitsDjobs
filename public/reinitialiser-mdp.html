@@ -12,6 +12,7 @@
         <div class="login-card">
             <h1>NOUVEAU MDP</h1>
             <p style="color:#666; margin-bottom:20px;">Entrez le code reçu par email et votre nouveau mot de passe.</p>
+            <p id="msg-status" style="display:none; color:#2e7d32; font-weight:bold; margin-bottom:10px;"></p>
             <form id="resetForm">
                 <input type="text" id="code" name="recup_code" placeholder="CODE À 6 CHIFFRES" required maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
                 <div style="position: relative; display: flex; align-items: center; margin: 10px 0; width: 100%">
@@ -46,8 +47,11 @@
             });
 
             if (res.ok) {
-                alert("Mot de passe mis à jour ! Connectez-vous.");
-                window.location.href = '/connexion';
+                const msg = document.getElementById('msg-status');
+                msg.innerText = "✓ Mot de passe modifié ! Redirection...";
+                msg.style.display = "block";
+                // Redirection automatique après 1.5s pour que l'utilisateur voie le succès
+                setTimeout(() => window.location.href = '/connexion', 1500);
             } else {
                 const data = await res.json();
                 alert(data.error);
