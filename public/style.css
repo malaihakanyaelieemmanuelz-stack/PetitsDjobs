@@ -237,10 +237,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     .auth-page { 
         display: flex; 
         flex-direction: column; 
-        justify-content: flex-start; 
-        min-height: 100dvh; /* Utilise la hauteur dynamique du viewport mobile */
-        padding: 0; 
+        justify-content: center; 
+        align-items: center;
+        min-height: 100vh; 
+        padding: 20px 0; 
         box-sizing: border-box; 
+        background-color: #f4f4f4;
     }
     .home-header { padding: 20px 10px; }
     .home-header h1 { font-size: 1.8rem; padding: 10px 20px; }
@@ -263,15 +265,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     .card img { height: 140px; }
     .card h3 { font-size: 0.9rem; }
 
-    .login-card { 
-        width: 100% !important;
-        max-width: 100% !important; 
-        border-radius: 0 !important; 
-        box-shadow: none !important; 
-        border-top: none !important;
-        padding: 20px !important;
-        margin: 0 !important;
-        text-align: center !important;
+    /* Rétablissement de la forme "Carte" pour la connexion sur mobile */
+    .login-card {
+        width: 90% !important;
+        margin: 20px auto !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
 

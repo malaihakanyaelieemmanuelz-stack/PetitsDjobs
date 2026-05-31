@@ -351,7 +351,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const payload = {
         client_id: parseInt(req.session.user.id, 10),
         prestataire_id: parseInt(cmd.prestataireId, 10),
-        backup_ids: cmd.backups ? cmd.backups.map(b => b.id) : [],
+        backup_ids: (cmd.backups && cmd.backups.length > 0) ? cmd.backups.map(b => b.id) : null,
         service: cmd.service,
         prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
         statut: 'en_attente_prestataire',
