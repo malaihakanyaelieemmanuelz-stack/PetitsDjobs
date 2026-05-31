@@ -44,21 +44,22 @@
                         <h3>Avis clients</h3>
                         <ul style="padding-left:20px;">${avis}</ul>
                         <button class="btn-primary-sm" style="width:100%; padding:14px; margin-top:16px;"
-                            onclick="choisir(${p.id})">Choisir cette personne</button>
+                            onclick="choisir('${p.id}', '${p.services}')">Choisir cette personne</button>
                     </div>`;
             });
         }
 
-        async function choisir(pid) {
+        async function choisir(pid, services) {
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prestataireId: pid })
             });
-            const data = await res.json();
-            if (data.error) alert(data.error);
-            // On passe les infos en URL pour être sûr que commande.html les reçoive
-            else window.location.href = `/commande?service=${encodeURIComponent(p.services || 'Service')}&prix=${p.prix || 0}`;
+            if (res.ok) {
+                window.location.href = `/commande?service=${encodeURIComponent(services || 'Service')}`;
+            } else {
+                alert("Erreur lors de la sélection.");
+            }
         }
     </script>
 </body>

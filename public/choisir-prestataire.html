@@ -39,12 +39,16 @@
 
         function simulerRechercheExpansion() {
             if (aTrouve) return;
-            rayonVirtuel += 10;
-            info.innerText = `🔍 Recherche en cours... Rayon : ${rayonVirtuel} mètres`;
             
-            // On continue de chercher tous les 500ms visuellement tant qu'on n'a pas de résultats
-            if (rayonVirtuel < 50000) {
-                setTimeout(simulerRechercheExpansion, 300);
+            if (rayonVirtuel < 100) {
+                rayonVirtuel += 10;
+                info.innerText = `🔍 Recherche locale : ${rayonVirtuel} m...`;
+                setTimeout(simulerRechercheExpansion, 200);
+            } else if (rayonVirtuel < 50000) {
+                rayonVirtuel += 1000;
+                const km = (rayonVirtuel / 1000).toFixed(0);
+                info.innerText = `🔍 Élargissement du périmètre : ${km} km...`;
+                setTimeout(simulerRechercheExpansion, 400);
             }
         }
 

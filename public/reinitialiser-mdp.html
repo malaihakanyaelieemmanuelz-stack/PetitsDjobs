@@ -13,13 +13,23 @@
             <h1>NOUVEAU MDP</h1>
             <p style="color:#666; margin-bottom:20px;">Entrez le code reçu par email et votre nouveau mot de passe.</p>
             <form id="resetForm">
-                <input type="text" id="code" placeholder="CODE À 6 CHIFFRES" required maxlength="6">
-                <input type="password" id="new-password" placeholder="NOUVEAU MOT DE PASSE" required minlength="8">
+                <input type="text" id="code" placeholder="CODE À 6 CHIFFRES" required maxlength="6" autocomplete="off">
+                <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
+                    <input type="password" id="new-password" placeholder="NOUVEAU MOT DE PASSE" required minlength="8" style="padding-right: 40px; width: 100%;">
+                    <button type="button" class="toggle-password" data-target="new-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem;">👁️</button>
+                </div>
                 <button type="submit">VALIDER LE CHANGEMENT</button>
             </form>
         </div>
     </div>
     <script>
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = document.getElementById(this.dataset.target);
+                target.type = target.type === 'password' ? 'text' : 'password';
+            });
+        });
+
         const email = new URLSearchParams(window.location.search).get('email');
         
         document.getElementById('resetForm').onsubmit = async function(e) {

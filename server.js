@@ -43,6 +43,16 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// --- Vérification du transporteur au démarrage pour les logs Render ---
+transporter.verify(function(error, success) {
+    if (error) {
+        console.error("❌ ERREUR CONFIG MAIL :", error);
+        console.log("INFO: Vérifiez EMAIL_USER et EMAIL_PASS (Mot de passe d'application obligatoire)");
+    } else {
+        console.log("✅ Serveur prêt à envoyer des emails");
+    }
+});
+
 // --- Test de connexion pour les logs Render ---
 supabase.from('utilisateurs').select('id').limit(1)
     .then(({ error }) => {
@@ -128,23 +138,24 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             })
             .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. Priorité absolue : En ligne ET à moins de 10 mètres
-                const aProcheEnLigne = a.enLigne && a.distanceM <= 10;
-                const bProcheEnLigne = b.enLigne && b.distanceM <= 10;
-                if (aProcheEnLigne !== bProcheEnLigne) return aProcheEnLigne ? -1 : 1;
-
-                // 2. Si aucun des deux n'est "proche en ligne", on trie par statut En Ligne
+                // 1. Statut En Ligne vs Hors Ligne
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 
-                // 3. Pour les hors-ligne, priorité au plus récemment connecté
-                if (!a.enLigne && !b.enLigne) {
-                    return new Date(b.dernier_acces) - new Date(a.dernier_acces);
+                if (a.enLigne) {
+                    // Si En ligne : Étoiles (desc), puis Ancienneté (asc)
+                    const etoilesA = a.etoiles || 0;
+                    const etoilesB = b.etoiles || 0;
+                    if (etoilesA !== etoilesB) return etoilesB - etoilesA;
+                    return new Date(a.created_at) - new Date(b.created_at);
+                } else {
+                    // Si Hors ligne : Dernière connexion (desc), puis Étoiles (desc)
+                    const dateA = new Date(a.dernier_acces || 0);
+                    const dateB = new Date(b.dernier_acces || 0);
+                    if (dateA.getTime() !== dateB.getTime()) return dateB - dateA;
+                    const etoilesA = a.etoiles || 0;
+                    const etoilesB = b.etoiles || 0;
+                    return etoilesB - etoilesA;
                 }
-
-                // 4. Ensuite par étoiles
-                const etoilesA = a.etoiles || 0;
-                const etoilesB = b.etoiles || 0;
-                if (etoilesA !== etoilesB) return etoilesB - etoilesA;
 
                 // 3. Enfin par date d'inscription (plus ancien en premier)
                 if (a.created_at && b.created_at) {
@@ -780,13 +791,19 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
     
     // ENVOI RÉEL DU CODE PAR EMAIL
     const mailOptions = {
-        from: '"PetitsDjobs Support" <' + process.env.EMAIL_USER + '>',
+        from: `"PetitsDjobs Support" <${process.env.EMAIL_USER}>`,
         to: emailClean,
         subject: 'Votre code de récupération PetitsDjobs',
         text: `Votre code de récupération est : ${code}. Il expire dans 15 minutes.`
     };
 
-    transporter.sendMail(mailOptions).catch(err => console.error("Erreur mail récupération:", err));
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error("❌ Echec envoi mail récupération à", emailClean, ":", error);
+        } else {
+            console.log("📧 Mail de récupération envoyé avec succès à", emailClean);
+        }
+    });
 
     res.json({ ok: true, message: "Un code a été envoyé à votre adresse email." });
 });
