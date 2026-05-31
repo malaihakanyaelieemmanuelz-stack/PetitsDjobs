@@ -231,13 +231,18 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
     .home-header { padding: 20px 10px; }
     .home-header h1 { font-size: 1.8rem; padding: 10px 20px; }
     
-    .app-wrap { padding: 10px; } /* Moins de marge sur les bords pour Android */
+    .app-wrap { padding: 10px; width: 100%; box-sizing: border-box; } /* Moins de marge sur les bords pour Android */
     
     .service-grid { 
         padding: 15px 10px; 
-        gap: 12px; 
+        gap: 10px; 
         display: grid;
         grid-template-columns: 1fr 1fr; /* 2 colonnes sur mobile pour ne pas être trop long */
+    }
+
+    /* Sur très petit écran (ex: vieux Android), on passe à 1 colonne */
+    @media (max-width: 360px) {
+        .service-grid { grid-template-columns: 1fr; }
     }
     
     .card { width: 100%; } /* Prend toute la place de sa colonne grid */
@@ -289,6 +294,14 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
         font-size: 1rem !important;
         margin-top: 15px;
     }
+
+    /* Ajustement des listes de prestataires sur mobile */
+    #liste-prestataires > div {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px !important;
+    }
+    #liste-prestataires button { width: 100%; margin-top: 10px; }
 }
 
 /* --- Boutons d'action critique (Suppression) --- */

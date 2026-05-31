@@ -2,12 +2,13 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Choisir Prestataire</title>
 </head>
 <body class="auth-page">
     <div style="max-width: 600px; margin: 30px auto; padding: 20px;">
-        <h1 style="color:#5D4037;">Prestataires les plus proches</h1>
+        <h1 id="titre-recherche" style="color:#5D4037;">Prestataires les plus proches</h1>
         <div id="compteur-total" style="background: #333; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">
             Chargement de la communauté...
         </div>
@@ -21,6 +22,12 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const service = params.get('service') || '';
+        const isBackupMode = params.get('mode') === 'backup';
+
+        if (isBackupMode) {
+            document.getElementById('titre-recherche').innerText = "Choisir un prestataire de secours";
+        }
+
         let offset = 0;
         let lat, lon;
         let rayonVirtuel = 0;
@@ -82,8 +89,11 @@
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // On passe le service pour que la session soit complète et évite le retour arrière
-                body: JSON.stringify({ prestataireId: id, serviceChoisi: service })
+                body: JSON.stringify({ 
+                    prestataireId: id, 
+                    serviceChoisi: service,
+                    isBackup: isBackupMode 
+                })
             });
             const data = await res.json();
             if (data.error) {

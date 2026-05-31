@@ -332,6 +332,7 @@ app.post('/preparer-commande', (req, res) => {
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
+    const { datePrevue } = req.body;
     const cmd = req.session.commande;
     const lat = req.session.latClient;
     const lon = req.session.lonClient;
@@ -347,8 +348,9 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     }
 
     const payload = {
-        client_id: req.session.user.id,
-        prestataire_id: cmd.prestataireId,
+        client_id: parseInt(req.session.user.id, 10),
+        prestataire_id: parseInt(cmd.prestataireId, 10),
+        backup_ids: cmd.backups ? cmd.backups.map(b => b.id) : [],
         service: cmd.service,
         prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
         statut: 'en_attente_prestataire',
@@ -368,21 +370,21 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
-        req.session.commande.statut = 'en_attente_prestataire';
+        req.session.commande.statut = payload.statut;
 
         // NOTIFICATION DU PRESTATAIRE PAR EMAIL
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
         if (pUser && pUser.email) {
+            const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le ${datePrevue}`;
             resend.emails.send({
                 from: 'PetitsDjobs <onboarding@resend.dev>',
                 to: pUser.email,
-                subject: '🚨 Nouvelle proposition de mission !',
+                subject: `🚨 Nouvelle mission ${msgDate} !`,
                 html: `
                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                         <h2 style="color: #5D4037;">Bonjour ${pUser.prenom},</h2>
-                        <p>Un client vient de vous solliciter pour un service de <strong>${cmd.service}</strong>.</p>
-                        <p>Veuillez vous rendre immédiatement sur <strong>votre carte de visite</strong> dans votre espace prestataire pour ACCEPTER ou REFUSER cette tâche.</p>
-                        <p style="color: #d32f2f; font-weight: bold;">⚠️ Vous avez moins d'une minute pour répondre avant que l'offre ne soit annulée.</p>
+                        <p>Vous avez reçu une demande pour : <strong>${cmd.service}</strong> (${msgDate}).</p>
+                        <p>Le client a été invité à vous appeler pour confirmer. Merci de vous connecter pour valider.</p>
                         <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 10px 20px; background: #5D4037; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Voir ma carte de visite</a>
                     </div>
                 `
@@ -398,6 +400,83 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         res.status(500).json({ error: "Erreur technique" });
     }
 });
+
+// --- LOGIQUE DE BASCULEMENT AUTOMATIQUE (GOUVERNANCE DES MISSIONS) ---
+// Cette fonction tourne en arrière-plan toutes les 15 secondes pour vérifier les délais
+setInterval(async () => {
+    const UNE_MINUTE_EN_MS = 60 * 1000;
+    const seuilExpiration = new Date(Date.now() - UNE_MINUTE_EN_MS).toISOString();
+
+    // 1. Trouver les missions qui n'ont pas été acceptées à temps
+    const { data: missionsExpirees } = await supabase
+        .from('missions')
+        .select('*')
+        .eq('statut', 'en_attente_prestataire')
+        .lt('created_at', seuilExpiration);
+
+    if (!missionsExpirees || missionsExpirees.length === 0) return;
+
+    for (const mission of missionsExpirees) {
+        const backups = mission.backup_ids || [];
+        
+        if (backups.length > 0) {
+            // PRENDRE LE PROCHAIN PRESTATAIRE DE SECOURS
+            const nouveauPrestaId = backups[0];
+            const resteBackups = backups.slice(1);
+
+            console.log(`[AUTO-BASCULE] Mission ${mission.id} : Délai dépassé. Passage au secours ${nouveauPrestaId}`);
+
+            // Mise à jour de la mission
+            const { error: updateError } = await supabase
+                .from('missions')
+                .update({
+                    prestataire_id: nouveauPrestaId,
+                    backup_ids: resteBackups,
+                    created_at: new Date().toISOString() // On reset le timer pour le nouveau
+                })
+                .eq('id', mission.id);
+
+            if (!updateError) {
+                // NOTIFIER LES DEUX PARTIES
+                const { data: anciens } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).single();
+                const { data: nouveaux } = await supabase.from('utilisateurs').select('email, prenom').eq('id', nouveauPrestaId).single();
+
+                if (anciens?.email) {
+                    resend.emails.send({
+                        from: 'PetitsDjobs <alerte@resend.dev>',
+                        to: anciens.email,
+                        subject: '⏰ Temps de réponse expiré',
+                        html: `<p>Bonjour ${anciens.prenom}, vous n'avez pas répondu à temps pour la mission de <strong>${mission.service}</strong>. Elle a été attribuée à un autre prestataire.</p>`
+                    });
+                }
+
+                if (nouveaux?.email) {
+                    resend.emails.send({
+                        from: 'PetitsDjobs <alerte@resend.dev>',
+                        to: nouveaux.email,
+                        subject: '🚨 Mission de secours disponible !',
+                        html: `<p>Bonjour ${nouveaux.prenom}, le premier prestataire n'étant pas disponible, cette mission de <strong>${mission.service}</strong> vous est maintenant proposée ! Connectez-vous vite.</p>`
+                    });
+                }
+            }
+        } else {
+            // PLUS DE SECOURS : ANNULATION FINALE
+            console.log(`[AUTO-ANNULATION] Mission ${mission.id} : Aucun prestataire disponible.`);
+            await supabase.from('missions').update({ statut: 'annule_faute_de_prestataire' }).eq('id', mission.id);
+            
+            const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
+            if (client?.email) {
+                resend.emails.send({
+                    from: 'PetitsDjobs <support@resend.dev>',
+                    to: client.email,
+                    subject: '😔 Désolé, aucun prestataire disponible',
+                    html: `<p>Nous avons sollicité tous les prestataires choisis pour votre service de <strong>${mission.service}</strong>, mais aucun n'a pu répondre à temps. Vous allez être remboursé.</p>`
+                });
+            }
+        }
+    }
+}, 15000); // Vérification toutes les 15 secondes
+
 
 app.post('/sauvegarder-position', async (req, res) => {
     const { lat, lon } = req.body;
@@ -454,7 +533,7 @@ app.post('/chercher-prestataires', async (req, res) => {
 });
 
 app.post('/selectionner-prestataire', async (req, res) => {
-    const { prestataireId, serviceChoisi } = req.body;
+    const { prestataireId, serviceChoisi, isBackup } = req.body;
     console.log(`[DEBUG SELECT] Click sur prestataire: ${prestataireId} pour service: ${serviceChoisi}`);
 
     const { data: p } = await supabase
@@ -474,15 +553,29 @@ app.post('/selectionner-prestataire', async (req, res) => {
     const frais = prixDistanceFcfa(distM);
 
     req.session.commande = req.session.commande || {};
-    req.session.commande.prestataireId = p.user_id;
-    req.session.commande.service = serviceChoisi || "Service";
-    req.session.commande.prestataireNom = user?.nom || 'Prestataire';
-    req.session.commande.prestatairePrenom = user?.prenom || '';
-    req.session.commande.prestatairePhoto = p.photo_profil_url || '';
-    req.session.commande.distanceM = distM;
-    req.session.commande.distanceKm = (distM / 1000).toFixed(2);
-    req.session.commande.fraisDeplacement = frais;
-    req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
+
+    if (isBackup) {
+        req.session.commande.backups = req.session.commande.backups || [];
+        // Vérifier si déjà présent
+        if (!req.session.commande.backups.find(b => b.id === p.user_id) && req.session.commande.prestataireId !== p.user_id) {
+            req.session.commande.backups.push({
+                id: p.user_id,
+                nom: user?.nom,
+                prenom: user?.prenom,
+                photo: p.photo_profil_url
+            });
+        }
+    } else {
+        req.session.commande.prestataireId = p.user_id;
+        req.session.commande.service = serviceChoisi || "Service";
+        req.session.commande.prestataireNom = user?.nom || 'Prestataire';
+        req.session.commande.prestatairePrenom = user?.prenom || '';
+        req.session.commande.prestatairePhoto = p.photo_profil_url || '';
+        req.session.commande.distanceM = distM;
+        req.session.commande.distanceKm = (distM / 1000).toFixed(2);
+        req.session.commande.fraisDeplacement = frais;
+        req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
+    }
 
     req.session.save((err) => {
         if (err) {

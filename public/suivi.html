@@ -82,29 +82,33 @@
         initMap();
 
         // Vérifier qui est l'utilisateur (Prestataire ou Client)
-        fetch('/get-user-data').then(r => r.json()).then(user => {
-            fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-                missionId = cmd.missionId;
-                // Si l'utilisateur connecté est le prestataire de cette mission précise
-                if (user.id === cmd.prestataireId) {
-                   isProvider = true;
-                   document.getElementById('btn-sos').style.display = 'block';
-                   demarrerSuiviGPS();
-                   demarrerPollingClientGPS(); // Le prestataire suit le client
+        async function identifierRole() {
+            const rUser = await fetch('/get-user-data');
+            const user = await rUser.json();
+            const rCmd = await fetch('/get-session-commande');
+            const cmd = await rCmd.json();
+            
+            missionId = cmd.missionId;
+
+            if (user.id === cmd.prestataireId) {
+                isProvider = true;
+                document.getElementById('btn-sos').style.display = 'block';
+                demarrerSuiviGPS();
+                demarrerPollingClientGPS();
+            } else {
+                const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
+                const statData = await resStat.json();
+                if (statData.statut === 'en_route' || statData.statut === 'travail_en_cours') {
+                    document.getElementById('status-mission').innerText = "Prestataire en route";
+                    demarrerPollingPrestataireGPS();
                 } else {
-                    // Si c'est le client, on vérifie qu'il est autorisé à être ici
-                    const resStat = await fetch('/api/statut-mission');
-                    const statData = await resStat.json();
-                    if (statData.statut === 'en_route') {
-                        document.getElementById('status-mission').innerText = "Prestataire en route";
-                        document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
-                        demarrerPollingPrestataireGPS();
-                    } else {
-                        window.location.href = '/attente-prestataire';
-                    }
+                    // Si la mission n'est pas encore acceptée, on retourne à l'attente
+                    window.location.href = '/attente-prestataire';
                 }
-            });
-        });
+            }
+        }
+
+        identifierRole();
 
         async function rafraichirStatut() {
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
@@ -127,6 +131,22 @@
             }
         }
         setInterval(rafraichirStatut, 2000);
+
+        function verifierDistance(lat, lon) {
+            if (!clientPos) return;
+            const dist = L.latLng(lat, lon).distanceTo(L.latLng(clientPos.lat, clientPos.lon));
+            
+            fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
+                if (data.statut === 'en_route' && dist < 50) {
+                    document.getElementById('btn-arrive').style.display = 'block';
+                }
+                
+                if (data.statut === 'attente_securite' && dist > 15 && !aAlerteSecurite) {
+                    aAlerteSecurite = true;
+                    document.getElementById('modal-securite').style.display = 'flex';
+                }
+            });
+        }
 
         // Charger les infos de la mission
         fetch('/get-session-commande')
@@ -177,23 +197,8 @@
                     map.setView([latitude, longitude], 16);
                     marker.setLatLng([latitude, longitude]).bindPopup("Vous êtes ici").openPopup();
 
-                    // LOGIQUE INTELLIGENTE DE DISTANCE
-                    if (clientPos) {
-                        const dist = L.latLng(latitude, longitude).distanceTo(L.latLng(clientPos.lat, clientPos.lon));
-                        
-                        fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
-                            // 1. Détecter l'arrivée (moins de 50m)
-                            if (data.statut === 'en_route' && dist < 50) {
-                                document.getElementById('btn-arrive').style.display = 'block';
-                            }
-                            
-                            // 2. Détecter l'éloignement après fin de tâche (plus de 10m)
-                            if (data.statut === 'attente_securite' && dist > 10 && !aAlerteSecurite) {
-                                aAlerteSecurite = true;
-                                document.getElementById('modal-securite').style.display = 'flex';
-                            }
-                        });
-                    }
+                    // Déclenche la vérification de proximité
+                    verifierDistance(latitude, longitude);
 
                     fetch('/sauvegarder-position', {
                         method: 'POST',

@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <title>Confirmer la commande</title>
 </head>
@@ -23,23 +24,45 @@
         <div class="checkout-card">
             <h1 style="text-align:center; color:#5D4037; margin-top:0;">Récapitulatif</h1>
 
+            <div style="background: #fff3e0; color: #e65100; padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; border: 1px solid #ffcc80;">
+                <strong>📞 ACTION REQUISE :</strong> Pour garantir la réalisation du service, vous devez <strong>appeler le prestataire</strong> après validation pour le prévenir.
+            </div>
+
             <div class="gps-banner" id="gps-status" style="margin-bottom:16px;">
                 <strong>📍 Votre position</strong>
                 Calcul de la distance avec le prestataire...
             </div>
 
-            <div id="bloc-prestataire" class="provider-pick" style="display:none;">
+            <div style="margin-bottom: 20px;">
+                <label style="font-weight: bold; color: #5D4037; display: block; margin-bottom: 8px;">Date de la prestation :</label>
+                <select id="select-date-mode" onchange="toggleDatePicker()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                    <option value="today">Aujourd'hui (Maintenant)</option>
+                    <option value="scheduled">Programmer à une autre date</option>
+                </select>
+                <input type="date" id="input-date-custom" style="display:none; width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            </div>
+
+            <h3 style="font-size: 1rem; color: #5D4037;">Prestataire Principal</h3>
+            <div id="bloc-prestataire" class="provider-pick" style="display:none; border: 2px solid #5D4037;">
                 <img id="photo-presta" src="" alt="">
-                <div>
+                <div style="flex:1">
                     <strong id="nom-presta">-</strong><br>
                     <small id="dist-presta" style="color:#2e7d32;"></small>
                 </div>
+                <button onclick="window.location.href='/choisir-prestataire'" style="background:none; border:none; color:#d32f2f; cursor:pointer; font-size:0.8rem; text-decoration:underline;">Changer</button>
             </div>
+
+            <h3 style="font-size: 0.9rem; color: #666; margin-top: 20px;">Prestataires de secours (Optionnel)</h3>
+            <p style="font-size: 0.8rem; color: #888;">En cas d'indisponibilité du premier, nous contacterons automatiquement les suivants.</p>
+            <div id="backups-container"></div>
+            <button id="btn-add-backup" class="btn-outline" style="width:100%; margin-top: 10px; font-size: 0.8rem;" onclick="ajouterSecours()">
+                + Ajouter un prestataire de secours
+            </button>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
             <div class="checkout-row"><span>Service</span><strong id="service-nom">-</strong></div>
             <div class="checkout-row"><span>Prix du service</span><span id="prix-base">-</span> FCFA</div>
-            <div class="checkout-row"><span>Distance</span><span id="distance-km">-</span></div>
-            <div class="checkout-row"><span>Frais déplacement (200 F/km)</span><span id="frais-deplacement">-</span> FCFA</div>
             <div class="checkout-row checkout-total">
                 <span>Total</span>
                 <span><span id="total-final">-</span> FCFA</span>
@@ -59,6 +82,16 @@
         const params = new URLSearchParams(window.location.search);
         let service = params.get('service');
         let prixBase = parseInt(params.get('prix'), 10) || 0;
+        let backups = [];
+
+        function toggleDatePicker() {
+            const mode = document.getElementById('select-date-mode').value;
+            document.getElementById('input-date-custom').style.display = (mode === 'scheduled') ? 'block' : 'none';
+        }
+
+        function ajouterSecours() {
+            window.location.href = `/choisir-prestataire?service=${encodeURIComponent(service)}&mode=backup`;
+        }
 
         function afficherTotal(cmd) {
             service = service || cmd.service;
@@ -80,9 +113,22 @@
                 document.getElementById('dist-presta').innerText = '📍 À ' + label;
                 document.getElementById('btn-payer').disabled = false;
                 document.getElementById('btn-payer').style.opacity = '1';
-                document.getElementById('btn-choisir').style.display = 'none';
             } else {
                 gps.innerHTML = '<strong>Étape suivante</strong> Choisissez d\'abord un prestataire proche de vous.';
+            }
+
+            // Affichage des backups
+            const container = document.getElementById('backups-container');
+            container.innerHTML = '';
+            if (cmd.backups && cmd.backups.length > 0) {
+                cmd.backups.forEach((b, i) => {
+                    container.innerHTML += `
+                        <div class="provider-pick" style="padding: 8px; font-size: 0.85rem; background: #f0f0f0;">
+                            <img src="${b.photo}" style="width:30px; height:30px;">
+                            <span>${b.prenom} ${b.nom} (Secours n°${i+1})</span>
+                        </div>`;
+                });
+                if (cmd.backups.length >= 2) document.getElementById('btn-add-backup').style.display = 'none';
             }
         }
 
@@ -125,9 +171,16 @@
             btn.disabled = true;
             btn.style.opacity = "0.7";
 
+            const dateMode = document.getElementById('select-date-mode').value;
+            const datePrevue = dateMode === 'scheduled' ? document.getElementById('input-date-custom').value : 'today';
+
             // Simulation d'une attente réseau de 1.5 seconde
             setTimeout(async () => {
-                const res = await fetch('/api/simuler-paiement', { method: 'POST' });
+                const res = await fetch('/api/simuler-paiement', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ datePrevue })
+                });
                 if (res.ok) {
                     window.location.href = '/attente-prestataire';
                 } else {
