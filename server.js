@@ -514,22 +514,32 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const pId = req.session.user.id;
     
-    // Diagnostic : On cherche toutes les missions en attente pour cet ID précis
-    console.log(`[QUERY DB] Recherche missions pour prestataire_id: ${pId} (Type: ${typeof pId})`);
-    
-    const { data, error } = await supabase.from('missions')
-        .select('*, client:utilisateurs!client_id(nom, prenom)')
+    // On récupère les missions seules d'abord pour éviter l'erreur de relation
+    const { data: missions, error: mError } = await supabase.from('missions')
+        .select('*')
         .eq('prestataire_id', pId)
         .eq('statut', 'en_attente_prestataire')
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error(`[DEBUG NOTIF ERR] Prestataire ${pId}:`, error.message);
-        return res.status(500).json({ error: error.message });
+    if (mError) {
+        console.error(`[DEBUG NOTIF ERR] Prestataire ${pId}:`, mError.message);
+        return res.status(500).json({ error: mError.message });
     }
 
-    console.log(`[QUERY DB RESULT] ${data?.length || 0} missions trouvées.`);
-    res.json(data);
+    if (!missions || missions.length === 0) return res.json([]);
+
+    // On récupère les infos des clients manuellement
+    const clientIds = missions.map(m => m.client_id);
+    const { data: clients } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', clientIds);
+    const clientMap = Object.fromEntries((clients || []).map(c => [c.id, c]));
+
+    const result = missions.map(m => ({
+        ...m,
+        client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu' }
+    }));
+
+    console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
+    res.json(result);
 });
 
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
