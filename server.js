@@ -37,12 +37,15 @@ const supabase = createClient(
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true pour le port 465
+    port: 587,
+    secure: false, // false pour le port 587 (STARTTLS)
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    }
+    },
+    connectionTimeout: 10000, // 10 secondes
+    greetingTimeout: 10000,
+    socketTimeout: 10000
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
