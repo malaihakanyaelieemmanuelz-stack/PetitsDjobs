@@ -6,6 +6,9 @@
     <title>Ma carte de visite</title>
 </head>
 <body>
+    <!-- Son de notification -->
+    <audio id="notif-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
     <header class="home-header">
         <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
     </header>
@@ -81,26 +84,36 @@
             setInterval(verifierMissions, 2000);
         });
 
+        let lastCount = 0;
         async function verifierMissions() {
             const res = await fetch('/api/mes-missions-prestataire');
             const missions = await res.json();
+            console.log("[DEBUG CLIENT] Missions reçues:", missions); // Pour voir dans F12 si des données arrivent
+            
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
             
             if (missions.length > 0) {
+                if (missions.length > lastCount) {
+                    document.getElementById('notif-sound').play().catch(e => {});
+                }
                 zone.style.display = 'block';
                 liste.innerHTML = missions.map(m => `
                     <div class="checkout-card" style="margin-bottom:10px;">
-                        <strong>Client :</strong> ${m.client.prenom} ${m.client.nom}<br>
+                        <strong>Client :</strong> ${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}<br>
                         <strong>Service :</strong> ${m.service}<br>
                         <strong>Somme :</strong> ${m.prix} FCFA<br>
+                        <p style="color:#b71c1c; font-weight:bold; font-size:0.85rem; margin:8px 0;">⏳ RÉPONDEZ VITE : Moins d'une minute restante !</p>
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:10px; border-radius:6px; cursor:pointer;">ACCEPTER</button>
                             <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#333; border:none; color:white; padding:10px; border-radius:6px; cursor:pointer;">REFUSER</button>
                         </div>
                     </div>
                 `).join('');
+            } else {
+                zone.style.display = 'none';
             }
+            lastCount = missions.length;
         }
 
         async function repondreMission(id, action) {

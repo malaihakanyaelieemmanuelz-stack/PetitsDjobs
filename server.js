@@ -245,8 +245,8 @@ app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 're
 
 app.post('/deconnexion', async (req, res) => {
     if (req.session.user) {
-        // On enregistre l'heure exacte de la déconnexion
-        const horsLigneDate = new Date().toISOString();
+        // On force le statut hors ligne en réglant le dernier accès à 10 minutes dans le passé
+        const horsLigneDate = new Date(Date.now() - 10 * 60 * 1000).toISOString();
         await supabase.from('utilisateurs').update({ dernier_acces: horsLigneDate }).eq('id', req.session.user.id);
     }
     req.session.destroy(() => res.redirect('/index.html'));
@@ -513,7 +513,10 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 // Nouvelles routes pour la gestion des missions par le prestataire
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const pId = req.session.user.id;
-    console.log(`[DEBUG NOTIF] Prestataire ${pId} scanne les offres en attente...`);
+    
+    // Diagnostic : On cherche toutes les missions en attente pour cet ID précis
+    console.log(`[QUERY DB] Recherche missions pour prestataire_id: ${pId} (Type: ${typeof pId})`);
+    
     const { data, error } = await supabase.from('missions')
         .select('*, client:utilisateurs!client_id(nom, prenom)')
         .eq('prestataire_id', pId)
@@ -524,9 +527,8 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         console.error(`[DEBUG NOTIF ERR] Prestataire ${pId}:`, error.message);
         return res.status(500).json({ error: error.message });
     }
-    if (data && data.length > 0) {
-        console.log(`[DEBUG NOTIF OK] ${data.length} mission(s) trouvée(s) pour ${pId}`);
-    }
+
+    console.log(`[QUERY DB RESULT] ${data?.length || 0} missions trouvées.`);
     res.json(data);
 });
 
