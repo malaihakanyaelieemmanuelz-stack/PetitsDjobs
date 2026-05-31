@@ -40,14 +40,18 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true pour le port 465, false pour le port 587
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // On repasse en 465 qui est parfois mieux géré en SSL direct
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    }
+    },
+    debug: true, // AFFICHE TOUT LE DIALOGUE DANS LES LOGS
+    logger: true, // LOGUE LES ACTIONS DANS LA CONSOLE
+    connectionTimeout: 10000, // 10 secondes max pour se connecter
+    greetingTimeout: 10000,
+    socketTimeout: 10000
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -360,9 +364,12 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
     try {
         const { data, error } = await supabase.from('missions').insert(payload).select().single();
+        if (error) {
+            console.error("❌ ERREUR INSERTION MISSION:", error);
+            throw error;
+        }
 
-        if (error) throw error;
-
+        console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = 'en_attente_prestataire';
@@ -489,12 +496,15 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 
 // Nouvelles routes pour la gestion des missions par le prestataire
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
+    console.log(`[DEBUG NOTIF] Le prestataire ${req.session.user.id} vérifie ses nouvelles missions...`);
     const { data, error } = await supabase.from('missions')
         .select('*, client:utilisateurs!client_id(nom, prenom)')
         .eq('prestataire_id', req.session.user.id)
         .eq('statut', 'en_attente_prestataire')
-        .limit(5);
+        .order('created_at', { ascending: false });
+
     if (error) return res.status(500).json({ error: error.message });
+    console.log(`[DEBUG NOTIF] Missions trouvées pour ${req.session.user.id}: ${data?.length || 0}`);
     res.json(data);
 });
 
@@ -896,8 +906,10 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error("❌ ECHEC ENVOI MAIL à", emailClean);
-            console.error("DETAILS SMTP:", error); // Très important pour voir si c'est un timeout ou un refus Gmail
+            console.error(`[MAIL ERROR] Échec pour ${emailClean}:`, error.message);
+            console.error(`[MAIL ERROR] Code Erreur: ${error.code}`);
+            console.error(`[MAIL ERROR] Commande: ${error.command}`);
+            console.log("💡 CONSEIL: Si l'erreur est ETIMEDOUT, Render bloque le SMTP. Utilisez un service API comme Resend ou Brevo.");
         } else {
             console.log("📧 MAIL ENVOYÉ avec succès à", emailClean);
             console.log("REPONSE SERVEUR SMTP:", info.response);
