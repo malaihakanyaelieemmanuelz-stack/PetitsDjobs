@@ -8,7 +8,7 @@ const geolib = require('geolib');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 // Mise à jour structure table : synchronisation avec infos_prestataires
@@ -34,35 +34,12 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-// --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn("⚠️ ATTENTION: Les variables EMAIL_USER ou EMAIL_PASS ne sont pas définies sur Render !");
+// --- Initialisation de Resend (Remplacement de Nodemailer pour éviter les blocages SMTP) ---
+if (!process.env.RESEND_API_KEY) {
+    console.warn("⚠️ ATTENTION: La variable RESEND_API_KEY n'est pas définie sur Render !");
 }
-
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // On repasse en 465 qui est parfois mieux géré en SSL direct
-    auth: {
-        user: process.env.EMAIL_USER, // Ton adresse Gmail
-        pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    },
-    debug: true, // AFFICHE TOUT LE DIALOGUE DANS LES LOGS
-    logger: true, // LOGUE LES ACTIONS DANS LA CONSOLE
-    connectionTimeout: 10000, // 10 secondes max pour se connecter
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-});
-
-// --- Vérification du transporteur au démarrage pour les logs Render ---
-transporter.verify(function(error, success) {
-    if (error) {
-        console.error("❌ ERREUR CONFIG MAIL :", error);
-        console.log("INFO: Vérifiez EMAIL_USER et EMAIL_PASS (Mot de passe d'application obligatoire)");
-    } else {
-        console.log("✅ Serveur prêt à envoyer des emails");
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+console.log("✅ Système d'emails configuré via API Resend");
 
 // --- Test de connexion pour les logs Render ---
 supabase.from('utilisateurs').select('id').limit(1)
@@ -119,7 +96,8 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
-        console.log(`[DEBUG SEARCH] Start - Svc=${service}, Lat=${lat}, Lon=${lon}`);
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[DEBUG SEARCH ${timestamp}] Recherche pour Svc=${service}, Lat=${lat}, Lon=${lon}`);
         const { data: prestataires, error: pError } = await supabase.from('infos_prestataires').select('*');
         
         if (pError) {
@@ -132,12 +110,11 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-        console.log(`[DEBUG SEARCH] Utilisateurs trouvés: ${users?.length || 0} / Prestataires: ${prestataires.length}`);
 
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
 
         const eligibles = prestataires
-            .filter(p => p.user_id !== excludeUserId) // INTERDICTION DE SE COMMANDER SOI-MÊME
+            .filter(p => String(p.user_id) !== String(excludeUserId)) // Comparaison en string pour éviter les bugs d'ID
             .filter(p => serviceMatch(p, service) && userMap[p.user_id])
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
@@ -155,6 +132,10 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 };
             })
             .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
+            .filter(p => {
+                if (!p.nom || p.nom === 'Prestataire') return true; 
+                return true;
+            })
             .sort((a, b) => {
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 
@@ -172,6 +153,11 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                     return etoilesB - etoilesA;
                 }
             });
+
+        console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
+        if (eligibles.length === 0) {
+            console.log(`[DEBUG SEARCH] Raisons possibles du vide : GPS Client=${lat}/${lon}, Svc=${service}, ExclureID=${excludeUserId}`);
+        }
 
         const limitFixe = limit || 20;
         const page = eligibles.slice(offset, offset + limitFixe);
@@ -256,7 +242,12 @@ app.get('/suivi', requireAuth, (req, res) => res.sendFile(path.join(publicDir, '
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
 
-app.post('/deconnexion', (req, res) => {
+app.post('/deconnexion', async (req, res) => {
+    if (req.session.user) {
+        // On force le statut hors ligne en réglant le dernier accès à 10 minutes dans le passé
+        const horsLigneDate = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        await supabase.from('utilisateurs').update({ dernier_acces: horsLigneDate }).eq('id', req.session.user.id);
+    }
     req.session.destroy(() => res.redirect('/index.html'));
 });
 
@@ -273,11 +264,12 @@ app.get('/api/total-prestataires', async (req, res) => {
 app.get('/get-all-prestataires', async (req, res) => {
     const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
     if (!prestataires) return res.json([]);
+    console.log(`[DEBUG API] get-all-prestataires appelé. Nombre total: ${prestataires.length}`);
     const userIds = prestataires.map(p => p.user_id);
     const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', userIds);
     const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
     res.json(prestataires
-        .filter(p => userMap[p.user_id])
+        .filter(p => userMap[p.user_id] && p.user_id !== req.session.user?.id)
         .map(p => ({
             ...p,
             nom: userMap[p.user_id].nom,
@@ -301,10 +293,13 @@ app.get('/get-top-prestataires', async (req, res) => {
     try {
         const lat = req.session.latClient;
         const lon = req.session.lonClient;
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, req.session.user?.id);
-        // FILTRE : On ne garde que ceux qui sont EN LIGNE pour le défilement
-        const enLigneUniquement = result.prestataires.filter(p => p.disponible);
-        res.json(enLigneUniquement);
+        const userId = req.session.user?.id;
+        console.log(`[DEBUG TOP] Demande de Top Prestataires pour User ${userId || 'Inconnu'}. GPS: ${lat}, ${lon}`);
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
+        
+        // On envoie TOUS les prestataires proches (en ligne ou hors ligne)
+        console.log(`[DEBUG TOP] ${result.prestataires.length} prestataires proches envoyés.`);
+        res.json(result.prestataires);
     } catch (err) {
         console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
         res.json([]);
@@ -496,15 +491,21 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 
 // Nouvelles routes pour la gestion des missions par le prestataire
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
-    console.log(`[DEBUG NOTIF] Le prestataire ${req.session.user.id} vérifie ses nouvelles missions...`);
+    const pId = req.session.user.id;
+    console.log(`[DEBUG NOTIF] Prestataire ${pId} scanne les offres en attente...`);
     const { data, error } = await supabase.from('missions')
         .select('*, client:utilisateurs!client_id(nom, prenom)')
-        .eq('prestataire_id', req.session.user.id)
+        .eq('prestataire_id', pId)
         .eq('statut', 'en_attente_prestataire')
         .order('created_at', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
-    console.log(`[DEBUG NOTIF] Missions trouvées pour ${req.session.user.id}: ${data?.length || 0}`);
+    if (error) {
+        console.error(`[DEBUG NOTIF ERR] Prestataire ${pId}:`, error.message);
+        return res.status(500).json({ error: error.message });
+    }
+    if (data && data.length > 0) {
+        console.log(`[DEBUG NOTIF OK] ${data.length} mission(s) trouvée(s) pour ${pId}`);
+    }
     res.json(data);
 });
 
@@ -897,24 +898,18 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
     }
     
     // ENVOI RÉEL DU CODE PAR EMAIL
-    const mailOptions = {
-        from: `"PetitsDjobs Support" <${process.env.EMAIL_USER}>`,
+    const { data, error: mailError } = await resend.emails.send({
+        from: 'PetitsDjobs <onboarding@resend.dev>', 
         to: emailClean,
         subject: 'Votre code de récupération PetitsDjobs',
         text: `Votre code de récupération est : ${code}. Il expire dans 15 minutes.`
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.error(`[MAIL ERROR] Échec pour ${emailClean}:`, error.message);
-            console.error(`[MAIL ERROR] Code Erreur: ${error.code}`);
-            console.error(`[MAIL ERROR] Commande: ${error.command}`);
-            console.log("💡 CONSEIL: Si l'erreur est ETIMEDOUT, Render bloque le SMTP. Utilisez un service API comme Resend ou Brevo.");
-        } else {
-            console.log("📧 MAIL ENVOYÉ avec succès à", emailClean);
-            console.log("REPONSE SERVEUR SMTP:", info.response);
-        }
     });
+
+    if (mailError) {
+        console.error(`[RESEND ERROR] Échec pour ${emailClean}:`, mailError);
+    } else {
+        console.log("📧 MAIL ENVOYÉ via Resend à", emailClean, data?.id);
+    }
 
     res.json({ ok: true, message: "Un code a été envoyé à votre adresse email." });
 });
@@ -993,14 +988,12 @@ Note : Cette alerte a été déclenchée manuellement par le prestataire depuis 
     console.error(alerteTexte);
 
     // ENVOI D'UN EMAIL D'URGENCE À L'ADMINISTRATEUR
-    const mailOptions = {
-        from: '"ALERTE SÉCURITÉ PetitsDjobs" <' + process.env.EMAIL_USER + '>',
-        to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, // Ton email perso
+    resend.emails.send({
+        from: 'SECURITE <onboarding@resend.dev>',
+        to: process.env.ADMIN_EMAIL || 'votre-email-de-test@gmail.com',
         subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
         text: alerteTexte
-    };
-
-    transporter.sendMail(mailOptions).catch(err => console.error("Erreur mail SOS:", err));
+    }).catch(err => console.error("Erreur mail SOS (Resend):", err));
 
     res.json({ ok: true, message: "Alerte envoyée aux services de sécurité de PetitsDjobs." });
 });

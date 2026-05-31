@@ -84,7 +84,7 @@
                    document.getElementById('status-mission').innerText = "Mission en cours";
                    document.getElementById('mission-info').innerText = "Rendez-vous chez le client.";
                    demarrerSuiviGPS();
-                   demarrerSuiviClientPourPrestataire();
+                   demarrerPollingClientGPS(); // Le prestataire suit le client
                 } else {
                     attendreAcceptationPrestataire();
                 }
@@ -99,7 +99,7 @@
                     clearInterval(timer);
                     document.getElementById('status-mission').innerText = "Prestataire en route";
                     document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
-                    demarrerPollingPrestatairePourClient();
+                    demarrerPollingPrestataireGPS(); // Le client suit le prestataire
                 } else if (data.statut === 'refuse') {
                     clearInterval(timer);
                     alert("Le prestataire a refusé la mission.");

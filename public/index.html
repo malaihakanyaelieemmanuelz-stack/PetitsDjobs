@@ -54,43 +54,43 @@
             <img src="cuisine.jpg.jpg" alt="Cuisine">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
-            <button class="btn-commander" data-service="Cuisine" data-prix="1500">COMMANDER</button>
+            <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="lavage.jpg.jpg" alt="Lavage">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
-            <button class="btn-commander" data-service="Lavage" data-prix="800">COMMANDER</button>
+            <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="vaiselle.jpg.jpg" alt="Vaisselle">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
-            <button class="btn-commander" data-service="Vaisselle" data-prix="400">COMMANDER</button>
+            <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="coursier.jpg.jpg" alt="Course">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
-            <button class="btn-commander" data-service="Course" data-prix="500">COMMANDER</button>
+            <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="chauffeur.jpg.jpg" alt="Chauffeur">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
-            <button class="btn-commander" data-service="Chauffeur" data-prix="3000">COMMANDER</button>
+            <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="coiffure.jpg.jpg" alt="Coiffure">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
-            <button class="btn-commander" data-service="Coiffure" data-prix="2500">COMMANDER</button>
+            <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
         </div>
         <div class="card">
             <img src="remplacement.JPG.jpg" alt="Remplacement">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
-            <button class="btn-commander" data-service="Remplacement" data-prix="500">COMMANDER</button>
+            <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special">
             <img src="particulier.jpg.jpg" alt="Particulier">
@@ -127,13 +127,14 @@
             let statusBadge = `<span class="badge-dispo" style="background:#2e7d32">En ligne</span>`;
             let cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
+            const dateConnection = p.dernierAcces ? new Date(p.dernierAcces) : null;
+            const heureConnection = dateConnection ? dateConnection.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+
             if (!p.disponible) {
-                const date = p.dernierAcces ? new Date(p.dernierAcces).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (${date})</span>`;
+                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (vu à ${heureConnection})</span>`;
                 cardAction = `afficherContactHorsLigne('${p.id}', '${nom}')`;
             }
             
-            // FIX: Correction de p.p.services en p.services + gestion sécurisée du texte
             let servicesAffiche = 'Services divers';
             if (p.services && typeof p.services === 'string') {
                 const liste = p.services.split(',');
@@ -162,8 +163,11 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.telephone) {
-                        alert(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté mais a autorisé la transmission de son numéro : ${data.telephone}\n\n⚠️ IMPORTANT : Cet appel doit rester strictement professionnel. Toute entente directe pour effectuer le service en dehors du site à cette étape est passible de poursuites judiciaires.`);
-                    } else {
+                        if (confirm(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté actuellement.\n\nSouhaitez-vous le contacter directement au : ${data.telephone} ?\n\n⚠️ RAPPEL : Le service doit être déclaré sur la plateforme pour bénéficier de la protection.`)) {
+                            window.location.href = "tel:" + data.telephone;
+                        }
+                    } 
+                    else {
                         alert(`${nom} est hors ligne et n'a pas laissé de numéro de secours. Réessayez plus tard.`);
                     }
                 });
@@ -276,8 +280,16 @@
 
             if (data.prestataires && data.prestataires.length > 0) {
                 const proche = data.prestataires[0]; // Le premier est le plus proche
-                console.log("[DEBUG CLIENT] Prestataire trouvé, redirection vers son profil.");
-                window.location.href = `/voir-prestataire?id=${proche.id}&service=${encodeURIComponent(service)}`;
+                console.log("[DEBUG CLIENT] Prestataire trouvé, sélection automatique...");
+                
+                // On sélectionne le prestataire en arrière-plan pour aller direct au paiement
+                await fetch('/selectionner-prestataire', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prestataireId: proche.id, serviceChoisi: service })
+                });
+                
+                window.location.href = '/commande';
             } else {
                 console.warn("[DEBUG CLIENT] Aucun prestataire trouvé à proximité, redirection vers recherche.");
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);

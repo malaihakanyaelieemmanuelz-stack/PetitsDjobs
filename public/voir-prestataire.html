@@ -34,7 +34,7 @@
                 const listeServices = (p.services || 'Services divers').split(',').map(s => s.trim());
                 const boutonsServices = listeServices.map(s => `
                     <button class="btn-primary-sm" style="width:100%; margin-bottom:8px; background:#f5f5f5; color:#333; border:1px solid #ddd;" 
-                        onclick="choisir('${p.id}', '${s}')">Commander : ${s}</button>
+                        onclick="choisir('${p.id}', '${s}')">Solliciter ${p.nom} (${s})</button>
                 `).join('');
 
                 document.getElementById('carte').innerHTML = `

@@ -92,7 +92,9 @@
             if (cmd.service) service = cmd.service;
             if (cmd.prixBase != null) prixBase = cmd.prixBase;
 
-            if (!cmd.prestataireNom) {
+            // Si les données sont incomplètes, on attend un peu (latence session) ou on redirige
+            if (!cmd.prestataireId || !cmd.prestataireNom) {
+                console.warn("Données prestataires manquantes dans la session, retour recherche.");
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
                 return;
             }

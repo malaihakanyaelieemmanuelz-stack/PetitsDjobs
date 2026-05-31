@@ -68,7 +68,7 @@
                         <strong>${p.nom}</strong> — ${p.profession || ''}<br>
                         <small>${p.distanceM} m · ⭐ ${p.etoiles || 0}</small>
                     </div>
-                    <button type="button" data-id="${p.id}" class="btn-select" style="padding:8px 12px; background:#5D4037; color:#fff; border:none; border-radius:6px; cursor:pointer;">SÉLECTIONNER</button>
+                    <button type="button" data-id="${p.id}" class="btn-select" style="padding:8px 12px; background:#5D4037; color:#fff; border:none; border-radius:6px; cursor:pointer;">Solliciter ${p.nom}</button>
                 `;
                 container.appendChild(div);
                 div.querySelector('.btn-select').onclick = () => selectionner(p.id);
@@ -76,10 +76,14 @@
         }
 
         async function selectionner(id) {
+            aTrouve = true; // Arrête immédiatement la recherche
+            info.innerText = "Sélection du prestataire...";
+            
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prestataireId: id })
+                // On passe le service pour que la session soit complète et évite le retour arrière
+                body: JSON.stringify({ prestataireId: id, serviceChoisi: service })
             });
             const data = await res.json();
             if (data.error) {

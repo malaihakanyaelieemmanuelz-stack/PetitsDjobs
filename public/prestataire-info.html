@@ -77,6 +77,8 @@
                 </div>`;
             
             verifierMissions();
+            // Vérifier les nouvelles missions toutes les 5 secondes sans rafraîchir
+            setInterval(verifierMissions, 5000);
         });
 
         async function verifierMissions() {
