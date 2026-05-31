@@ -30,11 +30,17 @@
                     ? p.commentaires.map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('') 
                     : '<li>Pas encore d\'avis — soyez le premier !</li>';
 
-                // On transforme la chaîne "Lavage, Vaisselle" en boutons cliquables
-                const listeServices = (p.services || 'Services divers').split(',').map(s => s.trim());
-                const boutonsServices = listeServices.map(s => `
-                    <button class="btn-primary-sm" style="width:100%; margin-bottom:8px; background:#f5f5f5; color:#333; border:1px solid #ddd;" 
-                        onclick="choisir('${p.id}', '${s}')">Solliciter ${p.nom} (${s})</button>
+                // On transforme la chaîne en liste de cases à cocher, en excluant "Tout"
+                const listeServices = (p.services || 'Services divers')
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s.toLowerCase() !== 'tout');
+
+                const checkboxesServices = listeServices.map(s => `
+                    <label style="display: flex; align-items: center; gap: 12px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; cursor: pointer;">
+                        <input type="checkbox" class="service-checkbox" value="${s}" style="width: 20px; height: 20px;">
+                        <span style="font-weight: 500; color: #333;">${s}</span>
+                    </label>
                 `).join('');
 
                 document.getElementById('carte').innerHTML = `
@@ -46,19 +52,30 @@
                     <div class="trust-card-body">
                         <p><strong>Métier :</strong> ${p.profession || '-'}</p>
                         <p style="font-style:italic; color:#555;">"${p.bio || 'Personne de confiance sur PetitsDjobs.'}"</p>
-                        <h3 style="margin-top:20px; color:#5D4037;">Choisissez un service :</h3>
-                        <div style="margin-bottom:20px;">${boutonsServices}</div>
+                        <h3 style="margin-top:20px; color:#5D4037;">Sélectionnez vos besoins :</h3>
+                        <div id="services-selection" style="margin-bottom:20px;">${checkboxesServices}</div>
+                        <button id="btn-valider-multi" class="btn-primary-sm" style="width:100%; margin-bottom: 20px;" onclick="validerSelection('${p.id}')">
+                            Commander les services sélectionnés
+                        </button>
                         <h3>Avis</h3>
                         <ul style="padding-left:20px;">${avis}</ul>
                     </div>`;
             });
         }
 
-        async function choisir(pid, serviceSelectionne) {
+        async function validerSelection(pid) {
+            const checkboxes = document.querySelectorAll('.service-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert("Veuillez sélectionner au moins un service.");
+                return;
+            }
+
+            const servicesSelectionnes = Array.from(checkboxes).map(cb => cb.value).join(', ');
+
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prestataireId: pid, serviceChoisi: serviceSelectionne })
+                body: JSON.stringify({ prestataireId: pid, serviceChoisi: servicesSelectionnes })
             });
             if (res.ok) {
                 window.location.href = `/commande`;

@@ -241,6 +241,15 @@
             document.getElementById('bandeau-connecte').style.display = 'block';
         }
 
+        const params = new URLSearchParams(location.search);
+        if (params.get('erreur') === 'refus_appel') {
+            const bandeau = document.getElementById('bandeau-connecte');
+            bandeau.innerText = "⚠️ Prestataire indisponible. Veuillez en choisir un autre.";
+            bandeau.style.background = "#ffcdd2";
+            bandeau.style.color = "#c62828";
+            bandeau.style.display = 'block';
+        }
+
         fetch('/session-status').then(r => r.json())
         .then(s => {
             connecte = s.loggedIn;

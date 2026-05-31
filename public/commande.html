@@ -24,8 +24,9 @@
         <div class="checkout-card">
             <h1 style="text-align:center; color:#5D4037; margin-top:0;">Récapitulatif</h1>
 
-            <div style="background: #fff3e0; color: #e65100; padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; border: 1px solid #ffcc80;">
+            <div id="banner-appel" style="display:none; background: #fff3e0; color: #e65100; padding: 15px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; border: 1px solid #ffcc80;">
                 <strong>📞 ACTION REQUISE :</strong> Pour garantir la réalisation du service, vous devez <strong>appeler le prestataire</strong> après validation pour le prévenir.
+                <div id="phone-display" style="margin-top:10px; font-weight:bold; font-size:1.1rem;"></div>
             </div>
 
             <div class="gps-banner" id="gps-status" style="margin-bottom:16px;">
@@ -63,6 +64,8 @@
 
             <div class="checkout-row"><span>Service</span><strong id="service-nom">-</strong></div>
             <div class="checkout-row"><span>Prix du service</span><span id="prix-base">-</span> FCFA</div>
+            <div class="checkout-row"><span>Distance</span><span id="distance-km">-</span></div>
+            <div class="checkout-row"><span>Frais de déplacement</span><span id="frais-deplacement">-</span> FCFA</div>
             <div class="checkout-row checkout-total">
                 <span>Total</span>
                 <span><span id="total-final">-</span> FCFA</span>
@@ -87,18 +90,41 @@
         function toggleDatePicker() {
             const mode = document.getElementById('select-date-mode').value;
             document.getElementById('input-date-custom').style.display = (mode === 'scheduled') ? 'block' : 'none';
+            if (currentCmdData) verifierNecessiteAppel(currentCmdData);
+        }
+
+        function verifierNecessiteAppel(cmd) {
+            console.log("[DEBUG] Vérification nécessité appel. En ligne:", cmd.disponible, "Tel:", cmd.telephone);
+            const mode = document.getElementById('select-date-mode').value;
+            const banner = document.getElementById('banner-appel');
+            const phoneDisplay = document.getElementById('phone-display');
+            
+            const isToday = (mode === 'today');
+            const isOnline = cmd.disponible;
+            const hasPhone = !!cmd.telephone;
+
+            if ((!isToday || !isOnline) && hasPhone) {
+                banner.style.display = 'block';
+                phoneDisplay.innerHTML = `<button onclick="location.href='/appele.html'" class="btn-primary-sm" style="background:#e65100; margin-top:10px; width:100%;">APPELER LE PRESTATAIRE</button>`;
+            } else {
+                banner.style.display = 'none';
+            }
         }
 
         function ajouterSecours() {
             window.location.href = `/choisir-prestataire?service=${encodeURIComponent(service)}&mode=backup`;
         }
 
+        let currentCmdData = null;
+
         function afficherTotal(cmd) {
-            service = service || cmd.service;
-            document.getElementById('service-nom').innerText = service || '-';
+            console.log("[DEBUG] Données reçues pour affichage:", cmd);
+            currentCmdData = cmd;
+            service = service || cmd.service || 'Service';
+            document.getElementById('service-nom').innerHTML = (service || '-').replace(/,/g, '<br>');
             document.getElementById('prix-base').innerText = cmd.prixBase ?? prixBase;
-            document.getElementById('distance-km').innerText = cmd.distanceKm ? cmd.distanceKm + ' km' : '—';
-            document.getElementById('frais-deplacement').innerText = cmd.fraisDeplacement ?? '—';
+            document.getElementById('distance-km').innerText = cmd.distanceKm && cmd.distanceKm !== "Infinity" ? cmd.distanceKm + ' km' : 'Calcul...';
+            document.getElementById('frais-deplacement').innerText = cmd.fraisDeplacement ?? '0';
             document.getElementById('total-final').innerText = cmd.total ?? prixBase;
 
             const gps = document.getElementById('gps-status');
@@ -113,7 +139,10 @@
                 document.getElementById('dist-presta').innerText = '📍 À ' + label;
                 document.getElementById('btn-payer').disabled = false;
                 document.getElementById('btn-payer').style.opacity = '1';
+                
+                verifierNecessiteAppel(cmd);
             } else {
+                console.warn("[DEBUG] Aucun prestataire sélectionné dans la session.");
                 gps.innerHTML = '<strong>Étape suivante</strong> Choisissez d\'abord un prestataire proche de vous.';
             }
 
@@ -135,12 +164,14 @@
         async function init() {
             const res = await fetch('/get-session-commande');
             const cmd = await res.json();
+            console.log("[DEBUG] Session commande récupérée:", cmd);
+
             if (cmd.service) service = cmd.service;
             if (cmd.prixBase != null) prixBase = cmd.prixBase;
 
             // Si les données sont incomplètes, on attend un peu (latence session) ou on redirige
             if (!cmd.prestataireId || !cmd.prestataireNom) {
-                console.warn("Données prestataires manquantes dans la session, retour recherche.");
+                console.error("[DEBUG] Données critiques manquantes, redirection recherche.");
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
                 return;
             }
@@ -152,12 +183,13 @@
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async pos => {
+                    console.log("[DEBUG] GPS OK sur Android:", pos.coords.latitude, pos.coords.longitude);
                     await fetch('/sauvegarder-position', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ lat: pos.coords.latitude, lon: pos.coords.longitude })
                     });
-                });
+                }, err => console.error("[DEBUG] Erreur Geolocation Android:", err.message));
             }
         }
 
@@ -174,6 +206,8 @@
             const dateMode = document.getElementById('select-date-mode').value;
             const datePrevue = dateMode === 'scheduled' ? document.getElementById('input-date-custom').value : 'today';
 
+            console.log("[DEBUG] Lancement simulation paiement...");
+
             // Simulation d'une attente réseau de 1.5 seconde
             setTimeout(async () => {
                 const res = await fetch('/api/simuler-paiement', { 
@@ -181,10 +215,15 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ datePrevue })
                 });
-                if (res.ok) {
+                
+                const result = await res.json();
+                console.log("[DEBUG] Réponse serveur simuler-paiement:", result);
+
+                if (res.ok && result.ok) {
                     window.location.href = '/attente-prestataire';
                 } else {
-                    alert("Erreur lors de la simulation du paiement.");
+                    console.error("[DEBUG] Erreur paiement:", result.error);
+                    alert("Erreur : " + (result.error || "Problème de connexion. Vérifiez votre GPS."));
                     btn.innerText = "Payer avec Wave";
                     btn.disabled = false;
                     btn.style.opacity = "1";

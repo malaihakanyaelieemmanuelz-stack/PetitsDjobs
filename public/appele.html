@@ -4,33 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <title>Statut Prestataire - PETITSDJOBS</title>
+    <title>Appel Prestataire - PETITSDJOBS</title>
 </head>
-<body>
-    <header class="home-header"><h1>PETITSDJOBS</h1></header>
-    <div class="app-wrap" style="text-align:center; padding-top:50px;">
-        <h2>GESTION DE DISPONIBILITÉ</h2>
-        <p style="color:#c62828; font-weight:bold; margin: 20px 0; padding:15px; border:1px solid #c62828; border-radius:8px;">
-            ⚠️ RAPPEL JURIDIQUE : Toute entente directe entre vous et l'employeur pour effectuer 
-            le service sans passer par le site est passible de poursuites judiciaires.
-        </p>
+<body class="auth-page">
+    <div class="login-card" style="max-width: 400px;">
+        <h1 style="font-size: 1.5rem; color: #5D4037;">APPEL DE CONFIRMATION</h1>
+        <p style="color: #666; font-size: 0.9rem;">Veuillez appeler le prestataire pour confirmer sa disponibilité pour votre commande.</p>
         
-        <div style="display:flex; flex-direction:column; gap:20px; max-width:350px; margin:0 auto;">
-            <button onclick="window.location.href='/connexion.html'" style="background:#2e7d32; color:white; padding:20px; border-radius:12px; font-weight:bold; border:none; cursor:pointer; font-size:1.1rem;">
-                ✅ DISPONIBLE<br><small style="font-weight:normal;">(Se connecter pour être visible)</small>
-            </button>
-            
-            <button onclick="marquerOccupe()" style="background:#333; color:white; padding:20px; border-radius:12px; font-weight:bold; border:none; cursor:pointer; font-size:1.1rem;">
-                🚫 OCCUPÉ<br><small style="font-weight:normal;">(Rester hors ligne)</small>
-            </button>
+        <div id="info-presta" class="provider-pick" style="justify-content: center; margin: 20px 0;">
+             <img id="call-photo" src="default-profile.png" style="width: 70px; height: 70px; border-radius: 50%;">
+             <div style="text-align: left;">
+                 <strong id="call-nom">Chargement...</strong><br>
+                 <small id="call-tel">-- -- -- --</small>
+             </div>
+        </div>
+
+        <a id="link-appel" href="#" class="btn-primary-sm" style="display:block; text-decoration:none; background:#2e7d32; padding:15px; margin-bottom:20px;">
+            📞 LANCER L'APPEL
+        </a>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <p style="font-size:0.9rem; margin-bottom: 15px;">Le prestataire a-t-il accepté ?</p>
+        <div style="display:flex; gap:10px;">
+            <button onclick="location.href='/commande'" style="flex:1; background:#5D4037; color:white; border:none; border-radius:6px; padding:12px; cursor:pointer; font-weight:bold;">OUI, ACCEPTÉ</button>
+            <button onclick="location.href='/index.html?erreur=refus_appel'" style="flex:1; background:#333; color:white; border:none; border-radius:6px; padding:12px; cursor:pointer; font-weight:bold;">NON, REFUSÉ</button>
         </div>
     </div>
 
     <script>
-        function marquerOccupe() {
-            alert("Vous avez été marqué comme occupé.");
-            window.location.href = '/index.html';
-        }
+        fetch('/get-session-commande').then(r => r.json()).then(cmd => {
+            if (cmd.telephone) {
+                const nom = [cmd.prestatairePrenom, cmd.prestataireNom].filter(Boolean).join(' ');
+                document.getElementById('call-nom').innerText = nom || "Prestataire";
+                document.getElementById('call-tel').innerText = cmd.telephone;
+                document.getElementById('link-appel').href = "tel:" + cmd.telephone;
+                if (cmd.prestatairePhoto) document.getElementById('call-photo').src = cmd.prestatairePhoto;
+            } else {
+                alert("Erreur: Numéro du prestataire introuvable.");
+                window.location.href = "/commande";
+            }
+        });
     </script>
 </body>
 </html>

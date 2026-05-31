@@ -104,6 +104,7 @@
         }
 
         async function charger(append) {
+            console.log("[DEBUG] Chargement prestataires avec GPS:", lat, lon);
             const res = await fetch('/chercher-prestataires', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -128,6 +129,7 @@
             async pos => {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
+                console.log("[DEBUG] Position capturée:", lat, lon);
                 simulerRechercheExpansion();
                 await fetch('/sauvegarder-position', {
                     method: 'POST',

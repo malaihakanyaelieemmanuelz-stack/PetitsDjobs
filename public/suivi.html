@@ -83,26 +83,32 @@
 
         // Vérifier qui est l'utilisateur (Prestataire ou Client)
         async function identifierRole() {
+            console.log("[DEBUG SUIVI] Identification du rôle...");
             const rUser = await fetch('/get-user-data');
             const user = await rUser.json();
             const rCmd = await fetch('/get-session-commande');
             const cmd = await rCmd.json();
             
+            console.log("[DEBUG SUIVI] Utilisateur:", user.id, "Commande Session:", cmd);
             missionId = cmd.missionId;
 
             if (user.id === cmd.prestataireId) {
+                console.log("[DEBUG SUIVI] Rôle: PRESTATAIRE");
                 isProvider = true;
                 document.getElementById('btn-sos').style.display = 'block';
                 demarrerSuiviGPS();
                 demarrerPollingClientGPS();
             } else {
+                console.log("[DEBUG SUIVI] Rôle: CLIENT. Vérification mission:", missionId);
                 const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
                 const statData = await resStat.json();
+                console.log("[DEBUG SUIVI] Statut mission actuel:", statData.statut);
+
                 if (statData.statut === 'en_route' || statData.statut === 'travail_en_cours') {
                     document.getElementById('status-mission').innerText = "Prestataire en route";
                     demarrerPollingPrestataireGPS();
                 } else {
-                    // Si la mission n'est pas encore acceptée, on retourne à l'attente
+                    console.warn("[DEBUG SUIVI] Mission non acceptée, redirection vers attente.");
                     window.location.href = '/attente-prestataire';
                 }
             }

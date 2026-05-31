@@ -339,12 +339,11 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
     console.log("[DEBUG SIMU PAY] Contenu session.commande:", JSON.stringify(cmd));
-    console.log(`[DEBUG SIMU PAY] GPS en session: ${lat}, ${lon}`);
-    console.log(`[DEBUG SIMU PAY] IDs à insérer: Client=${req.session.user.id} (Type: ${typeof req.session.user.id}), Prestataire=${cmd.prestataireId} (Type: ${typeof cmd.prestataireId})`);
+    console.log(`[DEBUG SIMU PAY] GPS en session: ${lat}, ${lon}`);    console.log(`[DEBUG SIMU PAY] Payload: Client=${req.session.user.id}, Presta=${cmd.prestataireId}`);
 
     if (!cmd || !cmd.prestataireId || !lat || !lon) {
-        console.error("[SIMU PAY ERROR] Données manquantes critiques :", { cmd, lat, lon });
-        return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
+        console.error("[SIMU PAY ERROR] Manque GPS ou PrestaID. SessionLat:", lat, "SessionLon:", lon);
+        return res.status(400).json({ error: "Localisation introuvable. Veuillez autoriser le GPS et rafraîchir la page d'accueil." });
     }
 
     const payload = {
@@ -544,13 +543,20 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
     if (!p) return res.status(400).json({ error: 'Prestataire introuvable' });
     
-    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
+    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom, dernier_acces').eq('id', p.user_id).maybeSingle();
     
+    // Calcul de l'état en ligne (moins de 5 minutes)
+    const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+    const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
+    const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
+
     const latC = req.session.latClient || 0;
     const lonC = req.session.lonClient || 0;
 
     const distM = distanceMetres(p, latC, lonC);
     const frais = prixDistanceFcfa(distM);
+
+    console.log(`[DEBUG SELECT] Distance calculée: ${distM}m`);
 
     req.session.commande = req.session.commande || {};
 
@@ -571,7 +577,10 @@ app.post('/selectionner-prestataire', async (req, res) => {
         req.session.commande.prestataireNom = user?.nom || 'Prestataire';
         req.session.commande.prestatairePrenom = user?.prenom || '';
         req.session.commande.prestatairePhoto = p.photo_profil_url || '';
-        req.session.commande.distanceM = distM;
+        req.session.commande.disponible = enLigne;
+        req.session.commande.telephone = p.autorise_numero_deconnexion ? p.telephone : null;
+        // Sécurité contre Infinity qui devient null en JSON
+        req.session.commande.distanceM = (distM === Infinity) ? 999999 : distM;
         req.session.commande.distanceKm = (distM / 1000).toFixed(2);
         req.session.commande.fraisDeplacement = frais;
         req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
