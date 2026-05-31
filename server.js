@@ -36,7 +36,9 @@ const supabase = createClient(
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true pour le port 465
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
@@ -66,7 +68,7 @@ supabase.from('utilisateurs').select('id').limit(1)
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
-const RAYON_MAX_METRES = 50000;
+const RAYON_MAX_METRES = 500000; // Augmenté à 500km pour ne plus être limité
 const BUCKET_NAME = 'prestataires';
 const offresDiscuter = [];
 
