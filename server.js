@@ -323,10 +323,17 @@ app.post('/sauvegarder-position', async (req, res) => {
             req.session.user.lat = parseFloat(lat);
             req.session.user.lon = parseFloat(lon);
             
-            // MISE À JOUR BASE DE DONNÉES : Pour garantir le statut "En ligne"
+            // Mise à jour de l'activité
             await supabase.from('utilisateurs')
                 .update({ dernier_acces: new Date().toISOString() })
                 .eq('id', req.session.user.id);
+
+            // Si c'est un prestataire, on met aussi à jour sa position réelle pour le suivi client
+            if (req.session.user.isPrestataire) {
+                await supabase.from('infos_prestataires')
+                    .update({ lat: parseFloat(lat), lon: parseFloat(lon) })
+                    .eq('user_id', req.session.user.id);
+            }
         }
     }
     res.json({ ok: true, lat: req.session.latClient, lon: req.session.lonClient });
@@ -376,13 +383,25 @@ app.post('/selectionner-prestataire', async (req, res) => {
     req.session.commande.fraisDeplacement = frais;
     req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
 
-    res.json({
-        prestataireNom: p.nom,
-        distanceKm: req.session.commande.distanceKm,
-        fraisDeplacement: frais,
-        prixBase: req.session.commande.prixBase,
-        total: req.session.commande.total
+    // FIX: On force la sauvegarde de la session avant de répondre pour éviter le "double clic"
+    req.session.save(() => {
+        res.json({
+            prestataireNom: user?.nom || 'Prestataire',
+            distanceKm: req.session.commande.distanceKm,
+            fraisDeplacement: frais,
+            prixBase: req.session.commande.prixBase,
+            total: req.session.commande.total
+        });
     });
+});
+
+// Route pour que le client récupère la position GPS du prestataire choisi
+app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
+    const cmd = req.session.commande;
+    if (!cmd || !cmd.prestataireId) return res.json({});
+    
+    const { data } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
+    res.json(data || {});
 });
 
 app.post('/calculer-distance', async (req, res) => {
