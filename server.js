@@ -88,10 +88,12 @@ function serviceMatch(prestataire, serviceDemande) {
 
 function distanceMetres(p, lat, lon) {
     if (p.lat == null || p.lon == null) return Infinity;
-    return geolib.getDistance(
+    const dist = geolib.getDistance(
         { latitude: parseFloat(lat), longitude: parseFloat(lon) },
         { latitude: parseFloat(p.lat), longitude: parseFloat(p.lon) }
     );
+    console.log(`[DEBUG DIST] Calcule entre Client(${lat}, ${lon}) et Presta(${p.lat}, ${p.lon}) = ${dist}m`);
+    return dist;
 }
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
@@ -334,16 +336,16 @@ app.post('/preparer-commande', (req, res) => {
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const { datePrevue } = req.body;
     const cmd = req.session.commande;
-    const lat = req.session.latClient;
-    const lon = req.session.lonClient;
+    const lat = req.session.latClient || req.session.user?.lat;
+    const lon = req.session.lonClient || req.session.user?.lon;
     
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
-    console.log("[DEBUG SIMU PAY] Contenu session.commande:", JSON.stringify(cmd));
-    console.log(`[DEBUG SIMU PAY] GPS en session: ${lat}, ${lon}`);    console.log(`[DEBUG SIMU PAY] Payload: Client=${req.session.user.id}, Presta=${cmd.prestataireId}`);
+    console.log(`[DEBUG SIMU PAY] GPS récupéré: ${lat}, ${lon}`);
+    console.log(`[DEBUG SIMU PAY] IDs: Client=${req.session.user?.id}, Presta=${cmd?.prestataireId}`);
 
     if (!cmd || !cmd.prestataireId || !lat || !lon) {
-        console.error("[SIMU PAY ERROR] Manque GPS ou PrestaID. SessionLat:", lat, "SessionLon:", lon);
-        return res.status(400).json({ error: "Localisation introuvable. Veuillez autoriser le GPS et rafraîchir la page d'accueil." });
+        console.error("[SIMU PAY ERROR] Données manquantes:", { hasCmd: !!cmd, prestaId: cmd?.prestataireId, lat, lon });
+        return res.status(400).json({ ok: false, error: "Localisation introuvable. Activez votre GPS et rafraîchissez la page." });
     }
 
     const payload = {
@@ -552,7 +554,8 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
     const latC = req.session.latClient || 0;
     const lonC = req.session.lonClient || 0;
-
+    console.log(`[DEBUG SELECT] GPS Client en session: ${latC}, ${lonC}`);
+    
     const distM = distanceMetres(p, latC, lonC);
     const frais = prixDistanceFcfa(distM);
 
@@ -600,16 +603,33 @@ app.post('/selectionner-prestataire', async (req, res) => {
 app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
     try {
         const missionId = req.query.missionId || req.session.commande?.missionId;
+        console.log(`[DEBUG GPS SUIVI] Requête reçue. Mission ID: ${missionId}`);
+
+        if (!missionId) {
+            console.warn(`[DEBUG GPS SUIVI] missionId manquant dans l'appel`);
+            return res.json({});
+        }
+
         if (missionId) {
             const { data: mData } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
-            if (mData?.lat_prestataire) return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
+            if (mData?.lat_prestataire) {
+                console.log(`[DEBUG GPS SUIVI] Position trouvée pour mission ${missionId}: ${mData.lat_prestataire}, ${mData.lon_prestataire}`);
+                return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
+            }
         }
 
         const cmd = req.session.commande;
-        if (!cmd?.prestataireId) return res.json({});
+        if (!cmd?.prestataireId) {
+            console.warn(`[DEBUG GPS SUIVI] Aucun prestataire en session pour le suivi`);
+            return res.json({});
+        }
         const { data: pPos } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
+        console.log(`[DEBUG GPS SUIVI] Repli sur position fixe prestataire ${cmd.prestataireId}: ${pPos?.lat}, ${pPos?.lon}`);
         res.json(pPos || {});
-    } catch (e) { res.json({}); }
+    } catch (e) { 
+        console.error(`[DEBUG GPS SUIVI] Erreur critique:`, e.message);
+        res.json({}); 
+    }
 });
 
 // Nouvelles routes pour la gestion des missions par le prestataire
@@ -676,15 +696,28 @@ app.post('/api/confirmer-securite', requireAuth, async (req, res) => {
 
 app.get('/api/suivi-client-gps', requireAuth, async (req, res) => {
     const { missionId } = req.query;
+    console.log(`[DEBUG GPS CLIENT] Suivi client pour mission: ${missionId}`);
+    
+    if (!missionId) return res.json({});
+
     const { data, error } = await supabase.from('missions').select('lat_client, lon_client').eq('id', missionId).maybeSingle();
-    if (error || !data) return res.json({});
+    if (error || !data) {
+        console.error(`[DEBUG GPS CLIENT] Erreur ou données absentes:`, error?.message);
+        return res.json({});
+    }
+    console.log(`[DEBUG GPS CLIENT] Position client renvoyée: ${data.lat_client}, ${data.lon_client}`);
     res.json({ lat: data.lat_client, lon: data.lon_client });
 });
 
 app.get('/api/statut-mission', requireAuth, async (req, res) => {
     const missionId = req.query.missionId || req.session.commande?.missionId;
-    if (!missionId) return res.json({ statut: 'aucune' });
+    console.log(`[DEBUG STATUT] Vérification mission ${missionId}`);
+    if (!missionId) {
+        console.warn(`[DEBUG STATUT] missionId est NULL ou UNDEFINED`);
+        return res.json({ statut: 'aucune' });
+    }
     const { data } = await supabase.from('missions').select('statut').eq('id', missionId).maybeSingle();
+    console.log(`[DEBUG STATUT] Résultat pour ${missionId}: ${data?.statut || 'inconnu'}`);
     res.json(data || { statut: 'inconnu' });
 });
 

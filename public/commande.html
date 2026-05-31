@@ -119,11 +119,17 @@
 
         function afficherTotal(cmd) {
             console.log("[DEBUG] Données reçues pour affichage:", cmd);
+            
+            if (cmd.distanceM > 100000) {
+                console.error("[DEBUG] Distance incohérente détectée:", cmd.distanceM);
+                document.getElementById('gps-status').innerHTML = `<strong style="color:red;">⚠️ Erreur de localisation</strong> La distance calculée (${cmd.distanceKm}km) semble fausse. Vérifiez votre GPS.`;
+            }
+
             currentCmdData = cmd;
             service = service || cmd.service || 'Service';
             document.getElementById('service-nom').innerHTML = (service || '-').replace(/,/g, '<br>');
             document.getElementById('prix-base').innerText = cmd.prixBase ?? prixBase;
-            document.getElementById('distance-km').innerText = cmd.distanceKm && cmd.distanceKm !== "Infinity" ? cmd.distanceKm + ' km' : 'Calcul...';
+            document.getElementById('distance-km').innerText = (cmd.distanceKm && cmd.distanceKm !== "Infinity") ? cmd.distanceKm + ' km' : 'Calcul...';
             document.getElementById('frais-deplacement').innerText = cmd.fraisDeplacement ?? '0';
             document.getElementById('total-final').innerText = cmd.total ?? prixBase;
 
@@ -199,16 +205,35 @@
 
         document.getElementById('btn-payer').onclick = async () => {
             const btn = document.getElementById('btn-payer');
-            btn.innerText = "CONNEXION À WAVE...";
+            btn.innerText = "VÉRIFICATION GPS...";
             btn.disabled = true;
-            btn.style.opacity = "0.7";
+            
+            // Force une mise à jour GPS avant de payer (Crucial pour Android)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async pos => {
+                    const { latitude: lat, longitude: lon } = pos.coords;
+                    console.log("[DEBUG] GPS rafraîchi avant paiement:", lat, lon);
+                    
+                    await fetch('/sauvegarder-position', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lat, lon })
+                    });
 
+                    procederAuPaiement();
+                }, () => procederAuPaiement()); // On tente quand même si échec
+            } else {
+                procederAuPaiement();
+            }
+        };
+
+        async function procederAuPaiement() {
+            const btn = document.getElementById('btn-payer');
+            btn.innerText = "CONNEXION À WAVE...";
+            
             const dateMode = document.getElementById('select-date-mode').value;
             const datePrevue = dateMode === 'scheduled' ? document.getElementById('input-date-custom').value : 'today';
 
-            console.log("[DEBUG] Lancement simulation paiement...");
-
-            // Simulation d'une attente réseau de 1.5 seconde
             setTimeout(async () => {
                 const res = await fetch('/api/simuler-paiement', { 
                     method: 'POST',

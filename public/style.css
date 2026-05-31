@@ -1,5 +1,12 @@
 /* --- Base --- */
-body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; margin: 0; min-height: 100vh; }
+html, body { 
+    width: 100%; 
+    margin: 0; 
+    padding: 0; 
+    overflow-x: hidden; /* Empêche le défilement horizontal sur mobile */
+    min-height: 100%;
+}
+body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
 .auth-page { display: flex; justify-content: center; align-items: center; }
 
 /* Styles spécifiques aux formulaires (CONNEXION/INSCRIPTION) */
@@ -227,11 +234,18 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; ma
 
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
-    .auth-page { display: flex; flex-direction: column; justify-content: flex-start; min-height: 100vh; padding: 10px; box-sizing: border-box; }
+    .auth-page { 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: flex-start; 
+        min-height: 100dvh; /* Utilise la hauteur dynamique du viewport mobile */
+        padding: 0; 
+        box-sizing: border-box; 
+    }
     .home-header { padding: 20px 10px; }
     .home-header h1 { font-size: 1.8rem; padding: 10px 20px; }
     
-    .app-wrap { padding: 10px; width: 100%; box-sizing: border-box; } /* Moins de marge sur les bords pour Android */
+    .app-wrap { padding: 0 10px; width: 100%; box-sizing: border-box; }
     
     .service-grid { 
         padding: 15px 10px; 

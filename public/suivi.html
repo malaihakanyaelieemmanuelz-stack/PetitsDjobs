@@ -83,34 +83,44 @@
 
         // Vérifier qui est l'utilisateur (Prestataire ou Client)
         async function identifierRole() {
-            console.log("[DEBUG SUIVI] Identification du rôle...");
-            const rUser = await fetch('/get-user-data');
-            const user = await rUser.json();
-            const rCmd = await fetch('/get-session-commande');
-            const cmd = await rCmd.json();
-            
-            console.log("[DEBUG SUIVI] Utilisateur:", user.id, "Commande Session:", cmd);
-            missionId = cmd.missionId;
-
-            if (user.id === cmd.prestataireId) {
-                console.log("[DEBUG SUIVI] Rôle: PRESTATAIRE");
-                isProvider = true;
-                document.getElementById('btn-sos').style.display = 'block';
-                demarrerSuiviGPS();
-                demarrerPollingClientGPS();
-            } else {
-                console.log("[DEBUG SUIVI] Rôle: CLIENT. Vérification mission:", missionId);
-                const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
-                const statData = await resStat.json();
-                console.log("[DEBUG SUIVI] Statut mission actuel:", statData.statut);
-
-                if (statData.statut === 'en_route' || statData.statut === 'travail_en_cours') {
-                    document.getElementById('status-mission').innerText = "Prestataire en route";
-                    demarrerPollingPrestataireGPS();
-                } else {
-                    console.warn("[DEBUG SUIVI] Mission non acceptée, redirection vers attente.");
-                    window.location.href = '/attente-prestataire';
+            try {
+                console.log("[DEBUG SUIVI] Début identification...");
+                const rUser = await fetch('/get-user-data');
+                const user = await rUser.json();
+                const rCmd = await fetch('/get-session-commande');
+                const cmd = await rCmd.json();
+                
+                console.log("[DEBUG SUIVI] Session récupérée:", cmd);
+                
+                if (!cmd.missionId) {
+                    console.error("[DEBUG SUIVI] Pas de missionId dans la session !");
+                    document.getElementById('status-mission').innerText = "Erreur: Mission introuvable";
+                    return;
                 }
+
+                missionId = cmd.missionId;
+
+                if (user.id === cmd.prestataireId) {
+                    console.log("[DEBUG SUIVI] Rôle détecté: PRESTATAIRE");
+                    isProvider = true;
+                    document.getElementById('btn-sos').style.display = 'block';
+                    demarrerSuiviGPS();
+                    demarrerPollingClientGPS();
+                } else {
+                    console.log("[DEBUG SUIVI] Rôle détecté: CLIENT");
+                    const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
+                    const statData = await resStat.json();
+                    
+                    if (statData.statut === 'en_route' || statData.statut === 'travail_en_cours' || statData.statut === 'attente_securite') {
+                        document.getElementById('status-mission').innerText = "Suivi en cours...";
+                        demarrerPollingPrestataireGPS();
+                    } else {
+                        console.warn("[DEBUG SUIVI] Statut non éligible au suivi:", statData.statut);
+                        window.location.href = '/attente-prestataire';
+                    }
+                }
+            } catch (err) {
+                console.error("[DEBUG SUIVI] Erreur lors de l'initialisation:", err);
             }
         }
 
@@ -141,7 +151,14 @@
         function verifierDistance(lat, lon) {
             if (!clientPos) return;
             const dist = L.latLng(lat, lon).distanceTo(L.latLng(clientPos.lat, clientPos.lon));
+            console.log(`[DEBUG SUIVI] Distance entre les points: ${dist.toFixed(0)} mètres`);
             
+            // Mise à jour de l'affichage de distance
+            const label = dist < 1000 ? Math.round(dist) + " m" : (dist/1000).toFixed(2) + " km";
+            document.getElementById('gps-info').innerHTML = isProvider ? 
+                `📍 Distance du client : <strong>${label}</strong>` : 
+                `🛵 Le prestataire est à <strong>${label}</strong> de vous.`;
+
             fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
                 if (data.statut === 'en_route' && dist < 50) {
                     document.getElementById('btn-arrive').style.display = 'block';
