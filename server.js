@@ -689,7 +689,15 @@ app.post('/api/repondre-mission', requireAuth, async (req, res) => {
 
 app.post('/api/marquer-arrivee', requireAuth, async (req, res) => {
     const { missionId } = req.body;
-    const { error } = await supabase.from('missions').update({ statut: 'travail_en_cours' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    // On autorise le prestataire ET le client à marquer l'arrivée
+    const { data: mission } = await supabase.from('missions').select('prestataire_id, client_id').eq('id', missionId).single();
+    if (!mission) return res.status(404).json({ error: 'Mission introuvable' });
+    
+    if (req.session.user.id !== mission.prestataire_id && req.session.user.id !== mission.client_id) {
+        return res.status(403).json({ error: 'Interdit' });
+    }
+
+    const { error } = await supabase.from('missions').update({ statut: 'travail_en_cours' }).eq('id', missionId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
 });
@@ -697,6 +705,14 @@ app.post('/api/marquer-arrivee', requireAuth, async (req, res) => {
 app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     const { missionId } = req.body;
     const { error } = await supabase.from('missions').update({ statut: 'attente_securite' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.post('/api/confirmer-depart', requireAuth, async (req, res) => {
+    const { missionId } = req.body;
+    // Le client valide le départ du prestataire pour terminer la mission
+    const { error } = await supabase.from('missions').update({ statut: 'termine' }).eq('id', missionId).eq('client_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
 });
