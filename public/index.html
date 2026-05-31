@@ -291,8 +291,8 @@
                 body: JSON.stringify({ prestataireId: id })
             });
             if (res.ok) {
-                console.log("[DEBUG CLIENT] Sélection enregistrée, redirection commande.");
-                window.location.href = `/commande`;
+                // On transmet le service en paramètre pour être certain de l'affichage
+                window.location.href = `/commande?service=${encodeURIComponent(service)}`;
             } else {
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
             }

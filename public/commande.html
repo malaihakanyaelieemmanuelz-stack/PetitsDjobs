@@ -113,12 +113,6 @@
             }
         }
 
-        fetch('/preparer-commande', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ service, prix: prixBase })
-        }).catch(() => {});
-
         document.getElementById('btn-choisir').onclick = () => {
             window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service || '');
         };

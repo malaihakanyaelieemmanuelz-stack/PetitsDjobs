@@ -40,15 +40,13 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Plus robuste sur Render pour Gmail
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    connectionTimeout: 20000, // On augmente le délai pour éviter les ETIMEDOUT
-    greetingTimeout: 20000,
-    socketTimeout: 20000,
-    debug: true
+    debug: true,
+    logger: true // Active les logs détaillés pour Nodemailer
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -328,13 +326,17 @@ app.get('/session-status', (req, res) => {
 
 app.post('/preparer-commande', (req, res) => {
     const { service, prix, prixLibre, missionId } = req.body;
-    req.session.commande = {
-        service: service || 'Service',
-        prixBase: parseInt(prixLibre || prix, 10) || 0,
-        prixLibre: !!prixLibre,
-        missionId: missionId
-    };
-    res.json({ ok: true });
+    // FIX: Fusionner avec la session existante pour ne pas perdre le prestataireId
+    req.session.commande = req.session.commande || {};
+    if (service) req.session.commande.service = service;
+    if (prix !== undefined) req.session.commande.prixBase = parseInt(prixLibre || prix, 10) || 0;
+    if (prixLibre !== undefined) req.session.commande.prixLibre = !!prixLibre;
+    if (missionId) req.session.commande.missionId = missionId;
+    
+    req.session.save((err) => {
+        if (err) console.error("Erreur sauvegarde session preparer-commande:", err);
+        res.json({ ok: true });
+    });
 });
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
@@ -347,7 +349,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     console.log("[DEBUG SIMU PAY] LatClient en session:", lat);
 
     if (!cmd || !cmd.prestataireId || !lat) {
-        console.error("[SIMU PAY ERROR] Données manquantes critiques.");
+        console.error("[SIMU PAY ERROR] Données manquantes critiques :", { cmd, lat });
         return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
     }
 
