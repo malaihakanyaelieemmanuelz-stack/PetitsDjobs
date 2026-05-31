@@ -30,6 +30,13 @@
                     ? p.commentaires.map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('') 
                     : '<li>Pas encore d\'avis — soyez le premier !</li>';
 
+                // On transforme la chaîne "Lavage, Vaisselle" en boutons cliquables
+                const listeServices = (p.services || 'Services divers').split(',').map(s => s.trim());
+                const boutonsServices = listeServices.map(s => `
+                    <button class="btn-primary-sm" style="width:100%; margin-bottom:8px; background:#f5f5f5; color:#333; border:1px solid #ddd;" 
+                        onclick="choisir('${p.id}', '${s}')">Commander : ${s}</button>
+                `).join('');
+
                 document.getElementById('carte').innerHTML = `
                     <div class="trust-card-header">
                         <img src="${p.photo || ''}" alt="">
@@ -38,25 +45,23 @@
                     </div>
                     <div class="trust-card-body">
                         <p><strong>Métier :</strong> ${p.profession || '-'}</p>
-                        <p><strong>Ville :</strong> ${p.ville || '-'}</p>
-                        <p><strong>Services :</strong> ${p.services || '-'}</p>
                         <p style="font-style:italic; color:#555;">"${p.bio || 'Personne de confiance sur PetitsDjobs.'}"</p>
-                        <h3>Avis clients</h3>
+                        <h3 style="margin-top:20px; color:#5D4037;">Choisissez un service :</h3>
+                        <div style="margin-bottom:20px;">${boutonsServices}</div>
+                        <h3>Avis</h3>
                         <ul style="padding-left:20px;">${avis}</ul>
-                        <button class="btn-primary-sm" style="width:100%; padding:14px; margin-top:16px;"
-                            onclick="choisir('${p.id}', '${p.services}')">Choisir cette personne</button>
                     </div>`;
             });
         }
 
-        async function choisir(pid, services) {
+        async function choisir(pid, serviceSelectionne) {
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prestataireId: pid })
+                body: JSON.stringify({ prestataireId: pid, serviceChoisi: serviceSelectionne })
             });
             if (res.ok) {
-                window.location.href = `/commande?service=${encodeURIComponent(services || 'Service')}`;
+                window.location.href = `/commande`;
             } else {
                 alert("Erreur lors de la sélection.");
             }

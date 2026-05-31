@@ -36,17 +36,20 @@ const supabase = createClient(
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
+    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Utilisation de STARTTLS (plus compatible avec Render)
+    port: 465,
+    secure: true, // Utilisation de SSL direct (plus stable sur Render)
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    connectionTimeout: 15000, // 15 secondes
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
-    debug: true // Affiche plus de détails dans les logs Render
+    tls: {
+        rejectUnauthorized: false // Aide à passer les pare-feu de cloud
+    },
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    debug: true
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -330,10 +333,11 @@ app.post('/preparer-commande', (req, res) => {
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
-    const cmd = req.session.commande;
-    if (!cmd || !cmd.prestataireId || !req.session.latClient) {
-        console.error("[SIMU PAY] Données manquantes :", { cmd, lat: req.session.latClient });
-        return res.status(400).json({ error: "Aucune commande en cours." });
+    const cmd = req.session.commande || {};
+    const lat = req.session.latClient;
+    if (!cmd.prestataireId || !lat) {
+        console.error("[SIMU PAY] Données manquantes :", { cmd, lat });
+        return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
     }
 
     try {
@@ -413,20 +417,26 @@ app.post('/chercher-prestataires', async (req, res) => {
 });
 
 app.post('/selectionner-prestataire', async (req, res) => {
-    const { prestataireId } = req.body;
+    const { prestataireId, serviceChoisi } = req.body;
     const { data: p } = await supabase
         .from('infos_prestataires')
         .select('*')
         .eq('user_id', prestataireId)
         .maybeSingle();
-    if (!p || req.session.latClient == null) {
-        return res.status(400).json({ error: 'Prestataire ou position introuvable' });
-    }
+    if (!p) return res.status(400).json({ error: 'Prestataire introuvable' });
+    
     const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
-    const distM = distanceMetres(p, req.session.latClient, req.session.lonClient);
+    
+    // Si la position client est inconnue, on prend celle par défaut ou 0
+    const latC = req.session.latClient || 0;
+    const lonC = req.session.lonClient || 0;
+
+    const distM = distanceMetres(p, latC, lonC);
     const frais = prixDistanceFcfa(distM);
+
     req.session.commande = req.session.commande || {};
     req.session.commande.prestataireId = p.user_id;
+    req.session.commande.service = serviceChoisi || req.session.commande.service || "Service";
     req.session.commande.prestataireNom = user?.nom || 'Prestataire';
     req.session.commande.prestatairePrenom = user?.prenom || '';
     req.session.commande.prestatairePhoto = p.photo_profil_url || '';
@@ -435,30 +445,26 @@ app.post('/selectionner-prestataire', async (req, res) => {
     req.session.commande.fraisDeplacement = frais;
     req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
 
-    // FIX: On force la sauvegarde de la session avant de répondre pour éviter le "double clic"
-    req.session.save(() => {
-        return res.json({
-            prestataireNom: user?.nom || 'Prestataire',
-            distanceKm: req.session.commande.distanceKm,
-            fraisDeplacement: frais,
-            prixBase: req.session.commande.prixBase,
-            total: req.session.commande.total || 0
-        });
-    });
+    req.session.save((err) => {
+        if (err) return res.status(500).json({ error: "Erreur session" });
+        res.json({ ok: true });
+    }
 });
 
 // Route pour que le client récupère la position GPS du prestataire choisi
 app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
-    const missionId = req.query.missionId || req.session.commande?.missionId;
-    if (!missionId) return res.json({});
+    try {
+        const missionId = req.query.missionId || req.session.commande?.missionId;
+        if (missionId) {
+            const { data: mData } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
+            if (mData?.lat_prestataire) return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
+        }
 
-    const { data } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
-    if (data && data.lat_prestataire) return res.json({ lat: data.lat_prestataire, lon: data.lon_prestataire });
-
-    const cmd = req.session.commande;
-    if (!cmd || !cmd.prestataireId) return res.json({});
-    const { data: prestaPos } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
-    res.json(prestaPos || {});
+        const cmd = req.session.commande;
+        if (!cmd?.prestataireId) return res.json({});
+        const { data: pPos } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
+        res.json(pPos || {});
+    } catch (e) { res.json({}); }
 });
 
 // Nouvelles routes pour la gestion des missions par le prestataire
