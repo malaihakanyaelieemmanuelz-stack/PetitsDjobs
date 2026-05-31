@@ -36,11 +36,14 @@ const supabase = createClient(
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Utilisation du SSL direct, plus stable sur Render
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    }
+    },
+    connectionTimeout: 10000 // Augmentation du délai d'attente
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -450,8 +453,8 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 
     const cmd = req.session.commande;
     if (!cmd || !cmd.prestataireId) return res.json({});
-    const { data } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
-    res.json(pos || {});
+    const { data: prestaPos } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
+    res.json(prestaPos || {});
 });
 
 // Nouvelles routes pour la gestion des missions par le prestataire
