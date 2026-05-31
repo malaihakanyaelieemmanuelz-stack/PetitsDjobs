@@ -257,18 +257,42 @@
             chargerJobsPublics();
         }).catch(() => {});
 
-        function allerCommander(service, prix) {
+        async function allerCommander(service, prix) {
             if (!connecte) {
                 window.location.href = 'connexion.html';
                 return;
             }
-            fetch('/preparer-commande', {
+            
+            // Étape 1 : Préparer la commande
+            await fetch('/preparer-commande', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service, prix })
-            }).then(() => {
-                window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
             });
+
+            // Étape 2 : Trouver automatiquement le plus proche pour sauter l'étape de recherche
+            const res = await fetch(`/prestataires-autour?service=${encodeURIComponent(service)}`);
+            const data = await res.json();
+
+            if (data.prestataires && data.prestataires.length > 0) {
+                const proche = data.prestataires[0]; // Le premier est le plus proche
+                await selectionnerPrestataireDirect(proche.id, service);
+            } else {
+                window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
+            }
+        }
+
+        async function selectionnerPrestataireDirect(id, service) {
+            const res = await fetch('/selectionner-prestataire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prestataireId: id })
+            });
+            if (res.ok) {
+                window.location.href = `/commande?service=${encodeURIComponent(service)}`;
+            } else {
+                window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
+            }
         }
 
         document.querySelectorAll('.btn-commander').forEach(btn => {

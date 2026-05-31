@@ -37,13 +37,16 @@ const supabase = createClient(
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Utilisation du SSL direct, plus stable sur Render
+    port: 587,
+    secure: false, // Utilisation de STARTTLS (plus compatible avec Render)
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    connectionTimeout: 10000 // Augmentation du délai d'attente
+    connectionTimeout: 15000, // 15 secondes
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+    debug: true // Affiche plus de détails dans les logs Render
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -328,7 +331,8 @@ app.post('/preparer-commande', (req, res) => {
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const cmd = req.session.commande;
-    if (!cmd || !cmd.prestataireId) {
+    if (!cmd || !cmd.prestataireId || !req.session.latClient) {
+        console.error("[SIMU PAY] Données manquantes :", { cmd, lat: req.session.latClient });
         return res.status(400).json({ error: "Aucune commande en cours." });
     }
 
@@ -337,7 +341,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             client_id: req.session.user.id,
             prestataire_id: cmd.prestataireId,
             service: cmd.service,
-            prix: cmd.total,
+            prix: parseInt(cmd.total || 0, 10),
             statut: 'en_attente_prestataire',
             lat_client: req.session.latClient,
             lon_client: req.session.lonClient
