@@ -131,6 +131,9 @@
                 container.innerHTML = '<p>Localisation refusée.</p>';
             }
         );
+
+        // Rafraîchir la liste de recherche toutes les 2 secondes
+        setInterval(() => { if(!aTrouve) charger(false); }, 2000);
     </script>
 </body>
 </html>

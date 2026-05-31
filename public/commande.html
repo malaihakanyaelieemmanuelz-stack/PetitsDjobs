@@ -129,7 +129,7 @@
             setTimeout(async () => {
                 const res = await fetch('/api/simuler-paiement', { method: 'POST' });
                 if (res.ok) {
-                    window.location.href = '/suivi';
+                    window.location.href = '/attente-prestataire';
                 } else {
                     alert("Erreur lors de la simulation du paiement.");
                     btn.innerText = "Payer avec Wave";

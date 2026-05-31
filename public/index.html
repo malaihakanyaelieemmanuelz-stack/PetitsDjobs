@@ -325,24 +325,24 @@
             });
         });
 
-        fetch('/get-top-prestataires').then(res => res.json()).then(data => {
-            console.log("DEBUG CLIENT: Données reçues pour le carrousel", data);
-            const container = document.getElementById('container-prestataires');
-            if (!data || !data.length) {
-                console.warn("DEBUG CLIENT: Aucun prestataire reçu");
-                container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé en base de données.</p>';
-                return;
-            }
-            container.innerHTML = data.map(p => miniCard(p)).join('');
-        }).catch(err => {
-            console.error("Client Side Debug: Erreur lors du fetch", err);
-            document.getElementById('container-prestataires').innerHTML =
-                '<p>Erreur de connexion au serveur.</p>';
-        });
+        function rafraichirCarrousel() {
+            fetch('/get-top-prestataires').then(res => res.json()).then(data => {
+                const container = document.getElementById('container-prestataires');
+                if (!data || !data.length) {
+                    container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé.</p>';
+                    return;
+                }
+                container.innerHTML = data.map(p => miniCard(p)).join('');
+            }).catch(err => console.error("Erreur polling carrousel", err));
+        }
+
+        // Premier chargement et intervalle de 2 secondes
+        rafraichirCarrousel();
+        setInterval(rafraichirCarrousel, 2000);
 
         // Initialisation des travaux demandés
         chargerJobsPublics();
-        setInterval(chargerJobsPublics, 20000); // Rafraîchir toutes les 20 secondes
+        setInterval(chargerJobsPublics, 2000); // Rafraîchir toutes les 2 secondes
     </script>
 </body>
 </html>

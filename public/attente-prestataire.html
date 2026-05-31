@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>En attente du prestataire - PETITSDJOBS</title>
+    <style>
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #5D4037; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .countdown { font-size: 2.5rem; font-weight: bold; color: #5D4037; margin: 15px 0; }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="login-card" style="max-width: 450px;">
+        <h1 style="font-size: 1.5rem;">VÉRIFICATION...</h1>
+        <p style="color: #666;">Nous avons envoyé votre demande au prestataire. Il a 1 minute pour répondre.</p>
+        
+        <div id="bloc-presta" class="provider-pick" style="justify-content: center; margin: 20px 0;">
+            <img id="wait-photo" src="default-profile.png" style="width: 70px; height: 70px;">
+            <div style="text-align: left;">
+                <strong id="wait-nom">Chargement...</strong><br>
+                <small id="wait-service">Service en attente</small>
+            </div>
+        </div>
+
+        <div class="loader"></div>
+        <div class="countdown" id="timer">60</div>
+        <p style="font-size: 0.85rem; color: #888;">Merci de rester sur cette page.</p>
+
+        <button onclick="if(confirm('Annuler la recherche ?')) window.location.href='/choisir-prestataire'" class="btn-outline" style="width: 100%; margin-top: 20px; border-color: #ccc; color: #666;">ANNULER</button>
+    </div>
+
+    <script>
+        let timeLeft = 60;
+        const timerEl = document.getElementById('timer');
+
+        // Charger les infos du prestataire pour la session
+        fetch('/get-session-commande').then(r => r.json()).then(cmd => {
+            if (cmd.prestataireNom) {
+                document.getElementById('wait-nom').innerText = [cmd.prestatairePrenom, cmd.prestataireNom].filter(Boolean).join(' ');
+                document.getElementById('wait-service').innerText = cmd.service || 'Service';
+                if (cmd.prestatairePhoto) document.getElementById('wait-photo').src = cmd.prestatairePhoto;
+            }
+        });
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerEl.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                clearInterval(poll);
+                alert("Le prestataire n'a pas répondu. Veuillez en choisir un autre.");
+                window.location.href = '/choisir-prestataire';
+            }
+        }, 1000);
+
+        const poll = setInterval(async () => {
+            const res = await fetch('/api/statut-mission');
+            const data = await res.json();
+            
+            if (data.statut === 'en_route') {
+                clearInterval(countdown);
+                clearInterval(poll);
+                window.location.href = '/suivi';
+            } else if (data.statut === 'refuse') {
+                clearInterval(countdown);
+                clearInterval(poll);
+                alert("Le prestataire a refusé la mission. Vous allez être redirigé vers la recherche.");
+                window.location.href = '/choisir-prestataire';
+            }
+        }, 2000); // Polling toutes les 2 secondes
+    </script>
+</body>
+</html>

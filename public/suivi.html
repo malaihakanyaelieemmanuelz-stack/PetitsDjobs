@@ -86,36 +86,19 @@
                    demarrerSuiviGPS();
                    demarrerPollingClientGPS(); // Le prestataire suit le client
                 } else {
-                    attendreAcceptationPrestataire();
+                    // Si c'est le client, on vérifie qu'il est autorisé à être ici
+                    const resStat = await fetch('/api/statut-mission');
+                    const statData = await resStat.json();
+                    if (statData.statut === 'en_route') {
+                        document.getElementById('status-mission').innerText = "Prestataire en route";
+                        document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
+                        demarrerPollingPrestataireGPS();
+                    } else {
+                        window.location.href = '/attente-prestataire';
+                    }
                 }
             });
         });
-
-        function attendreAcceptationPrestataire() {
-            const debutAttente = Date.now();
-            const timer = setInterval(async () => {
-                // Vérification du délai d'une minute (60 000 ms)
-                if (Date.now() - debutAttente > 60000) {
-                    clearInterval(timer);
-                    alert("Le prestataire n'a pas répondu dans le délai imparti (1 minute). Veuillez choisir un autre prestataire disponible.");
-                    window.location.href = '/choisir-prestataire';
-                    return;
-                }
-
-                const res = await fetch('/api/statut-mission');
-                const data = await res.json();
-                if (data.statut === 'en_route') {
-                    clearInterval(timer);
-                    document.getElementById('status-mission').innerText = "Prestataire en route";
-                    document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
-                    demarrerPollingPrestataireGPS(); // Le client suit le prestataire
-                } else if (data.statut === 'refuse') {
-                    clearInterval(timer);
-                    alert("Le prestataire a refusé la mission.");
-                    window.location.href = '/choisir-prestataire';
-                }
-            }, 3000);
-        }
 
         // Charger les infos de la mission
         fetch('/get-session-commande')
@@ -183,18 +166,30 @@
             }
         }
 
-        // FONCTION CLIENT : Il reçoit la position du prestataire
-        function demarrerPollingClient() {
+        // LE CLIENT suit le PRESTATAIRE
+        function demarrerPollingPrestataireGPS() {
             setInterval(async () => {
                 const res = await fetch('/api/suivi-prestataire-gps');
                 const pos = await res.json();
                 if (pos.lat && pos.lon) {
                     const newPos = [pos.lat, pos.lon];
-                    map.setView(newPos, 16);
                     marker.setLatLng(newPos).bindPopup("Votre prestataire arrive...").openPopup();
                     document.getElementById('gps-info').innerText = `🛵 Votre prestataire est en route.`;
                 }
-            }, 5000); // Mise à jour toutes les 5 secondes pour le client
+            }, 2000);
+        }
+
+        // LE PRESTATAIRE suit le CLIENT
+        function demarrerPollingClientGPS() {
+            setInterval(async () => {
+                const res = await fetch('/api/suivi-client-gps?missionId=' + missionId);
+                const pos = await res.json();
+                if (pos.lat && pos.lon) {
+                    const newPos = [pos.lat, pos.lon];
+                    markerClient.setLatLng(newPos).bindPopup("Position du client").openPopup();
+                    document.getElementById('gps-info').innerText = `📍 Itinéraire vers le client mis à jour.`;
+                }
+            }, 2000);
         }
     </script>
 </body>
