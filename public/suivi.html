@@ -11,14 +11,14 @@
     <header class="home-header"><h1>SÉCURITÉ PRESTATAIRE</h1></header>
     
     <div class="app-wrap" style="padding:20px;">
-        <div class="gps-banner">
-            <strong>🛡️ Protection Active</strong>
-            Votre position est suivie en temps réel par nos services.
+        <div class="gps-banner" id="banner-text">
+            <strong>🛡️ Protection & Suivi</strong>
+            Mise en relation et suivi GPS sécurisé.
         </div>
 
         <div class="checkout-card" style="text-align: center;">
-            <h2 id="status-mission">Mission en cours</h2>
-            <p style="color:#666;">Rendez-vous chez le client pour effectuer la tâche.</p>
+            <h2 id="status-mission">Initialisation...</h2>
+            <p id="mission-info" style="color:#666;">Vérification du statut de la mission.</p>
             
             <!-- Zone de la carte -->
             <div id="map"></div>
@@ -51,7 +51,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         let map, marker;
+        let markerClient;
         let isProvider = false;
+        let missionId = null;
         let lastLat = null;
         let lastLon = null;
 
@@ -63,6 +65,9 @@
             }).addTo(map);
             
             marker = L.marker([0, 0]).addTo(map);
+            markerClient = L.marker([0, 0], { 
+                icon: L.divIcon({ className: 'custom-icon', html: '🏠', iconSize: [30, 30] }) 
+            }).addTo(map);
         }
 
         initMap();
@@ -71,13 +76,36 @@
         fetch('/get-user-data').then(r => r.json()).then(user => {
             if (user.isPrestataire) {
                 isProvider = true;
-                document.getElementById('btn-sos').style.display = 'block';
-                document.getElementById('btn-fini').style.display = 'block';
-                demarrerSuiviGPS();
+                fetch('/get-session-commande').then(r => r.json()).then(cmd => {
+                   missionId = cmd.missionId;
+                   document.getElementById('btn-sos').style.display = 'block';
+                   document.getElementById('btn-fini').style.display = 'block';
+                   document.getElementById('status-mission').innerText = "Mission en cours";
+                   document.getElementById('mission-info').innerText = "Rendez-vous chez le client.";
+                   demarrerSuiviGPS();
+                   demarrerSuiviClientPourPrestataire();
+                });
             } else {
-                demarrerPollingClient();
+                attendreAcceptationPrestataire();
             }
         });
+
+        function attendreAcceptationPrestataire() {
+            const timer = setInterval(async () => {
+                const res = await fetch('/api/statut-mission');
+                const data = await res.json();
+                if (data.statut === 'en_route') {
+                    clearInterval(timer);
+                    document.getElementById('status-mission').innerText = "Prestataire en route";
+                    document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
+                    demarrerPollingPrestatairePourClient();
+                } else if (data.statut === 'refuse') {
+                    clearInterval(timer);
+                    alert("Le prestataire a refusé la mission.");
+                    window.location.href = '/choisir-prestataire';
+                }
+            }, 3000);
+        }
 
         // Charger les infos de la mission
         fetch('/get-session-commande')

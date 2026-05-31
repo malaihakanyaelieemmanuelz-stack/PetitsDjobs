@@ -36,16 +36,11 @@ const supabase = createClient(
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // false pour le port 587 (STARTTLS)
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    },
-    connectionTimeout: 10000, // 10 secondes
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    }
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -317,24 +312,44 @@ app.get('/session-status', (req, res) => {
 });
 
 app.post('/preparer-commande', (req, res) => {
-    const { service, prix, prixLibre } = req.body;
+    const { service, prix, prixLibre, missionId } = req.body;
     req.session.commande = {
         service: service || 'Service',
         prixBase: parseInt(prixLibre || prix, 10) || 0,
-        prixLibre: !!prixLibre
+        prixLibre: !!prixLibre,
+        missionId: missionId
     };
     res.json({ ok: true });
 });
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
-app.post('/api/simuler-paiement', requireAuth, (req, res) => {
-    if (!req.session.commande) {
+app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
+    const cmd = req.session.commande;
+    if (!cmd || !cmd.prestataireId) {
         return res.status(400).json({ error: "Aucune commande en cours." });
     }
-    // On marque la commande comme payée en session
-    req.session.commande.paye = true;
-    req.session.commande.statut = 'en_route';
-    res.json({ ok: true, message: "Paiement simulé avec succès !" });
+
+    try {
+        const { data, error } = await supabase.from('missions').insert({
+            client_id: req.session.user.id,
+            prestataire_id: cmd.prestataireId,
+            service: cmd.service,
+            prix: cmd.total,
+            statut: 'en_attente_prestataire',
+            lat_client: req.session.latClient,
+            lon_client: req.session.lonClient
+        }).select().single();
+
+        if (error) throw error;
+
+        req.session.commande.missionId = data.id;
+        req.session.commande.paye = true;
+        req.session.commande.statut = 'en_attente_prestataire';
+        res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
+    } catch (err) {
+        console.error("Erreur simuler-paiement:", err);
+        res.status(500).json({ error: "Erreur technique" });
+    }
 });
 
 app.post('/sauvegarder-position', async (req, res) => {
@@ -345,17 +360,23 @@ app.post('/sauvegarder-position', async (req, res) => {
         if (req.session.user) {
             req.session.user.lat = parseFloat(lat);
             req.session.user.lon = parseFloat(lon);
-            
+
             // Mise à jour de l'activité
             await supabase.from('utilisateurs')
                 .update({ dernier_acces: new Date().toISOString() })
                 .eq('id', req.session.user.id);
 
-            // Si c'est un prestataire, on met aussi à jour sa position réelle pour le suivi client
             if (req.session.user.isPrestataire) {
                 await supabase.from('infos_prestataires')
                     .update({ lat: parseFloat(lat), lon: parseFloat(lon) })
                     .eq('user_id', req.session.user.id);
+                // Mise à jour GPS pour les missions actives
+                await supabase.from('missions').update({ lat_prestataire: lat, lon_prestataire: lon })
+                    .eq('prestataire_id', req.session.user.id).eq('statut', 'en_route');
+            } else {
+                // Si c'est un client, on met à jour sa position pour que le prestataire puisse le rejoindre
+                await supabase.from('missions').update({ lat_client: lat, lon_client: lon })
+                    .eq('client_id', req.session.user.id).eq('statut', 'en_route');
             }
         }
     }
@@ -421,11 +442,49 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
 // Route pour que le client récupère la position GPS du prestataire choisi
 app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
+    const missionId = req.query.missionId || req.session.commande?.missionId;
+    if (!missionId) return res.json({});
+
+    const { data } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
+    if (data && data.lat_prestataire) return res.json({ lat: data.lat_prestataire, lon: data.lon_prestataire });
+
     const cmd = req.session.commande;
     if (!cmd || !cmd.prestataireId) return res.json({});
-    
     const { data } = await supabase.from('infos_prestataires').select('lat, lon').eq('user_id', cmd.prestataireId).maybeSingle();
-    res.json(data || {});
+    res.json(pos || {});
+});
+
+// Nouvelles routes pour la gestion des missions par le prestataire
+app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
+    const { data, error } = await supabase.from('missions')
+        .select('*, client:utilisateurs!client_id(nom, prenom)')
+        .eq('prestataire_id', req.session.user.id)
+        .eq('statut', 'en_attente_prestataire')
+        .limit(5);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.post('/api/repondre-mission', requireAuth, async (req, res) => {
+    const { missionId, action } = req.body;
+    const statut = action === 'accepter' ? 'en_route' : 'refuse';
+    const { error } = await supabase.from('missions').update({ statut }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.get('/api/suivi-client-gps', requireAuth, async (req, res) => {
+    const { missionId } = req.query;
+    const { data, error } = await supabase.from('missions').select('lat_client, lon_client').eq('id', missionId).maybeSingle();
+    if (error || !data) return res.json({});
+    res.json({ lat: data.lat_client, lon: data.lon_client });
+});
+
+app.get('/api/statut-mission', requireAuth, async (req, res) => {
+    const missionId = req.query.missionId || req.session.commande?.missionId;
+    if (!missionId) return res.json({ statut: 'aucune' });
+    const { data } = await supabase.from('missions').select('statut').eq('id', missionId).maybeSingle();
+    res.json(data || { statut: 'inconnu' });
 });
 
 app.post('/calculer-distance', async (req, res) => {

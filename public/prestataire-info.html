@@ -18,6 +18,11 @@
         ✓ Votre carte de visite est en ligne — les clients peuvent vous trouver près d'eux.
     </p>
 
+    <div id="zone-missions" class="app-wrap" style="display:none; margin-top:20px;">
+        <h3 style="color:#b71c1c;">🔔 NOUVELLES DEMANDES</h3>
+        <div id="liste-missions-attente"></div>
+    </div>
+
     <div class="trust-card" id="ma-carte">
         <p style="padding:40px;">Chargement...</p>
     </div>
@@ -70,8 +75,51 @@
                         Votre pièce d'identité reste privée — seuls votre visage et votre réputation sont visibles.
                     </p>
                 </div>`;
+            
+            verifierMissions();
         });
 
+        async function verifierMissions() {
+            const res = await fetch('/api/mes-missions-prestataire');
+            const missions = await res.json();
+            const zone = document.getElementById('zone-missions');
+            const liste = document.getElementById('liste-missions-attente');
+            
+            if (missions.length > 0) {
+                zone.style.display = 'block';
+                liste.innerHTML = missions.map(m => `
+                    <div class="checkout-card" style="margin-bottom:10px;">
+                        <strong>Client :</strong> ${m.client.prenom} ${m.client.nom}<br>
+                        <strong>Service :</strong> ${m.service}<br>
+                        <strong>Somme :</strong> ${m.prix} FCFA<br>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:10px; border-radius:6px; cursor:pointer;">ACCEPTER</button>
+                            <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#333; border:none; color:white; padding:10px; border-radius:6px; cursor:pointer;">REFUSER</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function repondreMission(id, action) {
+            const res = await fetch('/api/repondre-mission', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ missionId: id, action })
+            });
+            if (res.ok) {
+                if (action === 'accepter') {
+                    await fetch('/preparer-commande', {
+                       method: 'POST',
+                       headers: {'Content-Type': 'application/json'},
+                       body: JSON.stringify({ missionId: id })
+                    });
+                    window.location.href = '/suivi';
+                } else {
+                    verifierMissions();
+                }
+            }
+        }
         async function supprimerMaCarte() {
             if (confirm("Voulez-vous supprimer votre carte de visite ? Vous ne serez plus visible comme prestataire mais vous garderez votre compte client.")) {
                 const res = await fetch('/supprimer-profil-prestataire', { method: 'POST' });
