@@ -103,7 +103,7 @@
                 if (user.id === cmd.prestataireId) {
                     console.log("[DEBUG SUIVI] Rôle détecté: PRESTATAIRE");
                     isProvider = true;
-                    document.getElementById('btn-sos').style.display = 'block';
+                    document.getElementById('btn-sos').style.display = 'block'; // On s'assure que le bouton SOS est là
                     demarrerSuiviGPS();
                     demarrerPollingClientGPS();
                 } else {
@@ -208,16 +208,35 @@
             }
         }
 
-        function declencherSOS() { ... (code existant inchangé) ... }
+        async function declencherSOS() {
+            if (confirm("🚨 DÉCLENCHER UNE ALERTE DANGER ?\n\nCela enverra votre position exacte aux services de sécurité de PetitsDjobs.")) {
+                const res = await fetch('/alerte-sos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        lat: lastLat, 
+                        lon: lastLon 
+                    })
+                });
+                const data = await res.json();
+                alert(data.message);
+            }
+        }
 
         // FONCTION PRESTATAIRE : Il envoie sa position
         function demarrerSuiviGPS() {
             if (navigator.geolocation) {
+                console.log("[GPS DEVICE] Démarrage du watchPosition...");
                 navigator.geolocation.watchPosition(pos => {
                     const { latitude, longitude } = pos.coords;
                     lastLat = latitude; lastLon = longitude;
+                    console.log(`[GPS DEVICE] Nouvelle position capturée : ${latitude}, ${longitude}`);
+
+                    // On centre la carte seulement la première fois pour ne pas bloquer l'utilisateur
+                    if (!marker.getLatLng().lat) {
+                        map.setView([latitude, longitude], 16);
+                    }
                     
-                    map.setView([latitude, longitude], 16);
                     marker.setLatLng([latitude, longitude]).bindPopup("Vous êtes ici").openPopup();
 
                     // Déclenche la vérification de proximité
@@ -235,12 +254,18 @@
         // LE CLIENT suit le PRESTATAIRE
         function demarrerPollingPrestataireGPS() {
             setInterval(async () => {
-                const res = await fetch('/api/suivi-prestataire-gps');
+                console.log("[POLLING] Récupération position prestataire...");
+                // Passage du missionId obligatoire pour éviter les bugs de session
+                const res = await fetch('/api/suivi-prestataire-gps?missionId=' + missionId);
                 const pos = await res.json();
                 if (pos.lat && pos.lon) {
+                    console.log("[POLLING] Position reçue:", pos);
                     const newPos = [pos.lat, pos.lon];
-                    marker.setLatLng(newPos).bindPopup("Votre prestataire arrive...").openPopup();
+                    marker.setLatLng(newPos).bindPopup("Prestataire en mouvement...").openPopup();
+                    if (!map.getBounds().contains(newPos)) map.panTo(newPos);
                     document.getElementById('gps-info').innerText = `🛵 Votre prestataire est en route.`;
+                } else {
+                    console.warn("[POLLING] Aucune position reçue du serveur pour le prestataire.");
                 }
             }, 2000);
         }

@@ -498,13 +498,18 @@ app.post('/sauvegarder-position', async (req, res) => {
                 await supabase.from('infos_prestataires')
                     .update({ lat: parseFloat(lat), lon: parseFloat(lon) })
                     .eq('user_id', req.session.user.id);
-                // Mise à jour GPS pour les missions actives
-                await supabase.from('missions').update({ lat_prestataire: lat, lon_prestataire: lon })
-                    .eq('prestataire_id', req.session.user.id).eq('statut', 'en_route');
+                
+                console.log(`[GPS UPDATE] Prestataire ${req.session.user.id} en mouvement...`);
+                const { error: mErr } = await supabase.from('missions').update({ lat_prestataire: lat, lon_prestataire: lon })
+                    .eq('prestataire_id', req.session.user.id)
+                    .in('statut', ['en_route', 'travail_en_cours', 'attente_securite']);
+                if (mErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission prestataire:`, mErr.message);
             } else {
-                // Si c'est un client, on met à jour sa position pour que le prestataire puisse le rejoindre
-                await supabase.from('missions').update({ lat_client: lat, lon_client: lon })
-                    .eq('client_id', req.session.user.id).eq('statut', 'en_route');
+                console.log(`[GPS UPDATE] Client ${req.session.user.id} en mouvement...`);
+                const { error: cErr } = await supabase.from('missions').update({ lat_client: lat, lon_client: lon })
+                    .eq('client_id', req.session.user.id)
+                    .in('statut', ['en_route', 'travail_en_cours']);
+                if (cErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission client:`, cErr.message);
             }
         }
     }
@@ -606,18 +611,24 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
         console.log(`[DEBUG GPS SUIVI] Requête reçue. Mission ID: ${missionId}`);
 
         if (!missionId) {
-            console.warn(`[DEBUG GPS SUIVI] missionId manquant dans l'appel`);
+            console.warn(`[DEBUG GPS SUIVI] ATTENTION : missionId absent des paramètres et de la session.`);
             return res.json({});
         }
 
         if (missionId) {
-            const { data: mData } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
-            if (mData?.lat_prestataire) {
-                console.log(`[DEBUG GPS SUIVI] Position trouvée pour mission ${missionId}: ${mData.lat_prestataire}, ${mData.lon_prestataire}`);
+            const { data: mData, error } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
+            if (error) console.error(`[DEBUG GPS SUIVI] Erreur Supabase mission ${missionId}:`, error.message);
+            
+            // Priorité absolue aux coordonnées de la mission (temps réel)
+            if (mData && mData.lat_prestataire != null) {
+                console.log(`[DEBUG GPS SUIVI] OK - Coordonnées trouvées pour mission ${missionId}: ${mData.lat_prestataire}, ${mData.lon_prestataire}`);
                 return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
+            } else {
+                console.log(`[DEBUG GPS SUIVI] INFO - La mission ${missionId} n'a pas encore de lat_prestataire enregistrée.`);
             }
         }
 
+        // Repli sur la position fixe si la mission n'a pas encore de coordonnées propres
         const cmd = req.session.commande;
         if (!cmd?.prestataireId) {
             console.warn(`[DEBUG GPS SUIVI] Aucun prestataire en session pour le suivi`);

@@ -235,19 +235,43 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
     .auth-page { 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        align-items: center;
+        display: block; /* Passage en block pour un défilement naturel sur Android */
         min-height: 100vh; 
-        padding: 20px 0; 
+        padding: 0; 
         box-sizing: border-box; 
-        background-color: #f4f4f4;
+        background-color: white; /* Fond blanc uni comme les apps natives */
     }
-    .home-header { padding: 20px 10px; }
-    .home-header h1 { font-size: 1.8rem; padding: 10px 20px; }
+
+    .login-card {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 40px 20px !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border-top: none !important;
+        text-align: left !important; /* Alignement à gauche plus moderne sur mobile */
+    }
+
+    .login-card h1 {
+        font-size: 1.8rem !important;
+        margin-bottom: 20px !important;
+        text-align: center;
+    }
+
+    .home-header { 
+        padding: 15px 10px !important; 
+    }
+    .home-header h1 { 
+        font-size: 1.5rem !important; 
+        padding: 8px 15px !important; 
+    }
     
-    .app-wrap { padding: 0 10px; width: 100%; box-sizing: border-box; }
+    .app-wrap { 
+        padding: 0 !important; 
+        width: 100% !important; 
+        box-sizing: border-box; 
+    }
     
     .service-grid { 
         padding: 15px 10px; 
@@ -264,38 +288,32 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     .card { width: 100%; } /* Prend toute la place de sa colonne grid */
     .card img { height: 140px; }
     .card h3 { font-size: 0.9rem; }
-
-    /* Rétablissement de la forme "Carte" pour la connexion sur mobile */
-    .login-card {
-        width: 90% !important;
-        margin: 20px auto !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-    }
+    
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
 
     /* --- Ajustements pour Mon Profil et Ma Carte de Visite --- */
     .trust-card, .card-presta-mobile, .checkout-card {
         max-width: none !important;
         width: 100% !important;
-        margin: 0 0 20px 0 !important;
-        border-radius: 8px !important; /* Rayon plus typique d'Android */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1) !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
         border: none !important;
         box-sizing: border-box;
+        text-align: left !important;
     }
 
     .trust-card-header {
-        padding: 20px 15px !important;
+        padding: 25px 20px !important;
     }
 
     .trust-card-header img {
-        width: 90px !important;
-        height: 90px !important;
+        width: 80px !important;
+        height: 80px !important;
     }
 
     .trust-card-body, .card-presta-mobile, .checkout-card {
-        padding: 20px 15px !important;
+        padding: 20px !important;
     }
 
     /* Boutons de profil style Android (pleine largeur) */
