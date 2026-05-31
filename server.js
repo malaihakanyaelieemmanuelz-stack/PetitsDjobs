@@ -550,6 +550,28 @@ app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     res.json({ ok: true });
 });
 
+app.post('/api/marquer-arrivee', requireAuth, async (req, res) => {
+    const { missionId } = req.body;
+    const { error } = await supabase.from('missions').update({ statut: 'travail_en_cours' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.post('/api/terminer-tache', requireAuth, async (req, res) => {
+    const { missionId } = req.body;
+    const { error } = await supabase.from('missions').update({ statut: 'attente_securite' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.post('/api/confirmer-securite', requireAuth, async (req, res) => {
+    const { missionId, action } = req.body; // action: 'safe' ou 'danger'
+    const statut = action === 'safe' ? 'termine' : 'alerte_police';
+    const { error } = await supabase.from('missions').update({ statut }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, paye: action === 'safe' });
+});
+
 app.get('/api/suivi-client-gps', requireAuth, async (req, res) => {
     const { missionId } = req.query;
     const { data, error } = await supabase.from('missions').select('lat_client, lon_client').eq('id', missionId).maybeSingle();

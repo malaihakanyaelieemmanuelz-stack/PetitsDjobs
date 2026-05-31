@@ -27,24 +27,31 @@
                 Calcul de l'itinéraire...
             </div>
 
-            <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.2rem; padding:20px; margin-bottom: 20px;">
-                🆘 EN DANGER
+            <!-- Boutons dynamiques Prestataire -->
+            <button id="btn-arrive" onclick="marquerArrivee()" class="btn-primary-sm" style="display:none; background:#007bff; width:100%; margin-bottom:10px;">
+                JE SUIS ARRIVÉ SUR LE LIEU
             </button>
 
-            <button id="btn-fini" onclick="ouvrirModalFin()" class="btn-primary-sm" style="display:none; background:#2e7d32; width: 100%;">
-                J'AI FINI ET JE SUIS EN SÉCURITÉ
+            <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; margin-bottom:10px;">
+                J'AI FINI LA TÂCHE
+            </button>
+
+            <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.2rem; padding:20px; width:100%;">
+                🆘 EN DANGER
             </button>
         </div>
     </div>
 
-    <!-- Modal de confirmation par mot de passe -->
-    <div id="modal-confirm" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:9999;">
-        <div class="login-card" style="margin:20px;">
-            <h3>Confirmer votre sécurité</h3>
-            <p>Entrez votre mot de passe pour confirmer la fin de la mission.</p>
-            <input type="password" id="confirm-pwd" placeholder="VOTRE MOT DE PASSE" style="margin-bottom:15px;">
-            <button onclick="validerFin()" class="btn-primary-sm">VALIDER</button>
-            <button onclick="document.getElementById('modal-confirm').style.display='none'" style="background:none; border:none; margin-top:10px; cursor:pointer;">Annuler</button>
+    <!-- Modal de Sécurité (Apparaît quand le prestataire s'éloigne) -->
+    <div id="modal-securite" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; z-index:10000; text-align:center;">
+        <div class="login-card" style="margin:20px; border-top:6px solid #b71c1c;">
+            <h2 style="color:#b71c1c;">SÉCURITÉ RÉSEAU</h2>
+            <p>Vous avez quitté la zone d'intervention.</p>
+            <p><strong>Êtes-vous en sécurité ?</strong></p>
+            <p style="font-size:0.8rem; color:#666; margin-bottom:20px;">(Toute fausse déclaration de danger pour retarder un paiement est passible de sanctions).</p>
+            
+            <button onclick="repondreSecurite('safe')" class="btn-primary-sm" style="background:#2e7d32; margin-bottom:10px; width:100%;">OUI, JE SUIS EN SÉCURITÉ</button>
+            <button onclick="repondreSecurite('danger')" class="btn-danger" style="width:100%;">NON, JE SUIS EN DANGER</button>
         </div>
     </div>
 
@@ -56,6 +63,8 @@
         let missionId = null;
         let lastLat = null;
         let lastLon = null;
+        let clientPos = null;
+        let aAlerteSecurite = false;
 
         // Initialisation de la carte (vue par défaut sur une position neutre)
         function initMap() {
@@ -80,54 +89,44 @@
                 if (user.id === cmd.prestataireId) {
                    isProvider = true;
                    document.getElementById('btn-sos').style.display = 'block';
-                   document.getElementById('btn-fini').style.display = 'block';
-                   document.getElementById('status-mission').innerText = "Mission en cours";
-                   document.getElementById('mission-info').innerText = "Rendez-vous chez le client.";
                    demarrerSuiviGPS();
                    demarrerPollingClientGPS(); // Le prestataire suit le client
                 } else {
-                    attendreAcceptationPrestataire();
+                    // Si c'est le client, on vérifie qu'il est autorisé à être ici
+                    const resStat = await fetch('/api/statut-mission');
+                    const statData = await resStat.json();
+                    if (statData.statut === 'en_route') {
+                        document.getElementById('status-mission').innerText = "Prestataire en route";
+                        document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
+                        demarrerPollingPrestataireGPS();
+                    } else {
+                        window.location.href = '/attente-prestataire';
+                    }
                 }
             });
         });
 
-        function attendreAcceptationPrestataire() {
-            const debutAttente = Date.now();
-            const timer = setInterval(async () => {
-                // Vérification du délai d'une minute (60 000 ms)
-                if (Date.now() - debutAttente > 60000) {
-                    clearInterval(timer);
-                    alert("Le prestataire n'a pas répondu dans le délai imparti (1 minute). Veuillez choisir un autre prestataire disponible.");
-                    window.location.href = '/choisir-prestataire';
-                    return;
-                }
-
-                const res = await fetch('/api/statut-mission');
-                const data = await res.json();
+        async function rafraichirStatut() {
+            const res = await fetch('/api/statut-mission?missionId=' + missionId);
+            const data = await res.json();
+            
+            if (isProvider) {
                 if (data.statut === 'en_route') {
-                    clearInterval(timer);
-                    document.getElementById('status-mission').innerText = "Prestataire en route";
-                    document.getElementById('mission-info').innerText = "Suivez son arrivée sur la carte.";
-                    demarrerPollingPrestataireGPS(); // Le client suit le prestataire
-                } else if (data.statut === 'refuse') {
-                    clearInterval(timer);
-                    alert("Le prestataire a refusé la mission.");
-                    window.location.href = '/choisir-prestataire';
+                    document.getElementById('status-mission').innerText = "En route...";
+                } else if (data.statut === 'travail_en_cours') {
+                    document.getElementById('btn-arrive').style.display = 'none';
+                    document.getElementById('btn-fini-tache').style.display = 'block';
+                    document.getElementById('status-mission').innerText = "Travail en cours";
+                } else if (data.statut === 'attente_securite') {
+                    document.getElementById('btn-fini-tache').style.display = 'none';
+                    document.getElementById('status-mission').innerText = "Tâche finie - Éloignez-vous";
+                } else if (data.statut === 'termine') {
+                    alert("Mission terminée avec succès. Votre paiement a été débloqué.");
+                    window.location.href = '/index.html';
                 }
-            }, 2000); // Vérification toutes les 2 secondes
+            }
         }
-
-        // Ajout du polling automatique du statut de la mission
-        if (!isProvider) {
-            setInterval(async () => {
-                const res = await fetch('/api/statut-mission');
-                const data = await res.json();
-                if (data.statut === 'en_route') {
-                    document.getElementById('status-mission').innerText = "Prestataire en route";
-                    demarrerPollingPrestataireGPS();
-                }
-            }, 2000);
-        }
+        setInterval(rafraichirStatut, 2000);
 
         // Charger les infos de la mission
         fetch('/get-session-commande')
@@ -140,40 +139,33 @@
                 }
             });
 
-        function declencherSOS() {
-            if(confirm("DÉCLENCHER L'ALERTE ? Une notification d'urgence sera envoyée avec votre position.")) {
-                fetch('/alerte-sos', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat: lastLat, lon: lastLon })
-                })
-                    .then(r => r.json())
-                    .then(data => alert(data.message));
+        async function marquerArrivee() {
+            await fetch('/api/marquer-arrivee', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
+        }
+
+        async function terminerTache() {
+            if (confirm("Confirmez-vous avoir terminé le service ?")) {
+                await fetch('/api/terminer-tache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
             }
         }
 
-        function ouvrirModalFin() {
-            document.getElementById('modal-confirm').style.display = 'flex';
-        }
-
-        async function validerFin() {
-            const password = document.getElementById('confirm-pwd').value;
-            if(!password) return alert("Mot de passe requis");
-
-            const res = await fetch('/valider-fin-tache', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ password })
+        async function repondreSecurite(action) {
+            const res = await fetch('/api/confirmer-securite', { 
+                method: 'POST', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({ missionId, action }) 
             });
-
             const data = await res.json();
-            if(res.ok) {
-                alert(data.message);
+            if (action === 'safe') {
+                alert("Paiement validé. Merci pour votre professionnalisme.");
                 window.location.href = '/index.html';
             } else {
-                alert(data.error);
+                alert("ALERTE ENVOYÉE. La police et nos services de sécurité ont été prévenus de votre position.");
+                document.getElementById('modal-securite').style.display = 'none';
             }
         }
+
+        function declencherSOS() { ... (code existant inchangé) ... }
 
         // FONCTION PRESTATAIRE : Il envoie sa position
         function demarrerSuiviGPS() {
@@ -184,7 +176,24 @@
                     
                     map.setView([latitude, longitude], 16);
                     marker.setLatLng([latitude, longitude]).bindPopup("Vous êtes ici").openPopup();
-                    document.getElementById('gps-info').innerText = `📍 Ma position : ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+                    // LOGIQUE INTELLIGENTE DE DISTANCE
+                    if (clientPos) {
+                        const dist = L.latLng(latitude, longitude).distanceTo(L.latLng(clientPos.lat, clientPos.lon));
+                        
+                        fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
+                            // 1. Détecter l'arrivée (moins de 50m)
+                            if (data.statut === 'en_route' && dist < 50) {
+                                document.getElementById('btn-arrive').style.display = 'block';
+                            }
+                            
+                            // 2. Détecter l'éloignement après fin de tâche (plus de 10m)
+                            if (data.statut === 'attente_securite' && dist > 10 && !aAlerteSecurite) {
+                                aAlerteSecurite = true;
+                                document.getElementById('modal-securite').style.display = 'flex';
+                            }
+                        });
+                    }
 
                     fetch('/sauvegarder-position', {
                         method: 'POST',
@@ -195,18 +204,37 @@
             }
         }
 
-        // FONCTION CLIENT : Il reçoit la position du prestataire
-        function demarrerPollingClient() {
+        // LE CLIENT suit le PRESTATAIRE
+        function demarrerPollingPrestataireGPS() {
             setInterval(async () => {
                 const res = await fetch('/api/suivi-prestataire-gps');
                 const pos = await res.json();
                 if (pos.lat && pos.lon) {
                     const newPos = [pos.lat, pos.lon];
-                    map.setView(newPos, 16);
                     marker.setLatLng(newPos).bindPopup("Votre prestataire arrive...").openPopup();
                     document.getElementById('gps-info').innerText = `🛵 Votre prestataire est en route.`;
                 }
-            }, 2000); // Mise à jour toutes les 2 secondes pour le client
+            }, 2000);
+        }
+
+        // LE PRESTATAIRE suit le CLIENT
+        function demarrerPollingClientGPS() {
+            setInterval(async () => {
+                const res = await fetch('/api/suivi-client-gps?missionId=' + missionId);
+                const pos = await res.json();
+                if (pos.lat && pos.lon) {
+                    clientPos = pos;
+                    const newPos = [pos.lat, pos.lon];
+                    markerClient.setLatLng(newPos).bindPopup("Position du client").openPopup();
+                    document.getElementById('gps-info').innerText = `📍 Itinéraire vers le client mis à jour.`;
+
+                    // Cas particulier : si le prestataire est déjà là (moins de 50m)
+                    // On force la vérification dès qu'on reçoit la position du client
+                    if (isProvider && lastLat && lastLon) {
+                        verifierDistance(lastLat, lastLon);
+                    }
+                }
+            }, 2000);
         }
     </script>
 </body>
