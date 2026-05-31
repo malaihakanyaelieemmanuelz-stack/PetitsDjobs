@@ -499,13 +499,13 @@ app.post('/sauvegarder-position', async (req, res) => {
                     .update({ lat: parseFloat(lat), lon: parseFloat(lon) })
                     .eq('user_id', req.session.user.id);
                 
-                console.log(`[GPS UPDATE] Prestataire ${req.session.user.id} en mouvement...`);
+                console.log(`[GPS UPDATE] Prestataire ${req.session.user.id} : Lat=${lat}, Lon=${lon}`);
                 const { error: mErr } = await supabase.from('missions').update({ lat_prestataire: lat, lon_prestataire: lon })
                     .eq('prestataire_id', req.session.user.id)
                     .in('statut', ['en_route', 'travail_en_cours', 'attente_securite']);
                 if (mErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission prestataire:`, mErr.message);
             } else {
-                console.log(`[GPS UPDATE] Client ${req.session.user.id} en mouvement...`);
+                console.log(`[GPS UPDATE] Client ${req.session.user.id} : Lat=${lat}, Lon=${lon}`);
                 const { error: cErr } = await supabase.from('missions').update({ lat_client: lat, lon_client: lon })
                     .eq('client_id', req.session.user.id)
                     .in('statut', ['en_route', 'travail_en_cours']);
@@ -615,18 +615,22 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
             return res.json({});
         }
 
-        if (missionId) {
-            const { data: mData, error } = await supabase.from('missions').select('lat_prestataire, lon_prestataire').eq('id', missionId).maybeSingle();
-            if (error) console.error(`[DEBUG GPS SUIVI] Erreur Supabase mission ${missionId}:`, error.message);
-            
-            // Priorité absolue aux coordonnées de la mission (temps réel)
-            if (mData && mData.lat_prestataire != null) {
-                console.log(`[DEBUG GPS SUIVI] OK - Coordonnées trouvées pour mission ${missionId}: ${mData.lat_prestataire}, ${mData.lon_prestataire}`);
-                return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
-            } else {
-                console.log(`[DEBUG GPS SUIVI] INFO - La mission ${missionId} n'a pas encore de lat_prestataire enregistrée.`);
-            }
+        const { data: mData, error } = await supabase.from('missions')
+            .select('lat_prestataire, lon_prestataire, statut')
+            .eq('id', missionId)
+            .maybeSingle();
+
+        if (error) {
+            console.error(`[DEBUG GPS SUIVI] Erreur Supabase Mission ${missionId}:`, error.message);
+            return res.json({});
         }
+
+        if (mData && mData.lat_prestataire != null) {
+            console.log(`[DEBUG GPS SUIVI] OK Mission ${missionId} (${mData.statut}) : ${mData.lat_prestataire}, ${mData.lon_prestataire}`);
+            return res.json({ lat: mData.lat_prestataire, lon: mData.lon_prestataire });
+        }
+        
+        console.log(`[DEBUG GPS SUIVI] INFO: Pas de coordonnées temps réel pour mission ${missionId}. Repli session.`);
 
         // Repli sur la position fixe si la mission n'a pas encore de coordonnées propres
         const cmd = req.session.commande;

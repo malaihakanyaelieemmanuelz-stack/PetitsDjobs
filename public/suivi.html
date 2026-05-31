@@ -226,11 +226,11 @@
         // FONCTION PRESTATAIRE : Il envoie sa position
         function demarrerSuiviGPS() {
             if (navigator.geolocation) {
-                console.log("[GPS DEVICE] Démarrage du watchPosition...");
+                console.log("[GPS DEVICE] Initialisation du suivi temps réel...");
                 navigator.geolocation.watchPosition(pos => {
                     const { latitude, longitude } = pos.coords;
                     lastLat = latitude; lastLon = longitude;
-                    console.log(`[GPS DEVICE] Nouvelle position capturée : ${latitude}, ${longitude}`);
+                    console.log(`[GPS DEVICE] MAJ Position : ${latitude}, ${longitude} (Précision: ${pos.coords.accuracy}m)`);
 
                     // On centre la carte seulement la première fois pour ne pas bloquer l'utilisateur
                     if (!marker.getLatLng().lat) {
