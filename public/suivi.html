@@ -74,20 +74,21 @@
 
         // Vérifier qui est l'utilisateur (Prestataire ou Client)
         fetch('/get-user-data').then(r => r.json()).then(user => {
-            if (user.isPrestataire) {
-                isProvider = true;
-                fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-                   missionId = cmd.missionId;
+            fetch('/get-session-commande').then(r => r.json()).then(cmd => {
+                missionId = cmd.missionId;
+                // Si l'utilisateur connecté est le prestataire de cette mission précise
+                if (user.id === cmd.prestataireId) {
+                   isProvider = true;
                    document.getElementById('btn-sos').style.display = 'block';
                    document.getElementById('btn-fini').style.display = 'block';
                    document.getElementById('status-mission').innerText = "Mission en cours";
                    document.getElementById('mission-info').innerText = "Rendez-vous chez le client.";
                    demarrerSuiviGPS();
                    demarrerSuiviClientPourPrestataire();
-                });
-            } else {
-                attendreAcceptationPrestataire();
-            }
+                } else {
+                    attendreAcceptationPrestataire();
+                }
+            });
         });
 
         function attendreAcceptationPrestataire() {

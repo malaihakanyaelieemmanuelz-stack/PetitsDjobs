@@ -276,8 +276,8 @@
 
             if (data.prestataires && data.prestataires.length > 0) {
                 const proche = data.prestataires[0]; // Le premier est le plus proche
-                console.log("[DEBUG CLIENT] Prestataire le plus proche trouvé:", proche.nom);
-                selectionnerPrestataireDirect(proche.id, service);
+                console.log("[DEBUG CLIENT] Prestataire trouvé, redirection vers son profil.");
+                window.location.href = `/voir-prestataire?id=${proche.id}&service=${encodeURIComponent(service)}`;
             } else {
                 console.warn("[DEBUG CLIENT] Aucun prestataire trouvé à proximité, redirection vers recherche.");
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);

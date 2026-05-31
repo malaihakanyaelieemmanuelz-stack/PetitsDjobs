@@ -40,13 +40,14 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Port 465 nécessite secure: true
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    debug: true,
-    logger: true // Active les logs détaillés pour Nodemailer
+    connectionTimeout: 15000
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -151,17 +152,14 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             })
             .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
             .sort((a, b) => {
-                // 1. Statut En Ligne vs Hors Ligne
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 
                 if (a.enLigne) {
-                    // Si En ligne : Étoiles (desc), puis Ancienneté (asc)
                     const etoilesA = a.etoiles || 0;
                     const etoilesB = b.etoiles || 0;
                     if (etoilesA !== etoilesB) return etoilesB - etoilesA;
                     return new Date(a.created_at) - new Date(b.created_at);
                 } else {
-                    // Si Hors ligne : Dernière connexion (desc), puis Étoiles (desc)
                     const dateA = new Date(a.dernier_acces || 0);
                     const dateB = new Date(b.dernier_acces || 0);
                     if (dateA.getTime() !== dateB.getTime()) return dateB - dateA;
@@ -169,13 +167,6 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                     const etoilesB = b.etoiles || 0;
                     return etoilesB - etoilesA;
                 }
-
-                // 3. Enfin par date d'inscription (plus ancien en premier)
-                if (a.created_at && b.created_at) {
-                    return new Date(a.created_at) - new Date(b.created_at);
-                }
-
-                return a.distanceM - b.distanceM;
             });
 
         const limitFixe = limit || 20;
@@ -343,13 +334,14 @@ app.post('/preparer-commande', (req, res) => {
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const cmd = req.session.commande;
     const lat = req.session.latClient;
+    const lon = req.session.lonClient;
     
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
     console.log("[DEBUG SIMU PAY] Contenu session.commande:", JSON.stringify(cmd));
-    console.log("[DEBUG SIMU PAY] LatClient en session:", lat);
+    console.log(`[DEBUG SIMU PAY] GPS en session: ${lat}, ${lon}`);
 
-    if (!cmd || !cmd.prestataireId || !lat) {
-        console.error("[SIMU PAY ERROR] Données manquantes critiques :", { cmd, lat });
+    if (!cmd || !cmd.prestataireId || !lat || !lon) {
+        console.error("[SIMU PAY ERROR] Données manquantes critiques :", { cmd, lat, lon });
         return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
     }
 
@@ -360,8 +352,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             service: cmd.service,
             prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
             statut: 'en_attente_prestataire',
-            lat_client: req.session.latClient,
-            lon_client: req.session.lonClient
+            lat_client: lat,
+            lon_client: lon
         }).select().single();
 
         if (error) throw error;

@@ -26,9 +26,10 @@
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', function() {
                 const target = document.getElementById(this.dataset.target);
-                const isVisible = target.type === 'text';
-                target.type = isVisible ? 'password' : 'text';
-                this.style.opacity = isVisible ? "0.5" : "1"; // Effet simple : l'œil change d'opacité
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                // Toggle entre l'oeil ouvert et fermé (unicode classique)
+                this.textContent = isPass ? '🙈' : '👁️';
             });
         });
 
