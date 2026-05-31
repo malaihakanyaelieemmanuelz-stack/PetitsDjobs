@@ -96,7 +96,7 @@ function distanceMetres(p, lat, lon) {
     );
 }
 
-async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
+async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
         console.log(`[LOG] Recherche: Svc=${service || 'Tous'}, Lat=${lat ?? 'N/A'}, Lon=${lon ?? 'N/A'}`);
         const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
@@ -109,6 +109,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
 
         const eligibles = prestataires
+            .filter(p => p.user_id !== excludeUserId) // INTERDICTION DE SE COMMANDER SOI-MÊME
             .filter(p => serviceMatch(p, service) && userMap[p.user_id])
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
@@ -153,7 +154,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit) {
                 return a.distanceM - b.distanceM;
             });
 
-        const limitFixe = 20; // On veut toujours un pool de 20
+        const limitFixe = limit || 20;
         const page = eligibles.slice(offset, offset + limitFixe);
 
         return {
@@ -244,6 +245,12 @@ app.post('/deconnexion', (req, res) => {
 app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
 app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
 
+// Route pour obtenir le nombre total de prestataires inscrits
+app.get('/api/total-prestataires', async (req, res) => {
+    const { count } = await supabase.from('infos_prestataires').select('*', { count: 'exact', head: true });
+    res.json({ total: count || 0 });
+});
+
 app.get('/get-all-prestataires', async (req, res) => {
     const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
     if (!prestataires) return res.json([]);
@@ -267,7 +274,7 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
     if (lat == null || lon == null) {
         return res.json({ prestataires: [], message: 'Activez le GPS pour voir qui est près de vous.' });
     }
-    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 6);
+    const result = await chercherParRayonCroissant(lat, lon, service || null, 0, 6, req.session.user?.id);
     res.json({ prestataires: result.prestataires, total: result.total });
 });
 
@@ -275,7 +282,7 @@ app.get('/get-top-prestataires', async (req, res) => {
     try {
         const lat = req.session.latClient;
         const lon = req.session.lonClient;
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50);
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, req.session.user?.id);
         // FILTRE : On ne garde que ceux qui sont EN LIGNE pour le défilement
         const enLigneUniquement = result.prestataires.filter(p => p.disponible);
         res.json(enLigneUniquement);
@@ -355,7 +362,8 @@ app.post('/chercher-prestataires', async (req, res) => {
     const result = await chercherParRayonCroissant(
         latC, lonC, svc,
         parseInt(offset, 10) || 0,
-        BATCH_PRESTATAIRES
+        BATCH_PRESTATAIRES,
+        req.session.user?.id // Exclure l'utilisateur actuel
     );
     res.json(result);
 });
@@ -385,12 +393,12 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
     // FIX: On force la sauvegarde de la session avant de répondre pour éviter le "double clic"
     req.session.save(() => {
-        res.json({
+        return res.json({
             prestataireNom: user?.nom || 'Prestataire',
             distanceKm: req.session.commande.distanceKm,
             fraisDeplacement: frais,
             prixBase: req.session.commande.prixBase,
-            total: req.session.commande.total
+            total: req.session.commande.total || 0
         });
     });
 });
@@ -754,13 +762,12 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
     const { email } = req.body;
     const emailClean = (email || '').toLowerCase().trim();
 
-    // Vérifier si l'utilisateur existe
     const { data: user } = await supabase.from('utilisateurs').select('id').eq('email', emailClean).maybeSingle();
     if (!user) {
         return res.status(404).json({ error: "Cet email n'existe pas dans notre base." });
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString(); // Code à 6 chiffres
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     
     const { error } = await supabase.from('utilisateurs')
         .update({ reset_code: code, reset_expires: new Date(Date.now() + 15*60000).toISOString() })

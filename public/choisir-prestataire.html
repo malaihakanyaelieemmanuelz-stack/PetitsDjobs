@@ -8,7 +8,10 @@
 <body class="auth-page">
     <div style="max-width: 600px; margin: 30px auto; padding: 20px;">
         <h1 style="color:#5D4037;">Prestataires les plus proches</h1>
-        <p id="info-rayon" style="color:#666; font-size:0.9rem;">Recherche GPS en cours (rayon élargi de 1 m en 1 m)...</p>
+        <div id="compteur-total" style="background: #333; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">
+            Chargement de la communauté...
+        </div>
+        <p id="info-rayon" style="color:#666; font-size:0.9rem; font-weight: bold;">Recherche GPS active (incréments de 10m)...</p>
         <div id="liste-prestataires"></div>
         <button id="btn-plus" style="display:none; width:100%; padding:12px; margin-top:16px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">
             VOIR 20 PRESTATAIRES DE PLUS
@@ -20,10 +23,30 @@
         const service = params.get('service') || '';
         let offset = 0;
         let lat, lon;
+        let rayonVirtuel = 0;
+        let aTrouve = false;
 
         const container = document.getElementById('liste-prestataires');
         const info = document.getElementById('info-rayon');
         const btnPlus = document.getElementById('btn-plus');
+
+        // Afficher le nombre total de prestataires inscrits
+        fetch('/api/total-prestataires')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('compteur-total').innerText = `🚀 ${data.total} PRESTATAIRES PRÊTS À VOUS AIDER`;
+            });
+
+        function simulerRechercheExpansion() {
+            if (aTrouve) return;
+            rayonVirtuel += 10;
+            info.innerText = `🔍 Recherche en cours... Rayon : ${rayonVirtuel} mètres`;
+            
+            // On continue de chercher tous les 500ms visuellement tant qu'on n'a pas de résultats
+            if (rayonVirtuel < 50000) {
+                setTimeout(simulerRechercheExpansion, 300);
+            }
+        }
 
         function afficherListe(items, append) {
             if (!append) container.innerHTML = '';
@@ -31,6 +54,7 @@
                 container.innerHTML = '<p>Aucun prestataire disponible pour ce service. Élargissement du rayon...</p>';
                 return;
             }
+            aTrouve = true;
             items.forEach(p => {
                 const div = document.createElement('div');
                 div.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px; margin:8px 0; background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.08);';
@@ -86,6 +110,7 @@
             async pos => {
                 lat = pos.coords.latitude;
                 lon = pos.coords.longitude;
+                simulerRechercheExpansion();
                 await fetch('/sauvegarder-position', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

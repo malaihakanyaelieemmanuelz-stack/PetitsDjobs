@@ -24,7 +24,7 @@
                     <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="username">
                     <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
                         <input type="password" name="password" id="password" placeholder="MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="current-password">
-                        <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #666; padding: 0; width: auto;">👁️</button>
+                        <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #333; padding: 0; width: auto;">👁️</button>
                     </div>
                 </div>
                 <input type="hidden" name="lat" id="lat">
@@ -71,7 +71,7 @@
                 const target = document.getElementById(this.dataset.target);
                 const type = target.type === 'password' ? 'text' : 'password';
                 target.type = type;
-                this.textContent = type === 'password' ? '👁️' : '🙈';
+                this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
             });
         });
 

@@ -57,7 +57,8 @@
             });
             const data = await res.json();
             if (data.error) alert(data.error);
-            else window.location.href = '/commande';
+            // On passe les infos en URL pour être sûr que commande.html les reçoive
+            else window.location.href = `/commande?service=${encodeURIComponent(p.services || 'Service')}&prix=${p.prix || 0}`;
         }
     </script>
 </body>
