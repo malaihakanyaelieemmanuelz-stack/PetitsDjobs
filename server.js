@@ -40,14 +40,14 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 }
 
 const transporter = nodemailer.createTransport({
+    service: 'gmail',
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Port 465 nécessite secure: true
+    port: 587,
+    secure: false, // true pour le port 465, false pour le port 587
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
-    },
-    connectionTimeout: 15000
+    }
 });
 
 // --- Vérification du transporteur au démarrage pour les logs Render ---
@@ -339,22 +339,27 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
     console.log("[DEBUG SIMU PAY] Contenu session.commande:", JSON.stringify(cmd));
     console.log(`[DEBUG SIMU PAY] GPS en session: ${lat}, ${lon}`);
+    console.log(`[DEBUG SIMU PAY] IDs à insérer: Client=${req.session.user.id} (Type: ${typeof req.session.user.id}), Prestataire=${cmd.prestataireId} (Type: ${typeof cmd.prestataireId})`);
 
     if (!cmd || !cmd.prestataireId || !lat || !lon) {
         console.error("[SIMU PAY ERROR] Données manquantes critiques :", { cmd, lat, lon });
         return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
     }
 
+    const payload = {
+        client_id: req.session.user.id,
+        prestataire_id: cmd.prestataireId,
+        service: cmd.service,
+        prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
+        statut: 'en_attente_prestataire',
+        lat_client: parseFloat(lat),
+        lon_client: parseFloat(lon)
+    };
+
+    console.log("[DEBUG SIMU PAY] Payload envoyé à Supabase:", JSON.stringify(payload));
+
     try {
-        const { data, error } = await supabase.from('missions').insert({
-            client_id: req.session.user.id,
-            prestataire_id: cmd.prestataireId,
-            service: cmd.service,
-            prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
-            statut: 'en_attente_prestataire',
-            lat_client: parseFloat(lat),
-            lon_client: parseFloat(lon)
-        }).select().single();
+        const { data, error } = await supabase.from('missions').insert(payload).select().single();
 
         if (error) throw error;
 
@@ -363,7 +368,10 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         req.session.commande.statut = 'en_attente_prestataire';
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
-        console.error("Erreur simuler-paiement:", err);
+        console.error("❌ ERREUR CRITIQUE simuler-paiement:", err);
+        if (err.code === '22P02') {
+            console.error("👉 ANALYSE : Erreur de type UUID. Allez sur votre tableau de bord Supabase, table 'missions', et changez le type des colonnes 'client_id' et 'prestataire_id' de 'UUID' vers 'BIGINT' ou 'INT8'.");
+        }
         res.status(500).json({ error: "Erreur technique" });
     }
 });
