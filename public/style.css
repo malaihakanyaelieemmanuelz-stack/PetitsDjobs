@@ -310,13 +310,59 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
 
-    /* --- Optimisation de la carte de suivi pour Android --- */
+    /* --- Style Google Maps Immersif --- */
+    .tracking-body {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+
     #map {
-        height: 60dvh !important; /* Occupé 60% de la hauteur dynamique de l'écran */
-        margin-left: -20px !important; /* Étendre bord à bord en ignorant le padding du parent */
-        margin-right: -20px !important;
-        width: calc(100% + 40px) !important;
-        border-radius: 0 !important; /* Supprimer les arrondis pour l'effet plein écran */
+        position: absolute !important;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100% !important;
+        z-index: 1;
+    }
+
+    .floating-top-info {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    .floating-bottom-actions {
+        position: absolute;
+        bottom: 25px;
+        left: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    }
+
+    .nav-hint-google {
+        background: #1a73e8; /* Bleu Google Maps */
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        font-weight: 500;
     }
 
     .trust-card-header {
