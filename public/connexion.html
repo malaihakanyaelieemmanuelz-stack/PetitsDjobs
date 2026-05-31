@@ -69,9 +69,9 @@
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', function() {
                 const target = document.getElementById(this.dataset.target);
-                const type = target.type === 'password' ? 'text' : 'password';
-                target.type = type;
-                this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                this.textContent = '👁️';
             });
         });
 

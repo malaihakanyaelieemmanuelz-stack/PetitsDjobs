@@ -36,7 +36,6 @@ const supabase = createClient(
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // Utilisation de SSL direct (plus stable sur Render)
@@ -44,11 +43,9 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    tls: {
-        rejectUnauthorized: false // Aide à passer les pare-feu de cloud
-    },
-    connectionTimeout: 20000,
-    greetingTimeout: 20000,
+    connectionTimeout: 30000, // Augmentation du délai pour Render
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
     debug: true
 });
 
@@ -448,7 +445,7 @@ app.post('/selectionner-prestataire', async (req, res) => {
     req.session.save((err) => {
         if (err) return res.status(500).json({ error: "Erreur session" });
         res.json({ ok: true });
-    }
+    });
 });
 
 // Route pour que le client récupère la position GPS du prestataire choisi
