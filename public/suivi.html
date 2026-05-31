@@ -16,10 +16,14 @@
             Mise en relation et suivi GPS sécurisé.
         </div>
 
-        <div class="checkout-card" style="text-align: center;">
-            <h2 id="status-mission">Initialisation...</h2>
+        <div class="checkout-card" style="text-align: center; padding: 15px;">
+            <h2 id="status-mission" style="font-size: 1.2rem; margin-bottom: 5px;">Initialisation...</h2>
             <p id="mission-info" style="color:#666;">Vérification du statut de la mission.</p>
             
+            <div id="navigation-hint" style="display:none; background: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; font-weight: bold;">
+                ⬆️ Suivez la ligne bleue pour rejoindre le client
+            </div>
+
             <!-- Zone de la carte -->
             <div id="map"></div>
 
@@ -28,28 +32,29 @@
             </div>
 
             <!-- Boutons dynamiques Client (Commandeur) -->
-            <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#007bff; width:100%; margin-bottom:10px;">
+            <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; margin-bottom:10px;">
                 LE PRESTATAIRE EST ARRIVÉ
             </button>
 
-            <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.2rem; padding:20px; width:100%;">
+            <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.1rem; padding:15px; width:100%;">
                 🆘 SIGNALER UN DANGER (SOS)
             </button>
 
             <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#333; width:100%; margin-bottom:10px;">
-                CONFIRMER LE DÉPART DU PRESTATAIRE
+                VALIDER LE DÉPART DU PRESTATAIRE
             </button>
 
             <!-- Boutons dynamiques Prestataire -->
-            <button id="btn-arrive" onclick="marquerArrivee()" class="btn-primary-sm" style="display:none; background:#007bff; width:100%; margin-bottom:10px;">
-                JE SUIS ARRIVÉ SUR LE LIEU
-            </button>
+            <div id="group-presta-arrive" style="display:none; gap:10px; margin-bottom:10px;">
+                <button onclick="marquerArrivee()" class="btn-primary-sm" style="flex:2; background:#007bff;">OUI, JE SUIS ARRIVÉ</button>
+                <button onclick="alert('Continuez votre route vers le point rouge.')" class="btn-primary-sm" style="flex:1; background:#757575;">NON</button>
+            </div>
 
             <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; margin-bottom:10px;">
                 J'AI FINI LA TÂCHE
             </button>
 
-            <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.2rem; padding:20px; width:100%;">
+            <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; font-size:1.1rem; padding:15px; width:100%;">
                 🆘 EN DANGER
             </button>
         </div>
@@ -70,7 +75,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, markerProvider, markerClient;
+        let map, markerProvider, markerClient, routingLine;
         let isProvider = false;
         let missionId = null;
         let lastLat = null;
@@ -94,12 +99,15 @@
         // Initialisation de la carte (vue par défaut sur une position neutre)
         function initMap() {
             map = L.map('map').setView([0, 0], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+            // Vue Satellite avancée (Esri World Imagery)
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
             }).addTo(map);
             
             markerProvider = L.marker([0, 0], { icon: providerIcon }).addTo(map);
             markerClient = L.marker([0, 0], { icon: clientIcon }).addTo(map);
+            
+            routingLine = L.polyline([], {color: '#007bff', weight: 5, opacity: 0.6, dashArray: '10, 10'}).addTo(map);
         }
 
         initMap();
@@ -154,9 +162,10 @@
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
             const data = await res.json();
 
-            const btnArriveP = document.getElementById('btn-arrive');
+            const groupArriveP = document.getElementById('group-presta-arrive');
             const btnFiniP = document.getElementById('btn-fini-tache');
             const btnSosP = document.getElementById('btn-sos');
+            const navHint = document.getElementById('navigation-hint');
 
             const btnArriveC = document.getElementById('btn-client-arrive');
             const btnSosC = document.getElementById('btn-client-sos');
@@ -164,11 +173,13 @@
 
             if (isProvider) {
                 if (data.statut === 'en_route') {
-                    document.getElementById('status-mission').innerText = "En route...";
+                    document.getElementById('status-mission').innerText = "Êtes-vous arrivé ?";
+                    navHint.style.display = 'block';
                 } else if (data.statut === 'travail_en_cours') {
-                    btnArriveP.style.display = 'none';
+                    groupArriveP.style.display = 'none';
                     btnFiniP.style.display = 'block';
                     btnSosP.style.display = 'block';
+                    navHint.style.display = 'none';
                     document.getElementById('status-mission').innerText = "Travail en cours";
                 } else if (data.statut === 'attente_securite') {
                     btnFiniP.style.display = 'none';
@@ -179,6 +190,7 @@
                 }
             } else {
                 if (data.statut === 'en_route') {
+                    document.getElementById('status-mission').innerText = "Le prestataire arrive...";
                     btnArriveC.style.display = 'block';
                     btnSosC.style.display = 'none';
                     btnDepartC.style.display = 'none';
@@ -200,7 +212,13 @@
 
         function verifierDistance(lat, lon) {
             if (!clientPos) return;
-            const dist = L.latLng(lat, lon).distanceTo(L.latLng(clientPos.lat, clientPos.lon));
+            const pCoord = L.latLng(lat, lon);
+            const cCoord = L.latLng(clientPos.lat, clientPos.lon);
+            const dist = pCoord.distanceTo(cCoord);
+            
+            // Mise à jour de la ligne de direction
+            routingLine.setLatLngs([pCoord, cCoord]);
+
             console.log(`[DEBUG SUIVI] Distance entre les points: ${dist.toFixed(0)} mètres`);
             
             // Mise à jour de l'affichage de distance
@@ -211,7 +229,7 @@
 
             fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
                 if (data.statut === 'en_route' && dist < 50) {
-                    document.getElementById('btn-arrive').style.display = 'block';
+                    if (isProvider) document.getElementById('group-presta-arrive').style.display = 'flex';
                 }
                 
                 if (data.statut === 'attente_securite' && dist > 15 && !aAlerteSecurite) {
@@ -294,7 +312,7 @@
         // FONCTION PRESTATAIRE : Il envoie sa position
         function demarrerSuiviGPS() {
             if (navigator.geolocation) {
-                console.log("[GPS DEVICE] Initialisation du suivi temps réel...");
+                console.log("[GPS DEVICE] Initialisation du suivi haute précision...");
                 navigator.geolocation.watchPosition(pos => {
                     const { latitude, longitude } = pos.coords;
                     lastLat = latitude; lastLon = longitude;

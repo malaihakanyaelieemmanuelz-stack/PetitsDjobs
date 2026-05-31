@@ -258,6 +258,20 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
         background: white !important;
     }
 
+    .trust-card, .checkout-card {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 0 140px 0 !important; /* Bord à bord sur les côtés, espace en bas pour le défilement */
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        text-align: left !important;
+        min-height: 100dvh;
+        box-sizing: border-box;
+        background: white !important;
+    }
+
     .login-card h1 {
         font-size: 1.8rem !important;
         margin-bottom: 20px !important;
@@ -295,6 +309,15 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     .card h3 { font-size: 0.9rem; }
     
     .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
+
+    /* --- Optimisation de la carte de suivi pour Android --- */
+    #map {
+        height: 60dvh !important; /* Occupé 60% de la hauteur dynamique de l'écran */
+        margin-left: -20px !important; /* Étendre bord à bord en ignorant le padding du parent */
+        margin-right: -20px !important;
+        width: calc(100% + 40px) !important;
+        border-radius: 0 !important; /* Supprimer les arrondis pour l'effet plein écran */
+    }
 
     .trust-card-header {
         padding: 25px 20px !important;
