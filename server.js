@@ -240,7 +240,15 @@ app.get('/choisir-prestataire', requireAuth, (req, res) => res.sendFile(path.joi
 app.get('/commande', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'commande.html')));
 app.get('/discuter', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'discuter.html')));
 app.get('/voir-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'voir-prestataire.html')));
-app.get('/suivi', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'suivi.html')));
+
+app.get('/suivi', requireAuth, (req, res) => {
+    if (req.session.user.isPrestataire) {
+        res.sendFile(path.join(publicDir, 'suivi-prestataire.html'));
+    } else {
+        res.sendFile(path.join(publicDir, 'suivi-client.html'));
+    }
+});
+
 app.get('/attente-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'attente-prestataire.html')));
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
