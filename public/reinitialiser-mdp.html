@@ -13,9 +13,9 @@
             <h1>NOUVEAU MDP</h1>
             <p style="color:#666; margin-bottom:20px;">Entrez le code reçu par email et votre nouveau mot de passe.</p>
             <form id="resetForm">
-                <input type="text" id="code" name="reset_code_user" placeholder="CODE À 6 CHIFFRES" required maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
-                <div style="position: relative; display: flex; align-items: center; margin: 10px 0; width: 100%;">
-                    <input type="password" id="new-password" name="new_password_user" placeholder="NOUVEAU MOT DE PASSE" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="new-password">
+                <input type="text" id="code" name="recup_code" placeholder="CODE À 6 CHIFFRES" required maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
+er                <div style="position: relative; display: flex; align-items: center; margin: 10px 0; width: 100%">
+                    <input type="password" id="new-password" name="new_pass_val" placeholder="NOUVEAU MOT DE PASSE" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="new-password">
                     <button type="button" class="toggle-password" data-target="new-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #333; padding: 0; width: auto;">👁️</button>
                 </div>
                 <button type="submit">VALIDER LE CHANGEMENT</button>
@@ -28,8 +28,7 @@
                 const target = document.getElementById(this.dataset.target);
                 const isPass = target.type === 'password';
                 target.type = isPass ? 'text' : 'password';
-                // On garde l'icône simple pour éviter les bugs d'affichage
-                this.textContent = '👁️'; 
+                this.textContent = '👁️';
             });
         });
 

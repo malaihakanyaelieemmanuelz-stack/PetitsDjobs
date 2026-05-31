@@ -35,17 +35,19 @@ const supabase = createClient(
 );
 
 // --- Configuration de l'envoi d'emails (GMAIL recommandé) ---
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("⚠️ ATTENTION: Les variables EMAIL_USER ou EMAIL_PASS ne sont pas définies sur Render !");
+}
+
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Utilisation de SSL direct (plus stable sur Render)
+    service: 'gmail', // Plus robuste sur Render pour Gmail
     auth: {
         user: process.env.EMAIL_USER, // Ton adresse Gmail
         pass: process.env.EMAIL_PASS  // Ton "Mot de passe d'application" Google
     },
-    connectionTimeout: 30000, // Augmentation du délai pour Render
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+    connectionTimeout: 20000, // On augmente le délai pour éviter les ETIMEDOUT
+    greetingTimeout: 20000,
+    socketTimeout: 20000,
     debug: true
 });
 
@@ -114,13 +116,20 @@ function distanceMetres(p, lat, lon) {
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
-        console.log(`[LOG] Recherche: Svc=${service || 'Tous'}, Lat=${lat ?? 'N/A'}, Lon=${lon ?? 'N/A'}`);
-        const { data: prestataires } = await supabase.from('infos_prestataires').select('*');
+        console.log(`[DEBUG SEARCH] Start - Svc=${service}, Lat=${lat}, Lon=${lon}`);
+        const { data: prestataires, error: pError } = await supabase.from('infos_prestataires').select('*');
+        
+        if (pError) {
+            console.error("[DEBUG SEARCH] Erreur Supabase table infos_prestataires:", pError.message);
+            return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+        }
+
         if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+        console.log(`[DEBUG SEARCH] Utilisateurs trouvés: ${users?.length || 0} / Prestataires: ${prestataires.length}`);
 
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
 
@@ -330,10 +339,15 @@ app.post('/preparer-commande', (req, res) => {
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
-    const cmd = req.session.commande || {};
+    const cmd = req.session.commande;
     const lat = req.session.latClient;
-    if (!cmd.prestataireId || !lat) {
-        console.error("[SIMU PAY] Données manquantes :", { cmd, lat });
+    
+    console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
+    console.log("[DEBUG SIMU PAY] Contenu session.commande:", JSON.stringify(cmd));
+    console.log("[DEBUG SIMU PAY] LatClient en session:", lat);
+
+    if (!cmd || !cmd.prestataireId || !lat) {
+        console.error("[SIMU PAY ERROR] Données manquantes critiques.");
         return res.status(400).json({ error: "Session expirée ou GPS manquant. Rechargez la page." });
     }
 
@@ -342,7 +356,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             client_id: req.session.user.id,
             prestataire_id: cmd.prestataireId,
             service: cmd.service,
-            prix: parseInt(cmd.total || 0, 10),
+            prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
             statut: 'en_attente_prestataire',
             lat_client: req.session.latClient,
             lon_client: req.session.lonClient
@@ -362,6 +376,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
 app.post('/sauvegarder-position', async (req, res) => {
     const { lat, lon } = req.body;
+    console.log(`[DEBUG GPS] Reception position: Lat=${lat}, Lon=${lon} (User: ${req.session.user?.id || 'Invité'})`);
     if (lat != null && lon != null) {
         req.session.latClient = parseFloat(lat);
         req.session.lonClient = parseFloat(lon);
@@ -415,16 +430,18 @@ app.post('/chercher-prestataires', async (req, res) => {
 
 app.post('/selectionner-prestataire', async (req, res) => {
     const { prestataireId, serviceChoisi } = req.body;
+    console.log(`[DEBUG SELECT] Click sur prestataire: ${prestataireId} pour service: ${serviceChoisi}`);
+
     const { data: p } = await supabase
         .from('infos_prestataires')
         .select('*')
         .eq('user_id', prestataireId)
         .maybeSingle();
+
     if (!p) return res.status(400).json({ error: 'Prestataire introuvable' });
     
     const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
     
-    // Si la position client est inconnue, on prend celle par défaut ou 0
     const latC = req.session.latClient || 0;
     const lonC = req.session.lonClient || 0;
 
@@ -433,7 +450,7 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
     req.session.commande = req.session.commande || {};
     req.session.commande.prestataireId = p.user_id;
-    req.session.commande.service = serviceChoisi || req.session.commande.service || "Service";
+    req.session.commande.service = serviceChoisi || "Service";
     req.session.commande.prestataireNom = user?.nom || 'Prestataire';
     req.session.commande.prestatairePrenom = user?.prenom || '';
     req.session.commande.prestatairePhoto = p.photo_profil_url || '';
@@ -443,7 +460,11 @@ app.post('/selectionner-prestataire', async (req, res) => {
     req.session.commande.total = (req.session.commande.prixBase || 0) + frais;
 
     req.session.save((err) => {
-        if (err) return res.status(500).json({ error: "Erreur session" });
+        if (err) {
+            console.error("[DEBUG SELECT] Erreur sauvegarde session:", err);
+            return res.status(500).json({ error: "Erreur session" });
+        }
+        console.log("[DEBUG SELECT] Session sauvegardée avec succès pour mission.");
         res.json({ ok: true });
     });
 });
@@ -873,9 +894,11 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.error("❌ Echec envoi mail récupération à", emailClean, ":", error);
+            console.error("❌ ECHEC ENVOI MAIL à", emailClean);
+            console.error("DETAILS SMTP:", error); // Très important pour voir si c'est un timeout ou un refus Gmail
         } else {
-            console.log("📧 Mail de récupération envoyé avec succès à", emailClean);
+            console.log("📧 MAIL ENVOYÉ avec succès à", emailClean);
+            console.log("REPONSE SERVEUR SMTP:", info.response);
         }
     });
 

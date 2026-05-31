@@ -276,8 +276,10 @@
 
             if (data.prestataires && data.prestataires.length > 0) {
                 const proche = data.prestataires[0]; // Le premier est le plus proche
-                await selectionnerPrestataireDirect(proche.id, service);
+                console.log("[DEBUG CLIENT] Prestataire le plus proche trouvé:", proche.nom);
+                selectionnerPrestataireDirect(proche.id, service);
             } else {
+                console.warn("[DEBUG CLIENT] Aucun prestataire trouvé à proximité, redirection vers recherche.");
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
             }
         }
@@ -289,7 +291,8 @@
                 body: JSON.stringify({ prestataireId: id })
             });
             if (res.ok) {
-                window.location.href = `/commande?service=${encodeURIComponent(service)}`;
+                console.log("[DEBUG CLIENT] Sélection enregistrée, redirection commande.");
+                window.location.href = `/commande`;
             } else {
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
             }
