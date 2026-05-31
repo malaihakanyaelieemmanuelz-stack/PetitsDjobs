@@ -352,8 +352,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             service: cmd.service,
             prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
             statut: 'en_attente_prestataire',
-            lat_client: lat,
-            lon_client: lon
+            lat_client: parseFloat(lat),
+            lon_client: parseFloat(lon)
         }).select().single();
 
         if (error) throw error;

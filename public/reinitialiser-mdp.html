@@ -28,8 +28,7 @@
                 const target = document.getElementById(this.dataset.target);
                 const isPass = target.type === 'password';
                 target.type = isPass ? 'text' : 'password';
-                // Toggle entre l'oeil ouvert et fermé (unicode classique)
-                this.textContent = isPass ? '🙈' : '👁️';
+                this.textContent = '👁️';
             });
         });
 
