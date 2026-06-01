@@ -11,13 +11,13 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const sharp = require('sharp');
 
-console.log('--- [STARTUP] Vérification des variables d\'environnement ---');
+console.log('📋 [SYSTEM] --- VÉRIFICATION STARTUP ---');
 const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'RESEND_API_KEY'];
 requiredVars.forEach(v => {
     if (!process.env[v]) {
-        console.error(`❌ [ERROR] Variable manquante dans le dashboard Render : ${v}`);
+        console.error(`❌ [ERREUR] Variable manquante sur Render : ${v}. COPIEZ CECI ET VÉRIFIEZ L'ONGLET ENVIRONMENT.`);
     } else {
-        console.log(`✅ [OK] Variable présente : ${v}`);
+        console.log(`✅ [OK] Variable détectée : ${v}`);
     }
 });
 
@@ -43,33 +43,33 @@ const port = process.env.PORT || 5500; // Utilise le port de Render si disponibl
 let supabase;
 try {
     if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-        throw new Error("Missing SUPABASE_URL or SUPABASE_KEY in environment variables.");
+        throw new Error("Variables Supabase absentes.");
     }
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
-    console.log("🚀 [INIT] Supabase client initialized.");
+    console.log("✅ [DB] Client Supabase initialisé.");
 } catch (err) {
-    console.error("❌ [FATAL ERROR] Failed to initialize Supabase:", err.message);
+    console.error("❌ [ERREUR FATALE] Échec Supabase :", err.message, "📋 COPIEZ CECI POUR LE SUPPORT.");
     // On ne coupe pas le processus ici pour laisser le temps aux logs de s'afficher sur Render
 }
 
 // --- Initialisation de Resend (Remplacement de Nodemailer pour éviter les blocages SMTP) ---
 if (!process.env.RESEND_API_KEY) {
-    console.error("❌ [CRITICAL] RESEND_API_KEY est manquante. L'envoi d'emails échouera.");
+    console.error("❌ [ERREUR] RESEND_API_KEY manquante. Les mails ne partiront pas.");
 }
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-console.log("📨 [INFO] Client Resend configuré.");
+console.log("📨 [MAIL] Système Resend prêt.");
 
 // --- Test de connexion pour les logs Render ---
 if (supabase) {
     supabase.from('utilisateurs').select('id').limit(1)
     .then(({ error }) => {
         if (error) {
-            console.error('❌ [DATABASE ERROR] Connexion Supabase échouée:', error.message);
+            console.error('❌ [ERREUR DB] Impossible de lire la table utilisateurs :', error.message);
         } else {
-            console.log('✅ [DATABASE OK] Connexion Supabase établie.');
+            console.log('✅ [DB OK] Connexion à la base de données réussie.');
         }
     })
-    .catch(err => console.error('❌ [FATAL] Erreur lors de l\'initialisation Supabase :', err));
+    .catch(err => console.error('❌ [ERREUR FATALE DB] :', err));
 }
 
 const PRIX_PAR_KM = 200;
@@ -83,7 +83,10 @@ app.use(express.json());
 
 // Middleware de journalisation des requêtes (Visible dans les logs Render)
 app.use((req, res, next) => {
-    console.log(`[REQUEST] ${req.method} ${req.url} - IP: ${req.ip}`);
+    // On ne log que les routes API pour éviter de polluer les logs avec le CSS/Images
+    if (req.url.startsWith('/api') || req.url.includes('jobs')) {
+        console.log(`🌐 [API] ${req.method} ${req.url}`);
+    }
     next();
 });
 
@@ -113,12 +116,20 @@ function serviceMatch(prestataire, serviceDemande) {
 }
 
 function distanceMetres(p, lat, lon) {
-    if (p.lat == null || p.lon == null) return Infinity;
+    const clientLat = parseFloat(lat);
+    const clientLon = parseFloat(lon);
+    const prestaLat = parseFloat(p.lat);
+    const prestaLon = parseFloat(p.lon);
+
+    if (isNaN(clientLat) || isNaN(clientLon) || isNaN(prestaLat) || isNaN(prestaLon)) {
+        return Infinity;
+    }
+
     const dist = geolib.getDistance(
-        { latitude: parseFloat(lat), longitude: parseFloat(lon) },
-        { latitude: parseFloat(p.lat), longitude: parseFloat(p.lon) }
+        { latitude: clientLat, longitude: clientLon },
+        { latitude: prestaLat, longitude: prestaLon }
     );
-    console.log(`[DEBUG DIST] Calcule entre Client(${lat}, ${lon}) et Presta(${p.lat}, ${p.lon}) = ${dist}m`);
+    console.log(`[DEBUG DIST] Calcule entre Client(${clientLat}, ${clientLon}) et Presta(${prestaLat}, ${prestaLon}) = ${dist}m`);
     return dist;
 }
 
@@ -343,8 +354,8 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 
 app.get('/get-top-prestataires', async (req, res) => {
     try {
-        const lat = req.session.latClient;
-        const lon = req.session.lonClient;
+        const lat = req.query.lat || req.session.latClient;
+        const lon = req.query.lon || req.session.lonClient;
         const userId = req.session.user?.id;
         console.log(`[DEBUG TOP] Demande de Top Prestataires pour User ${userId || 'Inconnu'}. GPS: ${lat}, ${lon}`);
         const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
@@ -1433,6 +1444,19 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     }
 });
 
+// Log spécifique pour le favicon
+app.get(['/favicon.png', '/favicon.ico'], (req, res, next) => {
+    const filePath = path.join(publicDir, 'favicon.png');
+    
+    if (fs.existsSync(filePath)) {
+        // Log discret pour ne pas polluer
+        if (req.url === '/favicon.ico') return res.redirect(301, '/favicon.png');
+    } else {
+        console.error(`❌ [LOGO MANQUANT] Le fichier public/favicon.png est introuvable ! Google ne peut pas l'afficher.`);
+    }
+    next(); // Continue vers le middleware static pour servir le fichier
+});
+
 // Configuration de la mise en cache pour les fichiers statiques
 const optionsCache = {
     maxAge: '30d', // Indique au navigateur de garder les fichiers 30 jours
@@ -1453,7 +1477,7 @@ app.use(express.static(publicDir, { ...optionsCache, index: false }));
 
 // Middleware global de capture d'erreurs (Crucial pour le débogage sur Render)
 app.use((err, req, res, next) => {
-    console.error(`🚨 [SERVER ERROR] ${req.method} ${req.url} - Error:`, err.message);
+    console.error(`🚨 [ERREUR CRITIQUE SERVEUR] ${req.method} ${req.url} \n📋 COPIEZ CECI :`, err.message);
     console.error(err.stack);
     res.status(500).json({ error: "Une erreur interne est survenue sur le serveur." });
 });

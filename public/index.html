@@ -134,6 +134,8 @@
     <script>
         let connecte = false;
         let currentUserId = null; // Pour stocker l'ID de l'utilisateur connecté
+        let userLat = null;
+        let userLon = null;
 
         function distanceLabel(m) {
             if (m < 1000) return m + ' m';
@@ -216,16 +218,10 @@
 
         async function chargerJobsPublics() {
             let url = '/get-public-jobs';
-            
-            // On essaie d'ajouter la position de l'utilisateur pour calculer sa distance propre
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const { latitude, longitude } = pos.coords;
-                    executerChargementJobs(`${url}?lat=${latitude}&lon=${longitude}`);
-                }, () => executerChargementJobs(url));
-            } else {
-                executerChargementJobs(url);
+            if (userLat && userLon) {
+                url += `?lat=${userLat}&lon=${userLon}`;
             }
+            executerChargementJobs(url);
         }
 
         function executerChargementJobs(fetchUrl) {
@@ -324,9 +320,25 @@
                             '<strong>GPS désactivé</strong> Activez la localisation pour voir qui est autour de vous.';
                     }
                 );
+
+                let missionCount = 0;
+                if (userData.isPrestataire) {
+                    setInterval(async () => {
+                        const rM = await fetch('/api/mes-missions-prestataire');
+                        const mData = await rM.json();
+                        const flash = document.getElementById('alerte-mission-flash');
+                        if (mData && mData.length > 0) {
+                            if (mData.length > missionCount) {
+                                document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés par le navigateur"));
+                            }
+                            flash.style.display = 'block';
+                        } else {
+                            flash.style.display = 'none';
+                        }
+                        missionCount = mData.length;
+                    }, 2000);
+                }
             }
-            // On lance le chargement des jobs dès qu'on a l'ID utilisateur
-            chargerJobsPublics();
         }).catch(() => {});
 
         async function allerCommander(service, prix) {
@@ -389,7 +401,12 @@
         });
 
         function rafraichirCarrousel() {
-            fetch('/get-top-prestataires').then(res => res.json()).then(data => {
+            let url = '/get-top-prestataires';
+            if (userLat && userLon) {
+                url += `?lat=${userLat}&lon=${userLon}`;
+            }
+
+            fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
                 if (!data || !data.length) {
                     container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé.</p>';
