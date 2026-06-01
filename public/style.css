@@ -141,16 +141,16 @@ body::before {
 /* Bouton Connexion (Style contour) */
 .nav-compact a[href="connexion.html"], .nav-compact a[href="/profil"] {
     background: transparent;
-    color: #5D4037;
-    border: 2px solid #5D4037;
+    color: #333333;
+    border: 2px solid #333333;
 }
 
 /* Bouton Inscription / Déconnexion (Style plein) */
 .nav-compact a[href="inscription.html"], .nav-compact button {
-    background: #5D4037;
+    background: #333333;
     color: white;
-    border: 2px solid #5D4037;
-    box-shadow: 0 2px 4px rgba(93, 64, 55, 0.15);
+    border: 2px solid #333333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .nav-compact a:hover, .nav-compact button:hover {
@@ -223,10 +223,11 @@ body::before {
     flex-direction: row;       /* Force la ligne */
     overflow-x: auto;          /* Active le défilement horizontal */
     overflow-y: hidden;        /* Empêche le défilement vertical */
-    white-space: nowrap;       /* Empêche les cartes de passer à la ligne */
+    justify-content: center;   /* Recentrage des cartes */
     gap: 15px;                 /* Espace */
     padding: 20px 10px;
     width: 100%;               /* Prend toute la largeur */
+    box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Fluidité Android */
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
@@ -316,122 +317,91 @@ body::before {
 
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
-    /* Barre de recherche style App */
-    .search-container {
-        padding: 10px 15px;
-        background: white;
-    }
-    .search-box {
-        background: #f1f1f1;
-        border-radius: 8px;
-        padding: 10px 15px;
+    /* RÈGLE UNIVERSELLE PLEIN ÉCRAN ANDROID */
+    body { background-color: white !important; }
+
+    /* Tous les conteneurs principaux passent en mode "App" sans bordures ni ombres */
+    .login-card, 
+    .trust-card, 
+    .checkout-card, 
+    .card-presta-mobile, 
+    .auth-page,
+    .app-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 20px !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        box-sizing: border-box;
+        min-height: calc(100dvh - 60px);
         display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #888;
-        font-size: 0.9rem;
+        flex-direction: column;
+        align-items: center; /* Centrage horizontal de tout le contenu */
+        justify-content: flex-start;
     }
 
-    /* Grille de services style Jumia (Compacte) */
+    /* Centrage des titres et formulaires */
+    .login-card h1, .login-card form, .trust-card-body, .checkout-card form {
+        width: 100%;
+        max-width: 350px; /* Largeur confortable pour la lecture */
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
         gap: 10px !important;
         padding: 15px !important;
+        justify-items: center;
+        width: 100%;
     }
+
     .card {
-        box-shadow: none !important;
-        border: none !important;
         background: transparent !important;
-        text-align: center;
+        width: auto !important;
     }
+
     .card img {
         width: 60px !important;
         height: 60px !important;
-        border-radius: 15px !important;
-        margin: 0 auto !important;
-        object-fit: cover;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        border-radius: 12px !important;
     }
-    .card-info { padding: 5px 0 !important; }
+
     .card h3 { 
-        font-size: 0.7rem !important; 
-        margin-top: 5px !important;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 0.65rem !important;
+        text-align: center;
     }
-    .card .price, .card button { display: none !important; } /* On cache les prix et boutons sur l'accueil pour aérer */
 
-    /* Bottom Navigation style Yango */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 65px;
-        background: white;
+    /* Centrage forcé du carrousel horizontal */
+    .scroll-container {
+        justify-content: center !important; 
+        padding: 20px 10px !important;
         display: flex;
-        justify-content: space-around;
-        align-items: center;
-        border-top: 1px solid #eee;
-        z-index: 10000;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    }
-    .nav-item {
-        text-align: center;
-        color: #757575;
-        text-decoration: none;
-        font-size: 0.7rem;
-        font-weight: 600;
-    }
-    .nav-item.active { color: #5D4037; }
-    .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 4px; }
-
-    /* native look for android: solid white background */
-    body { background-color: white !important; min-height: 100dvh; }
-
-    .auth-page { 
-        display: block; 
-        min-height: 100dvh; 
-        padding: 0; 
-        width: 100%;
-        box-sizing: border-box; 
+        gap: 15px;
     }
 
-    .login-card, .trust-card, .checkout-card {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        padding: 20px 20px 140px !important; /* Espace pour le défilement et le clavier */
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        text-align: left !important;
-        min-height: 100dvh;
-        box-sizing: border-box;
-        background: white !important;
+    /* On ajoute un espacement automatique pour centrer la première carte au milieu de l'écran */
+    .scroll-container::before, .scroll-container::after {
+        content: '';
+        flex: 0 0 5%; 
     }
 
-    .trust-card, .checkout-card {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        padding: 0 0 140px 0 !important; /* Bord à bord sur les côtés, espace en bas pour le défilement */
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        text-align: left !important;
-        min-height: 100dvh;
-        box-sizing: border-box;
-        background: white !important;
+    .profile-card {
+        flex: 0 0 260px !important;
+        margin: 0 auto;
     }
 
-    .login-card h1 {
-        font-size: 1.8rem !important;
-        margin-bottom: 20px !important;
+    /* Header compact et centré */
+    .header-content {
+        flex-direction: column;
+        gap: 10px;
         text-align: center;
     }
+    .nav-compact { justify-content: center; width: 100%; }
 
     .home-header { 
         padding: 15px 10px !important; 
@@ -442,121 +412,6 @@ body::before {
         min-height: 42px;
         display: flex;
     }
-    .home-header h1 { 
-        font-size: 1.2rem !important; 
-        padding: 0 !important;
-        background: none !important;
-    }
-
-    /* Plein écran pour le profil sur Android */
-    .profile-full-screen {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        min-height: calc(100dvh - 70px) !important;
-    }
-    
-    .app-wrap { 
-        padding: 0 !important; 
-        width: 100% !important; 
-        min-height: calc(100dvh - 60px); /* Prend toute la hauteur moins le header */
-        box-sizing: border-box; 
-    }
-    
-    
-    .card { width: 100%; } /* Prend toute la place de sa colonne grid */
-    .card img { height: 140px; }
-    .card h3 { font-size: 0.9rem; }
-    
-    .scroll-container .profile-card { flex: 0 0 260px; } /* Taille optimisée pour Android */
-
-    /* --- Style Google Maps Immersif --- */
-    .tracking-body {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
-
-    #map {
-        position: absolute !important;
-        top: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100% !important;
-        z-index: 1;
-    }
-
-    .floating-top-info {
-        position: absolute;
-        top: 15px;
-        left: 10px;
-        right: 10px;
-        z-index: 1000;
-        background: white;
-        padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        text-align: center;
-    }
-
-    .floating-bottom-actions {
-        position: absolute;
-        bottom: 25px;
-        left: 10px;
-        right: 10px;
-        z-index: 1000;
-        background: white;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-    }
-
-    .nav-hint-google {
-        background: #1a73e8; /* Bleu Google Maps */
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        font-weight: 500;
-    }
-
-    .trust-card-header {
-        padding: 25px 20px !important;
-    }
-
-    .trust-card-header img {
-        width: 80px !important;
-        height: 80px !important;
-    }
-
-    .trust-card-body, .card-presta-mobile, .checkout-card {
-        padding: 20px !important;
-    }
-
-    /* Boutons de profil style Android (pleine largeur) */
-    .trust-card .btn-primary-sm, 
-    .card-presta-mobile button,
-    .checkout-card button {
-        width: 100% !important;
-        height: 48px; /* Hauteur standard pour le tactile */
-        font-size: 1rem !important;
-        margin-top: 15px;
-    }
-
-    /* Ajustement des listes de prestataires sur mobile */
-    #liste-prestataires > div {
-        flex-direction: column;
-        text-align: center;
-        padding: 15px !important;
-    }
-    #liste-prestataires button { width: 100%; margin-top: 10px; }
 }
 
 /* --- Boutons d'action critique (Suppression) --- */

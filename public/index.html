@@ -8,8 +8,6 @@
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2">
     <link rel="apple-touch-icon" href="/favicon.png?v=2">
     <title>Accueil - PETITSDJOBS</title>
-    <!-- Ajout des icônes pour la barre du bas -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Son de notification -->
@@ -44,19 +42,8 @@
         </div>
     </header>
 
-    <!-- Barre de recherche Mobile style Jumia -->
-    <div class="search-container">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <span>Rechercher un service ou un nom...</span>
-        </div>
-    </div>
-
-    <!-- Bandeau GPS plus discret -->
-    <div id="gps-accueil" style="padding: 10px 20px; font-size: 0.8rem; background: #fff8e1; color: #795548; display: flex; align-items: center; gap: 10px;">
-        <i class="fas fa-map-marker-alt"></i>
-        <span>Localisation en cours...</span>
-    </div>
+    <!-- ESPACE RÉSERVÉ POUR FUTURES PUBLICITÉS -->
+    <div style="margin: 10px; height: 10px;"></div>
 
     <!-- Section Annonces désormais visible par tous -->
     <div id="pub-container" style="margin: 10px; background:#5D4037; padding:15px; border-radius:12px; color:white; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
@@ -73,61 +60,59 @@
 
     <div class="service-grid" id="services-bloc">
         <div class="card">
-            <img src="cuisine.jpg.jpg" alt="Cuisine">
+            <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400" alt="Cuisine" onerror="this.src='default-profile.png'">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
-            <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
+            <button class="btn-commander" data-service="Cuisine" data-prix="1500" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="lavage.jpg.jpg" alt="Lavage">
+            <img src="https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400" alt="Lavage" onerror="this.src='default-profile.png'">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
-            <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
+            <button class="btn-commander" data-service="Lavage" data-prix="800" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="vaiselle.jpg.jpg" alt="Vaisselle">
+            <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400" alt="Vaisselle" onerror="this.src='default-profile.png'">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
-            <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
+            <button class="btn-commander" data-service="Vaisselle" data-prix="400" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="coursier.jpg.jpg" alt="Course">
+            <img src="https://images.unsplash.com/photo-1586769852836-bc069f19e1b6?w=400" alt="Course" onerror="this.src='default-profile.png'">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
-            <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
+            <button class="btn-commander" data-service="Course" data-prix="500" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="chauffeur.jpg.jpg" alt="Chauffeur">
+            <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400" alt="Chauffeur" onerror="this.src='default-profile.png'">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
-            <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
+            <button class="btn-commander" data-service="Chauffeur" data-prix="3000" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="coiffure.jpg.jpg" alt="Coiffure">
+            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400" alt="Coiffure" onerror="this.src='default-profile.png'">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
-            <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
+            <button class="btn-commander" data-service="Coiffure" data-prix="2500" style="margin-bottom:5px;">Choisir ce service</button>
+            <button class="btn-discuter" data-href="/discuter" style="background:#333;">DISCUTER LE PRIX</button>
         </div>
         <div class="card">
-            <img src="remplacement.JPG.jpg" alt="Remplacement">
+            <img src="https://images.unsplash.com/photo-1521791136064-7986c2959563?w=400" alt="Remplacement" onerror="this.src='default-profile.png'">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special">
-            <img src="particulier.jpg.jpg" alt="Particulier">
+            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400" alt="Particulier" onerror="this.src='default-profile.png'">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
-            <button class="btn-discuter" data-href="/discuter">DISCUTER</button>
+            <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
         </div>
-    </div>
-
-    <!-- Bottom Navigation Fixed (Style Yango/Jumia) -->
-    <div class="bottom-nav">
-        <a href="index.html" class="nav-item active"><i class="fas fa-home"></i>Accueil</a>
-        <a href="/discuter" class="nav-item"><i class="fas fa-search"></i>Recherche</a>
-        <a href="/prestataire-info" class="nav-item"><i class="fas fa-tasks"></i>Missions</a>
-        <a href="/profil" class="nav-item"><i class="fas fa-user"></i>Profil</a>
     </div>
 
     <section class="app-wrap" id="section-jobs" style="padding: 20px; display:none;">
@@ -209,23 +194,28 @@
             }
             
             return `
-                <article class="profile-card" style="cursor:pointer" onclick="${cardAction}">
-                    <div class="provider-card-top">
+                <article class="profile-card" style="cursor:pointer">
+                    <div class="provider-card-top" onclick="${cardAction}">
                         <span class="badge-dispo" style="background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
                         <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='default-profile.png'">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>
-                    <div class="provider-card-body">
+                    <div class="provider-card-body" onclick="${cardAction}">
                         <h3>${nom}</h3>
                         <p style="font-size:0.75rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
                         <p class="prof">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
-                        <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>                        <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>
+                        <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
                             <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
                             <div style="width:100px; height:6px; background:#eee; border-radius:3px; overflow:hidden;">
                                 <div style="width:${Math.min((p.etoiles || 0) * 20, 100)}%; height:100%; background:#5D4037;"></div>
                             </div>
                         </div>
+                    </div>
+                    <div style="margin-top:12px; display:flex; flex-direction:column; gap:5px;">
+                        <button onclick="selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')" class="btn-primary-sm" style="width:100%; padding:10px; font-size:0.8rem;">CHOISIR CE PRESTATAIRE</button>
+                        <button onclick="location.href='/discuter'" class="btn-primary-sm" style="width:100%; padding:10px; font-size:0.8rem; background:#333;">NÉGOCIER PRIX</button>
                     </div>
                 </article>`;
         }
@@ -349,8 +339,6 @@
                     () => {
                         // On charge quand même les jobs même si le GPS échoue pour que l'utilisateur voit SES tâches
                         chargerJobsPublics();
-                        document.getElementById('gps-accueil').innerHTML =
-                            '<strong>GPS désactivé</strong> Activez la localisation pour voir qui est autour de vous.';
                     }
                 );
             }
