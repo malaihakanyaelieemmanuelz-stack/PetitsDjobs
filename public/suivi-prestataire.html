@@ -27,6 +27,7 @@
 
         <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">MARQUER TÂCHE TERMINÉE</button>
         <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:block; width:100%; height:50px;">🆘 APPEL D'URGENCE (DANGER)</button>
+        <p style="font-size: 0.75rem; color: #b71c1c; text-align: center; margin-top: 8px; font-weight: bold;">⚠️ Toute fausse alerte (usage abusif) entraînera la suppression définitive de votre compte.</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -161,10 +162,10 @@
         }
 
         async function declencherSOS() {
-            if (confirm("🚨 SIGNALER UN DANGER ?")) {
+            if (confirm("🚨 SIGNALER UN DANGER IMMÉDIAT ?\n\nATTENTION : L'usage abusif de ce bouton sans danger réel est strictement interdit. Toute fausse alerte entraînera des sanctions immédiates pouvant aller jusqu'à la suppression définitive de votre compte.")) {
                 const pos = markerMe.getLatLng();
                 await fetch('/alerte-sos', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ lat: pos.lat, lon: pos.lng }) });
-                alert("Alerte envoyée.");
+                alert("Alerte envoyée aux services de sécurité.");
             }
         }
 
