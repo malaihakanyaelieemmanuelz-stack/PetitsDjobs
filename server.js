@@ -9,6 +9,17 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
+const sharp = require('sharp');
+
+console.log('--- [STARTUP] Vérification des variables d\'environnement ---');
+const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'RESEND_API_KEY'];
+requiredVars.forEach(v => {
+    if (!process.env[v]) {
+        console.error(`❌ [ERROR] Variable manquante dans le dashboard Render : ${v}`);
+    } else {
+        console.log(`✅ [OK] Variable présente : ${v}`);
+    }
+});
 
 const app = express();
 // Mise à jour structure table : synchronisation avec infos_prestataires
@@ -36,21 +47,21 @@ const supabase = createClient(
 
 // --- Initialisation de Resend (Remplacement de Nodemailer pour éviter les blocages SMTP) ---
 if (!process.env.RESEND_API_KEY) {
-    console.warn("⚠️ ATTENTION: La variable RESEND_API_KEY n'est pas définie sur Render !");
+    console.error("❌ [CRITICAL] RESEND_API_KEY est manquante. L'envoi d'emails échouera.");
 }
 const resend = new Resend(process.env.RESEND_API_KEY);
-console.log("✅ Système d'emails configuré via API Resend");
+console.log("📨 [INFO] Client Resend configuré.");
 
 // --- Test de connexion pour les logs Render ---
 supabase.from('utilisateurs').select('id').limit(1)
     .then(({ error }) => {
         if (error) {
-            console.error('❌ Erreur de connexion Supabase :', error.message);
+            console.error('❌ [DATABASE ERROR] Connexion Supabase échouée:', error.message);
         } else {
-            console.log('✅ Connexion à Supabase réussie !');
+            console.log('✅ [DATABASE OK] Connexion Supabase établie.');
         }
     })
-    .catch(err => console.error('❌ Erreur fatale lors de l\'initialisation Supabase :', err));
+    .catch(err => console.error('❌ [FATAL] Erreur lors de l\'initialisation Supabase :', err));
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
@@ -60,6 +71,12 @@ const offresDiscuter = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Middleware de journalisation des requêtes (Visible dans les logs Render)
+app.use((req, res, next) => {
+    console.log(`[REQUEST] ${req.method} ${req.url} - IP: ${req.ip}`);
+    next();
+});
 
 app.use(session({
     secret: 'petit-secret-job-2026',
@@ -964,11 +981,17 @@ app.post('/inscription', async (req, res) => {
 // Helper pour envoyer un fichier vers Supabase Storage
 async function uploadToSupabase(file, bucketName) {
     console.log(`[STORAGE] Début upload: ${file.originalname} (${file.size} octets)`);
-    const fileBuffer = fs.readFileSync(file.path);
-    const fileName = `${Date.now()}-${file.originalname}`;
+    
+    // Compression automatique avec Sharp
+    const compressedBuffer = await sharp(file.path)
+        .resize({ width: 800, withoutEnlargement: true }) // Redimensionne si l'image est trop grande
+        .webp({ quality: 75 }) // Conversion en WebP (plus léger et performant)
+        .toBuffer();
+
+    const fileName = `${Date.now()}-${path.parse(file.originalname).name}.webp`;
     const { data, error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, fileBuffer, { contentType: file.mimetype });
+        .upload(fileName, compressedBuffer, { contentType: 'image/webp' });
     
     if (error) {
         console.error(`[STORAGE ERR] Echec pour ${file.originalname}:`, error.message);
@@ -1401,7 +1424,29 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     }
 });
 
-app.use('/uploads', express.static(path.join(publicDir, 'uploads')));
-app.use(express.static(publicDir, { index: false }));
+// Configuration de la mise en cache pour les fichiers statiques
+const optionsCache = {
+    maxAge: '30d', // Indique au navigateur de garder les fichiers 30 jours
+    setHeaders: (res, path) => {
+        // On cible spécifiquement les images pour une mise en cache agressive
+        if (path.match(/\.(webp|jpg|jpeg|png|gif|ico|svg)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+        }
+        // On peut aussi mettre en cache le CSS et le JS
+        if (path.match(/\.(css|js)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 jours
+        }
+    }
+};
+
+app.use('/uploads', express.static(path.join(publicDir, 'uploads'), optionsCache));
+app.use(express.static(publicDir, { ...optionsCache, index: false }));
+
+// Middleware global de capture d'erreurs (Crucial pour le débogage sur Render)
+app.use((err, req, res, next) => {
+    console.error(`🚨 [SERVER ERROR] ${req.method} ${req.url} - Error:`, err.message);
+    console.error(err.stack);
+    res.status(500).json({ error: "Une erreur interne est survenue sur le serveur." });
+});
 
 app.listen(port, () => console.log('Cerveau opérationnel sur http://localhost:' + port));

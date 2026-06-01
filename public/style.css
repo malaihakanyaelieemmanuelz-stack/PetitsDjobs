@@ -104,28 +104,48 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
     align-items: center;
 }
 .nav-compact a, .nav-compact button {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     font-weight: bold;
     text-decoration: none;
-    color: #444;
-    background: #f0f0f0;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: none;
+    padding: 8px 18px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.nav-bar a:hover { text-decoration: underline; }
-.home-auth-btn {
-    display: inline-block; padding: 14px 28px; margin: 8px;
-    background-color: #5D4037; color: white !important; text-decoration: none;
-    border-radius: 8px; font-weight: bold; text-transform: uppercase;
+/* Bouton Connexion (Style contour) */
+.nav-compact a[href="connexion.html"], .nav-compact a[href="/profil"] {
+    background: transparent;
+    color: #5D4037;
+    border: 2px solid #5D4037;
 }
-.home-auth-btn-alt { background-color: #333333; }
-.home-auth-btn:hover { opacity: 0.9; }
+
+/* Bouton Inscription / Déconnexion (Style plein) */
+.nav-compact a[href="inscription.html"], .nav-compact button {
+    background: #5D4037;
+    color: white;
+    border: 2px solid #5D4037;
+}
+
+.nav-compact a:hover, .nav-compact button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(93, 64, 55, 0.2);
+    opacity: 0.9;
+}
+
 .service-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 40px; max-width: 1200px; margin: 0 auto; }
 .card { background: white; width: 300px; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.1); transition: transform 0.3s; border: 1px solid #eee; }
-.card img { width: 100%; height: 200px; object-fit: cover; }
+
+/* Optimisation du chargement visuel des images */
+.card img, .provider-card-top img, .profile-card img { 
+    width: 100%; 
+    height: 200px; 
+    object-fit: cover; 
+}
+
 .card-info { padding: 20px; text-align: center; }
 .card h3 { color: #333333; margin: 0 0 10px 0; font-size: 1.2rem; }
 .price { color: #666; font-weight: bold; margin-bottom: 15px; }
