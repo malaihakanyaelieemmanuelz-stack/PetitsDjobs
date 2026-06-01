@@ -131,24 +131,36 @@
             return (m / 1000).toFixed(1) + ' km';
         }
 
+        function formatDerniereConnexion(dateStr, disponible) {
+            if (disponible) return '<span style="color:#2e7d32; font-weight:bold;">En ligne</span>';
+            if (!dateStr) return 'Hors ligne';
+            
+            const date = new Date(dateStr);
+            const now = new Date();
+            
+            // Calcul des jours de différence (comparaison des dates sans l'heure)
+            const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.round((dNow - dDate) / (1000 * 60 * 60 * 24));
+
+            const optionsHeure = { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' };
+            const heure = date.toLocaleTimeString('fr-FR', optionsHeure);
+
+            if (diffDays === 0) return `vu à ${heure}`;
+            if (diffDays === 1) return `vu hier à ${heure}`;
+            if (diffDays === 2) return `vu avant-hier à ${heure}`;
+            
+            const optionsDate = { day: 'numeric', month: 'short', timeZone: 'Africa/Abidjan' };
+            return `vu le ${date.toLocaleDateString('fr-FR', optionsDate)} à ${heure}`;
+        }
+
         function miniCard(p) {
             const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
+            const cardAction = p.disponible 
+                ? `location.href='/voir-prestataire?id=${p.id}'` 
+                : `afficherContactHorsLigne('${p.id}', '${nom}')`;
             
-            let statusBadge = `<span class="badge-dispo" style="background:#2e7d32">En ligne</span>`;
-            let cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
-            
-            const dateConnection = p.dernierAcces ? new Date(p.dernierAcces) : null;
-            // On force l'heure ivoirienne (Africa/Abidjan)
-            const heureConnection = dateConnection ? dateConnection.toLocaleTimeString('fr-FR', {
-                hour: '2-digit', 
-                minute: '2-digit', 
-                timeZone: 'Africa/Abidjan'
-            }) : '--:--';
-
-            if (!p.disponible) {
-                statusBadge = `<span class="badge-dispo" style="background:#757575">Hors ligne (vu à ${heureConnection})</span>`;
-                cardAction = `afficherContactHorsLigne('${p.id}', '${nom}')`;
-            }
+            const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
             let servicesAffiche = 'Services divers';
             if (p.services && typeof p.services === 'string') {
@@ -159,12 +171,13 @@
             return `
                 <article class="profile-card" style="cursor:pointer" onclick="${cardAction}">
                     <div class="provider-card-top">
-                        ${statusBadge}
+                        <span class="badge-dispo" style="background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
                         <img src="${p.photo || 'default-profile.png'}" alt="${nom}" onerror="this.src='default-profile.png'">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>
                     <div class="provider-card-body">
                         <h3>${nom}</h3>
+                        <p style="font-size:0.75rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
                         <p class="prof">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
                         <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>

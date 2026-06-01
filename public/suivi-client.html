@@ -44,9 +44,8 @@
         function init() {
             map = L.map('map', { zoomControl: false, dragging: true }).setView([0, 0], 18);
             
-            // Style "Maps" Vectoriel épuré (CartoDB Voyager) au lieu de satellite
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '©OpenStreetMap ©CartoDB'
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
             }).addTo(map);
             
             markerMe = L.marker([0, 0], { icon: iconMe }).addTo(map);
@@ -70,13 +69,22 @@
             });
         }
 
+        let isProcessingArrivee = false;
+
         function startGPS() {
             navigator.geolocation.watchPosition(pos => {
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
+                
+                // Filtre de précision pour éviter les sauts de puce du marqueur
+                if (accuracy > 60) {
+                    document.getElementById('mission-info').innerText = `Signal GPS faible (±${Math.round(accuracy)}m)`;
+                    return;
+                }
+
                 markerMe.setLatLng([lat, lon]);
                 if (!map.getCenter().lat) map.setView([lat, lon], 18);
                 
-                document.getElementById('mission-info').innerText = `Signal GPS : ±${Math.round(accuracy)}m`;
+                document.getElementById('mission-info').innerText = `Signal GPS : Précis (±${Math.round(accuracy)}m)`;
                 
                 fetch('/sauvegarder-position', {
                     method: 'POST',
@@ -109,38 +117,82 @@
         }
 
         async function checkStatus() {
-            const res = await fetch('/api/statut-mission?missionId=' + missionId);
-            const data = await res.json();
-            
-            const btnArrive = document.getElementById('btn-client-arrive');
-            const btnSos = document.getElementById('btn-client-sos');
-            const btnDepart = document.getElementById('btn-client-depart');
+            try {
+                const res = await fetch('/api/statut-mission?missionId=' + missionId);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data || !data.statut) return;
+                
+                const btnArrive = document.getElementById('btn-client-arrive');
+                const btnSos = document.getElementById('btn-client-sos');
+                const btnDepart = document.getElementById('btn-client-depart');
+                const statusTxt = document.getElementById('status-mission');
+                const gpsInfo = document.getElementById('gps-info');
 
-            if (data.statut === 'en_route') {
-                btnArrive.style.display = 'block';
-            } else if (data.statut === 'travail_en_cours') {
-                btnArrive.style.display = 'none';
-                btnSos.style.display = 'block';
-                document.getElementById('status-mission').innerText = "Intervention en cours";
-            } else if (data.statut === 'attente_securite') {
-                btnSos.style.display = 'none';
-                btnDepart.style.display = 'block';
-                document.getElementById('status-mission').innerText = "Tâche terminée";
-            } else if (data.statut === 'termine') {
-                alert("Mission terminée avec succès !");
-                window.location.href = '/index.html';
+                // Si le client vient de cliquer sur "Arrivée", on ne réaffiche pas le bouton pendant 2 sec
+                if (isProcessingArrivee && data.statut === 'en_route') return;
+
+                // Gestion propre de l'affichage : on définit l'état de chaque bouton pour chaque statut
+                switch(data.statut) {
+                    case 'en_route':
+                        btnArrive.style.display = 'block';
+                        btnSos.style.display = 'none';
+                        btnDepart.style.display = 'none';
+                        statusTxt.innerText = "Le prestataire arrive...";
+                        break;
+                    case 'travail_en_cours':
+                        btnArrive.style.display = 'none';
+                        btnSos.style.display = 'block';
+                        btnDepart.style.display = 'none';
+                        statusTxt.innerText = "Intervention en cours";
+                        break;
+                    case 'attente_securite':
+                        btnArrive.style.display = 'none';
+                        btnSos.style.display = 'none';
+                        btnDepart.style.display = 'block';
+                        statusTxt.innerText = "Tâche terminée - Départ en attente";
+                        break;
+                    case 'termine':
+                        alert("Mission terminée avec succès !");
+                        window.location.href = '/index.html';
+                        break;
+                    default:
+                        // Par sécurité, on cache tout si le statut est inconnu
+                        btnArrive.style.display = 'none';
+                        btnSos.style.display = 'none';
+                        btnDepart.style.display = 'none';
+                        break;
+                }
+            } catch (err) {
+                console.error("Erreur polling statut:", err);
             }
         }
 
         async function clientMarquerArrivee() {
-            await fetch('/api/marquer-arrivee', { 
+            const btn = document.getElementById('btn-client-arrive');
+            btn.disabled = true;
+            btn.innerText = "CHARGEMENT...";
+            
+            const res = await fetch('/api/marquer-arrivee', { 
                 method: 'POST', 
                 headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify({ missionId }) 
             });
+
+            if (res.ok) {
+                btn.style.display = 'none';
+                isProcessingArrivee = true;
+                setTimeout(() => { isProcessingArrivee = false; checkStatus(); }, 2500);
+            } else {
+                btn.disabled = false;
+                btn.innerText = "L'INTERVENANT EST ARRIVÉ";
+            }
         }
 
         async function clientConfirmerDepart() {
+            const btn = document.getElementById('btn-client-depart');
+            btn.disabled = true;
+            
             await fetch('/api/confirmer-depart', { 
                 method: 'POST', 
                 headers: {'Content-Type':'application/json'}, 

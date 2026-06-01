@@ -308,9 +308,15 @@ app.get('/get-top-prestataires', async (req, res) => {
         console.log(`[DEBUG TOP] Demande de Top Prestataires pour User ${userId || 'Inconnu'}. GPS: ${lat}, ${lon}`);
         const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
         
-        // On envoie TOUS les prestataires proches (en ligne ou hors ligne)
-        console.log(`[DEBUG TOP] ${result.prestataires.length} prestataires proches envoyés.`);
-        res.json(result.prestataires);
+        // On ne garde que ceux connectés depuis moins d'une semaine pour le défilement
+        const UNE_SEMAINE_MS = 7 * 24 * 60 * 60 * 1000;
+        const filtered = result.prestataires.filter(p => {
+            if (!p.dernierAcces) return false;
+            return (Date.now() - new Date(p.dernierAcces).getTime()) < UNE_SEMAINE_MS;
+        });
+
+        console.log(`[DEBUG TOP] ${filtered.length} prestataires proches envoyés (filtrés sur 7 jours).`);
+        res.json(filtered);
     } catch (err) {
         console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
         res.json([]);

@@ -90,8 +90,8 @@
         // Initialisation de la carte (vue par défaut sur une position neutre)
         function initMap() {
             map = L.map('map').setView([0, 0], 13);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
             
             markerProvider = L.marker([0, 0], { icon: providerIcon }).addTo(map);
@@ -332,15 +332,22 @@
                 console.log("[GPS DEVICE] Initialisation du suivi haute précision...");
                 navigator.geolocation.watchPosition(pos => {
                     const { latitude, longitude } = pos.coords;
+                    const accuracy = pos.coords.accuracy;
+
+                    // Ignorer les points imprécis (souvent des erreurs de triangulation wifi/antenne)
+                    if (accuracy > 60) return;
+
                     lastLat = latitude; lastLon = longitude;
-                    console.log(`[GPS DEVICE] MAJ Position : ${latitude}, ${longitude} (Précision: ${pos.coords.accuracy}m)`);
+                    console.log(`[GPS DEVICE] MAJ Position : ${latitude}, ${longitude} (Précision: ${accuracy}m)`);
 
                     // On centre la carte seulement la première fois pour ne pas bloquer l'utilisateur
-                    if (!marker.getLatLng().lat) {
-                        map.setView([latitude, longitude], 16);
+                    if (!markerProvider.getLatLng().lat) {
+                        map.setView([latitude, longitude], 17);
                     }
                     
-                    marker.setLatLng([latitude, longitude]).bindPopup("Vous êtes ici").openPopup();
+                    // On met à jour le marqueur correspondant au rôle
+                    if (isProvider) markerProvider.setLatLng([latitude, longitude]);
+                    else markerClient.setLatLng([latitude, longitude]);
 
                     // Déclenche la vérification de proximité
                     verifierDistance(latitude, longitude);
@@ -350,7 +357,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ lat: latitude, lon: longitude })
                     });
-                }, () => {}, { enableHighAccuracy: true });
+                }, () => {}, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
             }
         }
 

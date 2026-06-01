@@ -49,7 +49,9 @@
 
         function init() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
             
             markerMe = L.marker([0, 0], { icon: iconMe }).addTo(map);
             markerDest = L.marker([0, 0], { icon: iconDest }).addTo(map);
@@ -72,13 +74,23 @@
             });
         }
 
+        let isUpdatingStatus = false;
+
         function startGPS() {
             navigator.geolocation.watchPosition(pos => {
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-                markerMe.setLatLng([lat, lon]);
-                if (!map.getCenter().lat) map.setView([lat, lon], 17);
+
+                // Augmentation de la précision : on ignore les points avec une erreur > 60m
+                if (accuracy > 60) {
+                    document.getElementById('mission-info').innerText = `Signal faible (±${Math.round(accuracy)}m)...`;
+                    return;
+                }
+
+                const newPos = [lat, lon];
+                markerMe.setLatLng(newPos);
+                if (!map.getCenter().lat) map.setView(newPos, 17);
                 
-                document.getElementById('mission-info').innerText = `Précision GPS: ${Math.round(accuracy)}m`;
+                document.getElementById('mission-info').innerText = `GPS : Précision excellente (±${Math.round(accuracy)}m)`;
 
                 fetch('/sauvegarder-position', {
                     method: 'POST',
@@ -115,6 +127,9 @@
         }
 
         async function checkStatus() {
+            // Si on est en train de cliquer sur un bouton, on ne laisse pas le polling écraser l'affichage
+            if (isUpdatingStatus) return;
+
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
             const data = await res.json();
             if (data.statut === 'travail_en_cours') {
@@ -128,7 +143,15 @@
         }
 
         async function marquerArrivee() {
+            isUpdatingStatus = true;
+            document.getElementById('group-presta-arrive').style.display = 'none';
+            
             await fetch('/api/marquer-arrivee', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
+            
+            setTimeout(() => {
+                isUpdatingStatus = false;
+                checkStatus();
+            }, 1000);
         }
 
         async function terminerTache() {
