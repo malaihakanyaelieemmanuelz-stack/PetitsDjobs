@@ -19,36 +19,40 @@
     <script>
         // SCRIPT DE DÉTECTION D'ERREURS LOGO
         window.addEventListener('load', () => {
-            const faviconPath = '/favicon.png';
-            const img = new Image();
-            
             function signalError(msg) {
                 const ui = document.getElementById('diagnostic-logo-ui');
                 const text = document.getElementById('diagnostic-logo-msg');
                 if (ui && text) {
                     ui.style.display = 'block';
-                    text.innerHTML += (text.innerHTML ? '<br>' : '') + msg;
+                    text.innerHTML += (text.innerHTML ? '<br>' : '') + "❌ " + msg;
                 }
             }
 
-            img.onload = function() {
-                console.log("❌❌❌ [LOGO_DIAGNOSTIC] Image chargée");
-                if (this.width !== this.height) {
-                    signalError("ERREUR : Le logo n'est pas CARRÉ (" + this.width + "x" + this.height + "). Google l'ignorera.");
-                }
-                if (this.width < 48) {
-                    signalError("ALERTE : Taille < 48px. Google demande au moins 48x48.");
-                }
-                if (this.width % 48 !== 0) {
-                    signalError("ALERTE : La taille n'est pas un multiple de 48px (ex: 48, 96, 144, 192).");
-                }
-            };
-            img.onerror = function() {
-                console.error("❌❌❌ [LOGO_DIAGNOSTIC_ERROR] Impossible de charger l'image");
-                signalError("IMAGE 'favicon.png' INTROUVABLE SUR LE SERVEUR !");
-            };
-            // Ajout d'un paramètre aléatoire pour éviter le cache pendant les tests
-            img.src = faviconPath + '?t=' + Date.now();
+            const testPath = '/favicon.png?t=' + Date.now();
+            
+            fetch(testPath)
+                .then(res => {
+                    console.log("❌❌❌ [LOGO_DIAGNOSTIC] Status HTTP: " + res.status);
+                    if (!res.ok) {
+                        signalError("HTTP " + res.status + " sur /favicon.png");
+                        return null;
+                    }
+                    return res.blob();
+                })
+                .then(blob => {
+                    if (!blob) return;
+                    const img = new Image();
+                    img.onload = function() {
+                        console.log("❌❌❌ [LOGO_DIAGNOSTIC] Chargement réussi: " + this.width + "x" + this.height);
+                        if (this.width !== this.height) signalError("IMAGE PAS CARRÉE (" + this.width + "x" + this.height + ")");
+                        if (this.width < 48) signalError("DIMENSION < 48px");
+                    };
+                    img.src = URL.createObjectURL(blob);
+                })
+                .catch(err => {
+                    console.error("❌❌❌ [LOGO_DIAGNOSTIC_ERROR]", err);
+                    signalError("ERREUR RÉSEAU : " + err.message);
+                });
         });
     </script>
 

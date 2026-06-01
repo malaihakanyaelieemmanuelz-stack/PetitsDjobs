@@ -1470,23 +1470,19 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 
 // Génération dynamique du favicon à partir de votre code SVG pour Google
 app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
-    console.log(`❌❌❌ [LOGO_DEBUG_REQUEST] Requête reçue pour : ${req.url}`);
-    console.log(`❌❌❌ [LOGO_DEBUG_UA] User-Agent : ${req.headers['user-agent']}`);
     const now = new Date().toLocaleTimeString();
-    console.log(`❌❌❌ -------------------------------------------------------`);
-    console.log(`❌❌❌ [LOGO_START] Requête à ${now}`);
-    console.log(`❌❌❌ [LOGO_URL] ${req.url}`);
-    console.log(`❌❌❌ [LOGO_UA] ${req.headers['user-agent']}`);
+    console.log(`❌❌❌ >>> [START_LOGO_REQUEST] ${now} - URL: ${req.url}`);
+    console.log(`❌❌❌ [UA] ${req.headers['user-agent']}`);
 
     const svgLogo = `
     <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" fill="white"/>
+        <!-- Suppression du rect blanc pour transparence -->
         <g transform="rotate(-30 50 50)">
             <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
             <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
             <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
             <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
-            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
+            <text x="55" y="75" font-family="monospace" font-size="12" font-weight="bold" fill="#FFFFFF">pd</text>
         </g>
     </svg>`;
 
@@ -1496,17 +1492,16 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
             .png()
             .toBuffer();
         
-        res.set('Content-Type', 'image/png');
-        res.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache de 7 jours
+        const isIco = req.url.endsWith('.ico');
+        res.set('Content-Type', isIco ? 'image/x-icon' : 'image/png');
         
-        console.log(`❌❌❌ [LOGO_SUCCESS] Image générée et envoyée avec succès.`);
-        console.log(`❌❌❌ [LOGO_SUCCESS] Envoyé avec succès (${pngBuffer.length} octets)`);
-        console.log(`❌❌❌ -------------------------------------------------------`);
+        // Désactivation du cache pendant les tests pour forcer l'affichage
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        
+        console.log(`❌❌❌ <<< [SUCCESS_LOGO] Image envoyée (${pngBuffer.length} octets)`);
         return res.send(pngBuffer);
     } catch (err) {
-        console.error("❌❌❌ [LOGO_FATAL_ERROR] Erreur génération favicon:", err);
-        console.error(`❌❌❌ [LOGO_ERROR] ${err.message}`);
-        console.log(`❌❌❌ -------------------------------------------------------`);
+        console.error(`❌❌❌ [FATAL_LOGO_ERROR] ${err.message}`);
         res.status(500).end();
     }
 });
