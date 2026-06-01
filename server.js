@@ -1468,22 +1468,33 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     }
 });
 
-// Log spécifique pour le favicon
-app.get(['/favicon.png', '/favicon.ico'], (req, res, next) => {
-    const filePath = path.join(publicDir, 'favicon.png');
-    console.log(`🔍 [DEBUG LOGO] Requête reçue pour : ${req.url}`);
-    console.log(`🔍 [DEBUG LOGO] User-Agent : ${req.headers['user-agent']}`);
+// Génération dynamique du favicon à partir de votre code SVG pour Google
+app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
+    const svgLogo = `
+    <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="white"/>
+        <g transform="rotate(-30 50 50)">
+            <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
+            <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
+            <path d="M15 50 L95 50" stroke="#8B4513" stroke-width="12" stroke-dasharray="3 3"/>
+            <path d="M50 15 L50 85" stroke="#8B4513" stroke-width="2" stroke-dasharray="1 1"/>
+            <text x="55" y="75" font-family="monospace" font-size="12" font-weight="bold" fill="#8B4513">pd</text>
+        </g>
+    </svg>`;
 
-    if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath);
-        console.log(`✅ [DEBUG LOGO] Fichier trouvé : ${filePath}`);
-        console.log(`✅ [DEBUG LOGO] Taille : ${stats.size} octets`);
+    try {
+        const pngBuffer = await sharp(Buffer.from(svgLogo))
+            .resize(192, 192)
+            .png()
+            .toBuffer();
         
-        if (req.url === '/favicon.ico') return res.redirect(301, '/favicon.png');
-    } else {
-        console.error(`❌ [ERREUR LOGO] Fichier INTROUVABLE sur le disque à : ${filePath}`);
+        res.set('Content-Type', 'image/png');
+        res.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache de 7 jours
+        return res.send(pngBuffer);
+    } catch (err) {
+        console.error("Erreur génération favicon:", err);
+        res.status(500).end();
     }
-    next(); // Continue vers le middleware static pour servir le fichier
 });
 
 // Configuration de la mise en cache pour les fichiers statiques
