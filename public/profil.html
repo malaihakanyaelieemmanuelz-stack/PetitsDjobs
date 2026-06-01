@@ -3,17 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Mon Profil</title>
 </head>
 <body>
     <header class="home-header">
-        <a href="index.html" style="text-decoration:none;"><h1>MON PROFIL</h1></a>
+        <div class="header-content">
+            <a href="index.html" style="text-decoration:none;">
+                <h1>
+                    <svg class="home-logo" viewBox="0 0 100 100">
+                        <g transform="rotate(-30 50 50)">
+                            <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
+                            <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
+                            <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
+                            <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
+                            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
+                        </g>
+                    </svg>
+                    MON PROFIL
+                </h1>
+            </a>
+            <nav class="nav-compact">
+                <a href="index.html">ACCUEIL</a>
+                <form action="/deconnexion" method="POST" style="display:inline;">
+                    <button type="submit" style="color:#c62828;">DÉCONNEXION</button>
+                </form>
+            </nav>
+        </div>
     </header>
-    <nav class="nav-bar">
-        <a href="index.html">ACCUEIL</a>
-    </nav>
 
-    <div class="app-wrap" style="max-width: 560px; margin: 30px auto; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+    <div class="app-wrap profile-full-screen" style="max-width: 560px; margin: 30px auto; padding: 24px; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
         <h2 style="color:#5D4037; margin-top:0;">Votre compte</h2>
         <p><strong>Nom :</strong> <span id="nom">-</span></p>
         <p><strong>Prénom :</strong> <span id="prenom">-</span></p>

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Suivi GPS & Sécurité</title>
 </head>
 <body class="tracking-body">
@@ -91,8 +92,10 @@
         // Initialisation de la carte (vue par défaut sur une position neutre)
         function initMap() {
             map = L.map('map').setView([0, 0], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains:['mt0','mt1','mt2','mt3'],
+                attribution: '© Google Maps'
             }).addTo(map);
             
             markerProvider = L.marker([0, 0], { icon: providerIcon }).addTo(map);
@@ -109,7 +112,7 @@
                 draggableWaypoints: false,
                 show: false, // Cache le panneau texte des directions pour garder la carte grande
                 router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    serviceUrl: 'https://router.project-osrm.org/route/v1/foot'
                 })
             }).addTo(map);
         }

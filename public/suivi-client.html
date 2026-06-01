@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Suivi de votre prestataire - PetitsDjobs</title>
 </head>
 <body class="tracking-body">
@@ -13,22 +14,41 @@
 
     <div class="floating-top-info">
         <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #333;">Suivi en cours</h2>
-        <p id="mission-info" style="color:#666; font-size: 0.85rem; margin: 3px 0 0;">Votre prestataire est en route</p>
+        <p id="mission-info" style="color:#666; font-size: 0.85rem; margin: 3px 0 0;">Visualisez l'arrivée de l'intervenant</p>
     </div>
 
     <div class="floating-bottom-actions">
         <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #ff5252; font-size: 1rem;">Localisation du prestataire...</div>
         
         <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">L'INTERVENANT EST ARRIVÉ</button>
+        <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm" style="display:none; background:#5D4037; width:100%; height:50px; margin-bottom:10px;">TERMINER LA TÂCHE</button>
         <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; width:100%; height:50px;">🆘 SIGNALER UN DANGER</button>
         <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#333; width:100%; height:50px;">VALIDER LE DÉPART ET PAYER</button>
+    </div>
+
+    <!-- Modal de notation -->
+    <div id="modal-notation" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
+        <div class="login-card" style="max-width:400px; text-align:center;">
+            <h2 style="color:#5D4037; margin-top:0;">MISSION TERMINÉE !</h2>
+            <p style="font-size:0.9rem; color:#666;">Notez la prestation (10 petites étoiles = 1 grande étoile)</p>
+            
+            <div id="star-rating" style="display:flex; justify-content:center; gap:4px; margin:20px 0; font-size:1.8rem; cursor:pointer; color:#ccc;">
+                <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
+                <span data-v="6">★</span><span data-v="7">★</span><span data-v="8">★</span><span data-v="9">★</span><span data-v="10">★</span>
+            </div>
+            
+            <textarea id="note-commentaire" placeholder="Un petit commentaire sur le travail ?" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px; box-sizing:border-box; min-height:80px;"></textarea>
+            
+            <button onclick="envoyerNote()" class="btn-primary-sm" style="width:100%; padding:15px;">ENVOYER MA NOTE</button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script>
-        let map, markerMe, markerProvider, missionId, routingControl;
+        let map, markerMe, markerProvider, missionId, prestataireId, routingControl;
         let lastDist = null;
+        let noteSelectionnee = 0;
 
         function parler(txt) {
             if ('speechSynthesis' in window) {
@@ -41,11 +61,28 @@
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(255,82,82,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
         const iconPro = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,123,255,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
 
+        // Gestion visuelle des étoiles
+        document.getElementById('star-rating').addEventListener('click', e => {
+            if (e.target.dataset.v) {
+                noteSelectionnee = parseInt(e.target.dataset.v);
+                const stars = document.querySelectorAll('#star-rating span');
+                stars.forEach((s, idx) => {
+                    if (idx < noteSelectionnee) {
+                        s.style.color = "#5D4037"; // Marron PetitsDjobs
+                    } else {
+                        s.style.color = "#ccc";
+                    }
+                });
+            }
+        });
+
         function init() {
             map = L.map('map', { zoomControl: false, dragging: true }).setView([0, 0], 18);
             
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains:['mt0','mt1','mt2','mt3'],
+                attribution: '© Google Maps'
             }).addTo(map);
             
             markerMe = L.marker([0, 0], { icon: iconMe }).addTo(map);
@@ -57,11 +94,12 @@
                 createMarker: () => null,
                 addWaypoints: false,
                 show: false,
-                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' })
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1/foot' })
             }).addTo(map);
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
                 missionId = cmd.missionId;
+                prestataireId = cmd.prestataireId;
                 parler("Suivi activé. Votre prestataire arrive.");
                 startGPS();
                 setInterval(pollProvider, 2000);
@@ -95,7 +133,7 @@
         }
 
         function pollProvider() {
-            fetch('/api/suivi-prestataire-gps?missionId=' + missionId).then(r => r.json()).then(pos => {
+            fetch('/api/suivi-prestataire-gps?missionId=' + missionId).then(r => r.json()).then(async pos => {
                 if (pos.lat) {
                     const pPos = L.latLng(pos.lat, pos.lon);
                     markerProvider.setLatLng(pPos);
@@ -106,6 +144,13 @@
                         const dist = Math.round(myPos.distanceTo(pPos));
                         document.getElementById('gps-info').innerHTML = `🛵 Prestataire en approche : <strong>${dist} m</strong>`;
                         
+                        // ACTIVATION AUTOMATIQUE si distance < 50m
+                        if (dist < 50 && !isProcessingArrivee) {
+                            const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
+                            const dataStat = await resStat.json();
+                            if (dataStat.statut === 'en_route') clientMarquerArrivee();
+                        }
+
                         if (dist < 100 && (!lastDist || lastDist >= 100)) {
                             parler("Le prestataire est à moins de cent mètres.");
                         }
@@ -124,6 +169,7 @@
                 if (!data || !data.statut) return;
                 
                 const btnArrive = document.getElementById('btn-client-arrive');
+                const btnFin = document.getElementById('btn-client-fin');
                 const btnSos = document.getElementById('btn-client-sos');
                 const btnDepart = document.getElementById('btn-client-depart');
                 const statusTxt = document.getElementById('status-mission');
@@ -189,6 +235,16 @@
             }
         }
 
+        async function clientDemandeFin() {
+            if (confirm("Confirmez-vous la fin de la tâche ?")) {
+                await fetch('/api/terminer-tache-client', { 
+                    method: 'POST', 
+                    headers: {'Content-Type':'application/json'}, 
+                    body: JSON.stringify({ missionId }) 
+                });
+            }
+        }
+
         async function clientConfirmerDepart() {
             const btn = document.getElementById('btn-client-depart');
             btn.disabled = true;
@@ -198,6 +254,18 @@
                 headers: {'Content-Type':'application/json'}, 
                 body: JSON.stringify({ missionId }) 
             });
+        }
+
+        async function envoyerNote() {
+            if (noteSelectionnee === 0) return alert("Veuillez sélectionner une note.");
+            const commentaire = document.getElementById('note-commentaire').value;
+            
+            await fetch('/api/noter-prestataire', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ missionId, prestataireId, note: noteSelectionnee, commentaire })
+            });
+            window.location.href = '/index.html';
         }
 
         async function declencherSOS() {

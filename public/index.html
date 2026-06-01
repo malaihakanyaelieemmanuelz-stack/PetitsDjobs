@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
@@ -18,26 +19,38 @@
     </div>
 
     <header class="home-header">
-        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
-        <p style="margin:12px 0 0; color:#666; font-size:1rem;">Services du quotidien, en toute confiance</p>
-    </header>
+        <div class="header-content">
+            <a href="index.html" style="text-decoration:none;">
+                <h1>
+                    <svg class="home-logo" viewBox="0 0 100 100">
+                        <g transform="rotate(-30 50 50)">
+                            <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
+                            <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
+                            <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
+                            <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
+                            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
+                        </g>
+                    </svg>
+                    PETITSDJOBS
+                </h1>
+            </a>
+            
+            <nav id="nav-invite">
+                <a href="connexion.html">CONNEXION</a>
+                <a href="inscription.html">INSCRIPTION</a>
+            </nav>
 
-    <nav class="nav-bar" id="nav-invite">
-        <a href="connexion.html">CONNEXION</a>
-        <a href="inscription.html">INSCRIPTION</a>
-    </nav>
+            <nav id="nav-connecte" style="display:none;">
+                <a href="/profil">MON PROFIL</a>
+                <form action="/deconnexion" method="POST" style="display:inline; margin:0;">
+                    <button type="submit">DÉCONNEXION</button>
+                </form>
+            </nav>
+        </div>
+    </header>
     <p id="bandeau-connecte" style="display:none; text-align:center; margin:0; padding:14px; background:#c8e6c9; color:#1b5e20; font-weight:bold;">
         ✓ Connexion réussie — vous êtes sur la page d'ACCUEIL. Choisissez un service ci-dessous.
     </p>
-
-    <nav class="nav-bar" id="nav-connecte" style="display:none;">
-        <a href="index.html">ACCUEIL</a>
-        <a href="/profil">MON PROFIL</a>
-        <form action="/deconnexion" method="POST" style="display:inline; margin:0;">
-            <button type="submit" style="background:none; border:none; color:white; cursor:pointer; font:inherit; font-weight:bold; text-decoration:underline;">DÉCONNEXION</button>
-        </form>
-    </nav>
-
     <section id="zone-bienvenue" class="app-wrap" style="text-align:center; padding:20px; background:#f9f9f9; margin:20px; border-radius:12px;">
         <p style="color:#5D4037; margin:0 0 16px;">Inscrivez-vous ou connectez-vous pour commander en un clic.</p>
         <a href="connexion.html" class="home-auth-btn">CONNEXION</a>
@@ -181,7 +194,12 @@
                         <p class="prof">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
                         <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>
-                        <p style="margin-top:8px;">⭐ ${p.etoiles || 0} / 5</p>
+                        <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                            <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
+                            <div style="width:100px; height:6px; background:#eee; border-radius:3px; overflow:hidden;">
+                                <div style="width:${Math.min((p.etoiles || 0) * 20, 100)}%; height:100%; background:#5D4037;"></div>
+                            </div>
+                        </div>
                     </div>
                 </article>`;
         }

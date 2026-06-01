@@ -72,10 +72,49 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
 }
 
 /* --- Accueil (Ne touche plus aux formulaires) --- */
-.home-header { background-color: white; padding: 30px; text-align: center; border-bottom: 4px solid #333333; }
-.home-header h1 { background-color: #5D4037; color: white; padding: 15px 30px; border-radius: 8px; display: inline-block; margin: 0; font-size: 2.5rem; }
-.nav-bar { background-color: #333333; padding: 15px; text-align: center; }
-.nav-bar a { color: white; text-decoration: none; margin: 0 20px; font-weight: bold; }
+.home-header { 
+    background-color: white; 
+    padding: 10px 0; 
+    border-bottom: 1px solid #eee; 
+}
+.header-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+.home-header h1 { 
+    color: #5D4037; 
+    margin: 0; 
+    font-size: 1.5rem; 
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.home-logo { width: 40px; height: 40px; }
+
+.nav-bar { display: none; } /* On cache l'ancienne barre trop grosse */
+
+.nav-compact {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.nav-compact a, .nav-compact button {
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: #444;
+    background: #f0f0f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
 .nav-bar a:hover { text-decoration: underline; }
 .home-auth-btn {
     display: inline-block; padding: 14px 28px; margin: 8px;
@@ -282,8 +321,19 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
         padding: 15px 10px !important; 
     }
     .home-header h1 { 
-        font-size: 1.5rem !important; 
-        padding: 8px 15px !important; 
+        font-size: 1.2rem !important; 
+        padding: 0 !important;
+        background: none !important;
+    }
+
+    /* Plein écran pour le profil sur Android */
+    .profile-full-screen {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        min-height: calc(100dvh - 70px) !important;
     }
     
     .app-wrap { 

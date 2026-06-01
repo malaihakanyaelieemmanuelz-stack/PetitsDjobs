@@ -96,6 +96,21 @@ function distanceMetres(p, lat, lon) {
     return dist;
 }
 
+/**
+ * Récupère la distance réelle à pied via OSRM
+ */
+async function distanceMarcheReelle(lat1, lon1, lat2, lon2) {
+    try {
+        const url = `https://router.project-osrm.org/route/v1/foot/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+            return data.routes[0].distance; // Distance en mètres
+        }
+    } catch (e) { console.error("Erreur OSRM:", e); }
+    return null; // Retourne null en cas d'échec pour repli sur Haversine
+}
+
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
         const timestamp = new Date().toLocaleTimeString();
@@ -543,12 +558,7 @@ app.post('/chercher-prestataires', async (req, res) => {
     req.session.latClient = parseFloat(latC);
     req.session.lonClient = parseFloat(lonC);
 
-    const result = await chercherParRayonCroissant(
-        latC, lonC, svc,
-        parseInt(offset, 10) || 0,
-        BATCH_PRESTATAIRES,
-        req.session.user?.id // Exclure l'utilisateur actuel
-    );
+    const result = await chercherParRayonCroissant(latC, lonC, svc, parseInt(offset, 10) || 0, BATCH_PRESTATAIRES, req.session.user?.id);
     res.json(result);
 });
 
@@ -573,9 +583,13 @@ app.post('/selectionner-prestataire', async (req, res) => {
 
     const latC = req.session.latClient || 0;
     const lonC = req.session.lonClient || 0;
-    console.log(`[DEBUG SELECT] GPS Client en session: ${latC}, ${lonC}`);
     
-    const distM = distanceMetres(p, latC, lonC);
+    // CALCUL DE LA DISTANCE À PIED (Plus précis pour le paiement)
+    let distM = await distanceMarcheReelle(latC, lonC, p.lat, p.lon);
+    
+    // Repli sur vol d'oiseau si OSRM échoue
+    if (distM === null) distM = distanceMetres(p, latC, lonC);
+    
     const frais = prixDistanceFcfa(distM);
 
     console.log(`[DEBUG SELECT] Distance calculée: ${distM}m`);
@@ -721,6 +735,41 @@ app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     const { error } = await supabase.from('missions').update({ statut: 'attente_securite' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
+});
+
+app.post('/api/terminer-tache-client', requireAuth, async (req, res) => {
+    const { missionId } = req.body;
+    const { error } = await supabase.from('missions').update({ statut: 'attente_securite' }).eq('id', missionId).eq('client_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.post('/api/noter-prestataire', requireAuth, async (req, res) => {
+    const { missionId, prestataireId, note, commentaire } = req.body; // note de 1 à 10
+    try {
+        const { data: p } = await supabase.from('infos_prestataires').select('etoiles, commentaires').eq('user_id', prestataireId).single();
+        
+        // 10 petites étoiles (input) = 1 grande étoile (DB)
+        const currentStars = parseFloat(p.etoiles || 0);
+        const increment = parseFloat(note) / 10;
+        const newStars = Math.round((currentStars + increment) * 100) / 100;
+        
+        const comms = p.commentaires || [];
+        if (commentaire) comms.push({ texte: commentaire, date: new Date().toISOString() });
+
+        await supabase.from('infos_prestataires').update({ 
+            etoiles: newStars, 
+            commentaires: comms 
+        }).eq('user_id', prestataireId);
+
+        // On passe la mission à terminé si ce n'est pas déjà fait
+        await supabase.from('missions').update({ statut: 'termine' }).eq('id', missionId);
+
+        res.json({ ok: true });
+    } catch (err) {
+        console.error("Erreur notation:", err);
+        res.status(500).json({ error: "Impossible d'enregistrer la note" });
+    }
 });
 
 app.post('/api/confirmer-depart', requireAuth, async (req, res) => {

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <link rel="icon" type="image/png" href="favicon.png">
     <title>Navigation Prestataire - PetitsDjobs</title>
 </head>
 <body class="tracking-body">
@@ -20,13 +21,19 @@
     <div class="floating-bottom-actions">
         <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #1a73e8; font-size: 1rem;">Initialisation...</div>
         
-        <div id="group-presta-arrive" style="display:none; gap:10px; margin-bottom:10px;">
-            <button onclick="marquerArrivee()" class="btn-primary-sm" style="flex:2; background:#1a73e8; height:50px;">OUI, JE SUIS ARRIVÉ</button>
-            <button onclick="parler('Continuez vers le point rouge')" class="btn-primary-sm" style="flex:1; background:#757575; height:50px;">NON</button>
+        <div id="group-presta-arrive" style="display:none; flex-direction:column; gap:10px; margin-bottom:10px;">
+            <p style="font-size:0.85rem; color:#1a73e8; font-weight:bold;">📍 Vous êtes à destination</p>
+            <button onclick="marquerArrivee()" class="btn-primary-sm" style="background:#1a73e8; height:50px;">JE SUIS ARRIVÉ</button>
         </div>
 
         <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">MARQUER TÂCHE TERMINÉE</button>
-        <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:block; width:100%; height:50px;">🆘 APPEL D'URGENCE (DANGER)</button>
+        
+        <div id="group-securite" style="display:none; flex-direction:column; gap:10px; margin-bottom:10px;">
+            <p style="font-size:0.85rem; color:#5D4037; font-weight:bold;">Tâche finie. Éloignez-vous de 20m pour valider ou confirmez ici :</p>
+            <button onclick="repondreSecurite('safe')" class="btn-primary-sm" style="background:#2e7d32; height:50px;">JE CONFIRME ÊTRE EN SÉCURITÉ</button>
+        </div>
+
+        <button id="btn-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; width:100%; height:50px;">🆘 APPEL D'URGENCE (DANGER)</button>
         <p style="font-size: 0.75rem; color: #b71c1c; text-align: center; margin-top: 8px; font-weight: bold;">⚠️ Toute fausse alerte (usage abusif) entraînera la suppression définitive de votre compte.</p>
     </div>
 
@@ -36,6 +43,7 @@
         let map, markerMe, markerDest, routingControl, missionId;
         let clientPos = null;
         let lastDist = null;
+        let aConfirmeSecurite = false;
 
         function parler(txt) {
             if ('speechSynthesis' in window) {
@@ -50,8 +58,10 @@
 
         function init() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains:['mt0','mt1','mt2','mt3'],
+                attribution: '© Google Maps'
             }).addTo(map);
             
             markerMe = L.marker([0, 0], { icon: iconMe }).addTo(map);
@@ -119,11 +129,22 @@
             
             routingControl.setWaypoints([p1, p2]);
             document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${Math.round(dist)} mètres</strong>`;
+            
+            // Vérification automatique du statut pour la zone de sécurité
+            const res = await fetch('/api/statut-mission?missionId=' + missionId);
+            const data = await res.json();
 
-            if (dist < 50 && (!lastDist || lastDist >= 50)) {
+            if (data.statut === 'en_route' && dist < 50 && (!lastDist || lastDist >= 50)) {
                 parler("Vous êtes arrivé. Confirmez votre présence.");
                 document.getElementById('group-presta-arrive').style.display = 'flex';
             }
+
+            // Zone de sécurité des 20 mètres pour paiement automatique
+            if (data.statut === 'attente_securite' && dist > 20 && !aConfirmeSecurite) {
+                aConfirmeSecurite = true;
+                repondreSecurite('safe');
+            }
+
             lastDist = dist;
         }
 
@@ -159,6 +180,15 @@
             if (confirm("Confirmer la fin ?")) {
                 await fetch('/api/terminer-tache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
             }
+        }
+
+        async function repondreSecurite(action) {
+            const res = await fetch('/api/confirmer-securite', { 
+                method: 'POST', 
+                headers: {'Content-Type':'application/json'}, 
+                body: JSON.stringify({ missionId, action }) 
+            });
+            if (res.ok && action === 'safe') window.location.href = '/index.html';
         }
 
         async function declencherSOS() {
