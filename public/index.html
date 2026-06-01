@@ -42,67 +42,55 @@
         </div>
     </header>
 
-    <!-- ESPACE RÉSERVÉ POUR FUTURES PUBLICITÉS -->
-    <div style="margin: 10px; height: 10px;"></div>
-
-    <!-- Section Annonces désormais visible par tous -->
-    <div id="pub-container" style="margin: 10px; background:#5D4037; padding:15px; border-radius:12px; color:white; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <strong style="display:block;">PROMO DU JOUR</strong>
-            <span>-20% sur les courses à domicile</span>
-        </div>
-        <i class="fas fa-chevron-right"></i>
-    </div>
-
     <div class="app-wrap">
         <h2 style="font-size:1rem; margin-left: 15px;">Nos catégories</h2>
     </div>
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
-            <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400" alt="Cuisine" onerror="this.src='default-profile.png'">
+            <img src="cuisine.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
             <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Lavage', 800)">
-            <img src="https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400" alt="Lavage" onerror="this.src='default-profile.png'">
+            <img src="lavage.jpg" alt="Lavage" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
             <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Vaisselle', 400)">
-            <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400" alt="Vaisselle" onerror="this.src='default-profile.png'">
+            <img src="vaisselle.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
             <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Course', 500)">
-            <img src="https://images.unsplash.com/photo-1586769852836-bc069f19e1b6?w=400" alt="Course" onerror="this.src='default-profile.png'">
+            <img src="course.jpg" alt="Course" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
             <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Chauffeur', 3000)">
-            <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400" alt="Chauffeur" onerror="this.src='default-profile.png'">
+            <img src="chauffeur.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
             <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Coiffure', 2500)">
-            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400" alt="Coiffure" onerror="this.src='default-profile.png'">
+            <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
             <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Remplacement', 500)">
-            <img src="https://images.unsplash.com/photo-1521791136064-7986c2959563?w=400" alt="Remplacement" onerror="this.src='default-profile.png'">
+            <img src="remplacement.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special" onclick="location.href='/discuter'">
-            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400" alt="Particulier" onerror="this.src='default-profile.png'">
+            <img src="particulier.jpg" alt="Particulier" onerror="this.src='default-profile.png'" width="300" height="200">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
@@ -189,20 +177,23 @@
             }
             
             return `
-                <article class="profile-card" style="cursor:pointer">
+                <article class="profile-card" style="cursor:pointer" loading="lazy">
                     <div class="provider-card-top" onclick="${cardAction}">
                         <span class="badge-dispo" style="background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
                         <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>
-                    <div class="provider-card-body" onclick="${cardAction}">
+                    <div class="provider-card-body" onclick="event.stopPropagation(); ${cardAction}">
                         <h3>${nomComplet}</h3>
                         <p style="font-size:0.75rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
                         <p class="prof">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
                         <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>
                         <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
-                            <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
+                                <small style="font-size:0.7rem; color:#999;">(${p.nbAvis || 0} avis)</small>
+                            </div>
                             <div style="width:100px; height:6px; background:#eee; border-radius:3px; overflow:hidden;">
                                 <div style="width:${Math.min((p.etoiles || 0) * 20, 100)}%; height:100%; background:#5D4037;"></div>
                             </div>
@@ -422,11 +413,11 @@
 
         // Premier chargement et intervalle de 2 secondes
         rafraichirCarrousel();
-        setInterval(rafraichirCarrousel, 2000);
+        setInterval(rafraichirCarrousel, 15000); // Stabilisation : rafraîchissement toutes les 15s
 
         // Initialisation des travaux demandés
         chargerJobsPublics();
-        setInterval(chargerJobsPublics, 2000); // Rafraîchir toutes les 2 secondes
+        setInterval(chargerJobsPublics, 10000); // Stabilisation : rafraîchissement toutes les 10s
     </script>
 </body>
 </html>

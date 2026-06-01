@@ -1465,41 +1465,6 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 });
 
 // --- DIAGNOSTIC GOOGLE : Autorisation et Logs de passage ---
-app.get('/robots.txt', (req, res) => {
-    res.type('text/plain');
-    res.send("User-agent: *\nAllow: /favicon.png\nAllow: /\n\n# PetitsDjobs : Autorise Google à indexer le logo");
-});
-
-// Génération dynamique du favicon à partir de votre code SVG pour Google
-app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
-    const svgLogo = `
-    <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="48" fill="white" /> <!-- Fond blanc pour visibilité -->
-        <g transform="rotate(-30 50 50)">
-            <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
-            <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
-            <path d="M15 50 L95 50" stroke="white" stroke-width="12" stroke-dasharray="3 3"/>
-            <path d="M50 15 L50 85" stroke="white" stroke-width="2" stroke-dasharray="1 1"/>
-            <text x="55" y="75" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">pd</text>
-        </g>
-    </svg>`;
-
-    try {
-        const pngBuffer = await sharp(Buffer.from(svgLogo))
-            .resize(192, 192)
-            .png()
-            .toBuffer();
-        
-        const isIco = req.path.includes('.ico');
-        res.set('Content-Type', isIco ? 'image/x-icon' : 'image/png');
-        res.set('Cache-Control', 'public, max-age=604800, immutable');
-
-        return res.send(pngBuffer);
-    } catch (err) {
-        console.error(`[LOGO_ERROR] ${err.message}`);
-        res.status(500).end();
-    }
-});
 
 // Configuration de la mise en cache pour les fichiers statiques
 const optionsCache = {

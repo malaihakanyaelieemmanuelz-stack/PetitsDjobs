@@ -389,12 +389,6 @@ body::before {
         gap: 15px;
     }
 
-    /* On ajoute un espacement automatique pour centrer la première carte au milieu de l'écran */
-    .scroll-container::before, .scroll-container::after {
-        content: '';
-        flex: 0 0 5%; 
-    }
-
     .profile-card {
         flex: 0 0 260px !important;
         margin: 0 auto;
