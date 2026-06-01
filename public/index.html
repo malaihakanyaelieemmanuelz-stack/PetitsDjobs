@@ -19,16 +19,22 @@
     <script>
         // SCRIPT DE DÉTECTION D'ERREURS LOGO
         window.addEventListener('load', () => {
-            function showStatus(msg, isError = true) {
+            function showStatus(msg, isError = true, imgBlob = null) {
                 const ui = document.getElementById('diagnostic-logo-ui');
                 const text = document.getElementById('diagnostic-logo-msg');
                 const icon = document.getElementById('diagnostic-logo-icon');
                 if (ui && text) {
                     ui.style.display = 'block';
-                    ui.style.borderColor = isError ? "#ff5252" : "#2e7d32";
+                    ui.style.borderColor = isError ? "#ff5252" : "#2e7d32"; 
                     text.style.color = isError ? "#d32f2f" : "#2e7d32";
                     icon.innerHTML = isError ? "❌" : "✅";
                     text.innerHTML += (text.innerHTML ? '<br>' : '') + msg;
+                    
+                    if (imgBlob) {
+                        const url = URL.createObjectURL(imgBlob);
+                        text.innerHTML += `<br><p style="color:#666;font-size:10px;">Voici l'image reçue par votre navigateur :</p>
+                                          <img src="${url}" style="width:48px;height:48px;border:2px solid #5D4037;background:#eee;margin-top:5px;">`;
+                    }
                 }
             }
 
@@ -51,7 +57,7 @@
                         console.log("❌❌❌ [LOGO_DIAGNOSTIC] Chargement réussi: " + this.width + "x" + this.height);
                         if (this.width !== this.height) showStatus("IMAGE PAS CARRÉE");
                         else if (this.width < 48) showStatus("DIMENSION < 48px");
-                        else showStatus("LOGO CHARGÉ AVEC SUCCÈS !", false);
+                        else showStatus("LOGO CHARGÉ AVEC SUCCÈS !", false, blob);
                     };
                     img.src = URL.createObjectURL(blob);
                 })

@@ -1505,9 +1505,9 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         <g transform="rotate(-30 50 50)">
             <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
             <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
-            <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
-            <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
-            <text x="55" y="75" font-family="monospace" font-size="12" font-weight="bold" fill="#FFFFFF">pd</text>
+            <path d="M15 50 L95 50" stroke="white" stroke-width="12" stroke-dasharray="3 3"/>
+            <path d="M50 15 L50 85" stroke="white" stroke-width="2" stroke-dasharray="1 1"/>
+            <text x="55" y="75" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">pd</text>
         </g>
     </svg>`;
 
