@@ -54,13 +54,20 @@
             </div>
 
             <p style="font-weight:bold; color:#5D4037;">3. Photo & vérification</p>
-            <p style="font-size:0.8rem; color:#c62828;">⚠️ En cas d'erreur, essayez des photos plus légères ou faites des captures d'écran de vos photos.</p>
+            <p style="font-size:0.8rem; color:#666;">Pour remplacer une photo, choisissez un nouveau fichier. Laissez vide pour conserver l'actuelle.</p>
+            
             <p>Photo de profil (votre visage) :</p>
-            <input type="file" name="photo_profil" accept="image/*" required>
-            <p>Pièce d'identité (Recto) — non affichée au public :</p>
-            <input type="file" name="piece_recto" accept="image/*" required>
+            <div id="current-photo-box" style="margin-bottom:10px; display:none;">
+                <img id="current-photo-preview" src="" style="width:65px; height:65px; border-radius:50%; object-fit:cover; border:2px solid #5D4037;">
+                <span style="font-size:0.75rem; color:#888; display:block;">Actuelle</span>
+            </div>
+            <input type="file" name="photo_profil" accept="image/*" required style="width:100%; margin-bottom:15px;">
+            
+            <p>Pièce d'identité (Recto) :</p>
+            <input type="file" name="piece_recto" accept="image/*" required style="width:100%; margin-bottom:15px;">
+            
             <p>Pièce d'identité (Verso) :</p>
-            <input type="file" name="piece_verso" accept="image/*" required>
+            <input type="file" name="piece_verso" accept="image/*" required style="width:100%; margin-bottom:15px;">
 
             <p id="gps-p" style="font-size:0.85rem; color:#666;">Position GPS requise pour apparaître aux clients proches.</p>
             <button type="submit" id="btn-submit-presta" style="width:100%; padding:15px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>

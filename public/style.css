@@ -223,7 +223,7 @@ body::before {
     flex-direction: row;       /* Force la ligne */
     overflow-x: auto;          /* Active le défilement horizontal */
     overflow-y: hidden;        /* Empêche le défilement vertical */
-    justify-content: center;   /* Recentrage des cartes */
+    justify-content: flex-start; /* Changé de center pour permettre le scroll fluide */
     gap: 15px;                 /* Espace */
     padding: 20px 10px;
     width: 100%;               /* Prend toute la largeur */
@@ -350,6 +350,11 @@ body::before {
         text-align: center;
     }
 
+    /* Rendre les cartes de service cliquables directement */
+    .card { cursor: pointer; }
+    /* Cacher les boutons sur mobile pour épurer la grille 4 colonnes */
+    .service-grid .card button, .service-grid .card .price { display: none !important; }
+
     /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
@@ -378,7 +383,7 @@ body::before {
 
     /* Centrage forcé du carrousel horizontal */
     .scroll-container {
-        justify-content: center !important; 
+        justify-content: flex-start !important; 
         padding: 20px 10px !important;
         display: flex;
         gap: 15px;
