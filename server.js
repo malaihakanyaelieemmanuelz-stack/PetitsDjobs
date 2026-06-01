@@ -1472,6 +1472,11 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
     console.log(`❌❌❌ [LOGO_DEBUG_REQUEST] Requête reçue pour : ${req.url}`);
     console.log(`❌❌❌ [LOGO_DEBUG_UA] User-Agent : ${req.headers['user-agent']}`);
+    const now = new Date().toLocaleTimeString();
+    console.log(`❌❌❌ -------------------------------------------------------`);
+    console.log(`❌❌❌ [LOGO_START] Requête à ${now}`);
+    console.log(`❌❌❌ [LOGO_URL] ${req.url}`);
+    console.log(`❌❌❌ [LOGO_UA] ${req.headers['user-agent']}`);
 
     const svgLogo = `
     <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1479,9 +1484,9 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         <g transform="rotate(-30 50 50)">
             <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
             <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
-            <path d="M15 50 L95 50" stroke="#8B4513" stroke-width="12" stroke-dasharray="3 3"/>
-            <path d="M50 15 L50 85" stroke="#8B4513" stroke-width="2" stroke-dasharray="1 1"/>
-            <text x="55" y="75" font-family="monospace" font-size="12" font-weight="bold" fill="#8B4513">pd</text>
+            <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
+            <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
+            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
         </g>
     </svg>`;
 
@@ -1495,9 +1500,13 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         res.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache de 7 jours
         
         console.log(`❌❌❌ [LOGO_SUCCESS] Image générée et envoyée avec succès.`);
+        console.log(`❌❌❌ [LOGO_SUCCESS] Envoyé avec succès (${pngBuffer.length} octets)`);
+        console.log(`❌❌❌ -------------------------------------------------------`);
         return res.send(pngBuffer);
     } catch (err) {
         console.error("❌❌❌ [LOGO_FATAL_ERROR] Erreur génération favicon:", err);
+        console.error(`❌❌❌ [LOGO_ERROR] ${err.message}`);
+        console.log(`❌❌❌ -------------------------------------------------------`);
         res.status(500).end();
     }
 });
