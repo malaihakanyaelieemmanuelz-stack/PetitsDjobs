@@ -176,6 +176,24 @@
             return `vu le ${date.toLocaleDateString('fr-FR', optionsDate)} à ${heure}`;
         }
 
+        // Restauration et gestion des boutons du Header
+        function mettreAJourHeader(isLoggedIn) {
+            const container = document.getElementById('header-actions');
+            if (isLoggedIn) {
+                container.innerHTML = `
+                    <a href="/profil">MON PROFIL</a>
+                    <form action="/deconnexion" method="POST" style="display:inline;">
+                        <button type="submit" style="background:transparent; border:none; color:#5D4037; font-weight:bold; cursor:pointer; font-size:0.8rem; padding: 6px 15px;">DÉCONNEXION</button>
+                    </form>
+                `;
+            } else {
+                container.innerHTML = `
+                    <a href="connexion.html">CONNEXION</a>
+                    <a href="inscription.html">INSCRIPTION</a>
+                `;
+            }
+        }
+
         function miniCard(p) {
             const nom = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom;
             const cardAction = p.disponible 
@@ -286,12 +304,8 @@
         fetch('/session-status').then(r => r.json())
         .then(s => {
             connecte = s.loggedIn;
+            mettreAJourHeader(connecte); // On affiche les bons boutons immédiatement
             if (!connecte) return null;
-            
-            // Mise à jour immédiate de l'UI si connecté pour éviter les boucles de redirection sur mobile
-            document.getElementById('nav-invite').style.display = 'none';
-            document.getElementById('nav-connecte').style.display = 'block';
-            document.getElementById('bandeau-connecte').style.display = 'block';
             
             return fetch('/get-user-data').then(r => r.json());
         }).then(userData => {
