@@ -1447,12 +1447,17 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 // Log spécifique pour le favicon
 app.get(['/favicon.png', '/favicon.ico'], (req, res, next) => {
     const filePath = path.join(publicDir, 'favicon.png');
-    
+    console.log(`🔍 [DEBUG LOGO] Requête reçue pour : ${req.url}`);
+    console.log(`🔍 [DEBUG LOGO] User-Agent : ${req.headers['user-agent']}`);
+
     if (fs.existsSync(filePath)) {
-        // Log discret pour ne pas polluer
+        const stats = fs.statSync(filePath);
+        console.log(`✅ [DEBUG LOGO] Fichier trouvé : ${filePath}`);
+        console.log(`✅ [DEBUG LOGO] Taille : ${stats.size} octets`);
+        
         if (req.url === '/favicon.ico') return res.redirect(301, '/favicon.png');
     } else {
-        console.error(`❌ [LOGO MANQUANT] Le fichier public/favicon.png est introuvable ! Google ne peut pas l'afficher.`);
+        console.error(`❌ [ERREUR LOGO] Fichier INTROUVABLE sur le disque à : ${filePath}`);
     }
     next(); // Continue vers le middleware static pour servir le fichier
 });
