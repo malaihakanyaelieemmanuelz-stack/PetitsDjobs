@@ -32,7 +32,7 @@
             }
 
             img.onload = function() {
-                console.log("✅ Diagnostic Logo : Image chargée");
+                console.log("❌❌❌ [LOGO_DIAGNOSTIC] Image chargée");
                 if (this.width !== this.height) {
                     signalError("ERREUR : Le logo n'est pas CARRÉ (" + this.width + "x" + this.height + "). Google l'ignorera.");
                 }
@@ -44,6 +44,7 @@
                 }
             };
             img.onerror = function() {
+                console.error("❌❌❌ [LOGO_DIAGNOSTIC_ERROR] Impossible de charger l'image");
                 signalError("IMAGE 'favicon.png' INTROUVABLE SUR LE SERVEUR !");
             };
             // Ajout d'un paramètre aléatoire pour éviter le cache pendant les tests
