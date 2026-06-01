@@ -11,6 +11,14 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const sharp = require('sharp');
 
+// --- DÉTECTION D'ERREURS GLOBALES (Pour voir pourquoi Render échoue) ---
+process.on('uncaughtException', (err) => {
+    console.error('💥 [CRITICAL] Exception non gérée (l\'application va peut-être crash) :', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 [CRITICAL] Rejet de promesse non géré à :', promise, 'raison :', reason);
+});
+
 console.log('📋 [SYSTEM] --- VÉRIFICATION STARTUP ---');
 const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'RESEND_API_KEY'];
 requiredVars.forEach(v => {
@@ -58,6 +66,22 @@ if (!process.env.RESEND_API_KEY) {
 }
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 console.log("📨 [MAIL] Système Resend prêt.");
+
+// Helper pour envoyer des emails sans faire crasher l'application
+async function safeSendEmail(payload) {
+    if (!resend) {
+        console.warn("⚠️ [MAIL SKIP] Envoi annulé : RESEND_API_KEY non configuré dans Render.");
+        return null;
+    }
+    try {
+        const result = await resend.emails.send(payload);
+        if (result.error) console.error("❌ [RESEND ERROR] :", result.error);
+        return result;
+    } catch (e) {
+        console.error("❌ [MAIL CRITICAL ERROR] :", e.message);
+        return null;
+    }
+}
 
 // --- Test de connexion pour les logs Render ---
 if (supabase) {
@@ -441,9 +465,9 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
         // NOTIFICATION DU PRESTATAIRE PAR EMAIL
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
-        if (pUser && pUser.email) {
+        if (pUser && pUser.email && resend) {
             const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le ${datePrevue}`;
-            resend.emails.send({
+            safeSendEmail({
                 from: 'PetitsDjobs <onboarding@resend.dev>',
                 to: pUser.email,
                 subject: `🚨 Nouvelle mission ${msgDate} !`,
@@ -455,7 +479,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                         <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 10px 20px; background: #5D4037; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Voir ma carte de visite</a>
                     </div>
                 `
-            }).catch(e => console.error("Erreur notification mail prestataire:", e));
+            });
         }
 
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
@@ -509,7 +533,7 @@ setInterval(async () => {
                 const { data: nouveaux } = await supabase.from('utilisateurs').select('email, prenom').eq('id', nouveauPrestaId).single();
 
                 if (anciens?.email) {
-                    resend.emails.send({
+                    safeSendEmail({
                         from: 'PetitsDjobs <alerte@resend.dev>',
                         to: anciens.email,
                         subject: '⏰ Temps de réponse expiré',
@@ -518,7 +542,7 @@ setInterval(async () => {
                 }
 
                 if (nouveaux?.email) {
-                    resend.emails.send({
+                    safeSendEmail({
                         from: 'PetitsDjobs <alerte@resend.dev>',
                         to: nouveaux.email,
                         subject: '🚨 Mission de secours disponible !',
@@ -533,7 +557,7 @@ setInterval(async () => {
             
             const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
             if (client?.email) {
-                resend.emails.send({
+                safeSendEmail({
                     from: 'PetitsDjobs <support@resend.dev>',
                     to: client.email,
                     subject: '😔 Désolé, aucun prestataire disponible',
@@ -1337,12 +1361,12 @@ Note : Cette alerte a été déclenchée manuellement par le prestataire depuis 
     console.error(alerteTexte);
 
     // ENVOI D'UN EMAIL D'URGENCE À L'ADMINISTRATEUR
-    resend.emails.send({
+    safeSendEmail({
         from: 'SECURITE <onboarding@resend.dev>',
         to: process.env.ADMIN_EMAIL || 'votre-email-de-test@gmail.com',
         subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
         text: alerteTexte
-    }).catch(err => console.error("Erreur mail SOS (Resend):", err));
+    });
 
     res.json({ ok: true, message: "Alerte envoyée aux services de sécurité de PetitsDjobs." });
 });
@@ -1487,4 +1511,4 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Une erreur interne est survenue sur le serveur." });
 });
 
-app.listen(port, () => console.log('Cerveau opérationnel sur http://localhost:' + port));
+app.listen(port, '0.0.0.0', () => console.log(`🚀 Serveur démarré sur le port ${port} (Binding 0.0.0.0)`));
