@@ -1470,6 +1470,9 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 
 // Génération dynamique du favicon à partir de votre code SVG pour Google
 app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
+    console.log(`🔍 [DEBUG LOGO] Requête reçue pour : ${req.url}`);
+    console.log(`🔍 [DEBUG LOGO] User-Agent : ${req.headers['user-agent']}`);
+
     const svgLogo = `
     <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <rect width="100" height="100" fill="white"/>
@@ -1490,6 +1493,8 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         
         res.set('Content-Type', 'image/png');
         res.set('Cache-Control', 'public, max-age=604800, immutable'); // Cache de 7 jours
+        
+        console.log(`✅ [DEBUG LOGO] Image générée et envoyée avec succès.`);
         return res.send(pngBuffer);
     } catch (err) {
         console.error("Erreur génération favicon:", err);
