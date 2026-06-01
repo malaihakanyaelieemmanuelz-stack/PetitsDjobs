@@ -275,25 +275,30 @@
         fetch('/session-status').then(r => r.json())
         .then(s => {
             connecte = s.loggedIn;
-            return fetch('/get-user-data'); // Récupère les données de l'utilisateur si connecté
-        }).then(r => r.json()).then(userData => {
-            if (!connecte) return;
+            if (!connecte) return null;
+            
+            // Mise à jour immédiate de l'UI si connecté pour éviter les boucles de redirection sur mobile
             document.getElementById('nav-invite').style.display = 'none';
             document.getElementById('nav-connecte').style.display = 'block';
             document.getElementById('bandeau-connecte').style.display = 'block';
-            if (navigator.geolocation) {
-                currentUserId = userData.id; // Stocke l'ID de l'utilisateur
+            
+            return fetch('/get-user-data').then(r => r.json());
+        }).then(userData => {
+            if (!userData || !connecte) return;
+            
+            currentUserId = userData.id;
 
-                let missionCount = 0;
+            if (navigator.geolocation) {
                 // Si c'est un prestataire, on surveille les missions entrantes sur l'accueil
                 if (userData.isPrestataire) {
+                    let missionCount = 0;
                     setInterval(async () => {
                         const rM = await fetch('/api/mes-missions-prestataire');
                         const mData = await rM.json();
                         const flash = document.getElementById('alerte-mission-flash');
                         if (mData && mData.length > 0) {
                             if (mData.length > missionCount) {
-                                document.getElementById('notif-sound').play().catch(e => console.log("Audio blocké par le navigateur"));
+                                document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));
                             }
                             flash.style.display = 'block';
                         } else {
@@ -306,11 +311,14 @@
                 navigator.geolocation.getCurrentPosition(
                     pos => {
                         const { latitude: lat, longitude: lon } = pos.coords;
+                        userLat = lat;
+                        userLon = lon;
                         fetch('/sauvegarder-position', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ lat, lon })
                         });
+                        chargerJobsPublics();
                         // La fonction chargerProches a été retirée car elle ciblait un élément non existant ou non pertinent ici.
                     },
                     () => {
@@ -320,24 +328,6 @@
                             '<strong>GPS désactivé</strong> Activez la localisation pour voir qui est autour de vous.';
                     }
                 );
-
-                let missionCount = 0;
-                if (userData.isPrestataire) {
-                    setInterval(async () => {
-                        const rM = await fetch('/api/mes-missions-prestataire');
-                        const mData = await rM.json();
-                        const flash = document.getElementById('alerte-mission-flash');
-                        if (mData && mData.length > 0) {
-                            if (mData.length > missionCount) {
-                                document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés par le navigateur"));
-                            }
-                            flash.style.display = 'block';
-                        } else {
-                            flash.style.display = 'none';
-                        }
-                        missionCount = mData.length;
-                    }, 2000);
-                }
             }
         }).catch(() => {});
 
