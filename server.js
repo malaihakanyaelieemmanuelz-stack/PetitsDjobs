@@ -1517,7 +1517,7 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
             .png()
             .toBuffer();
         
-        const isIco = req.url.endsWith('.ico');
+        const isIco = req.path.includes('.ico');
         res.set('Content-Type', isIco ? 'image/x-icon' : 'image/png');
         
         // Désactivation du cache pendant les tests pour forcer l'affichage
