@@ -1470,35 +1470,12 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 
 // --- DIAGNOSTIC GOOGLE : Autorisation et Logs de passage ---
 app.get('/robots.txt', (req, res) => {
-    const ua = req.headers['user-agent'] || 'Inconnu';
-    console.log(`❌❌❌ =====================================================`);
-    console.log(`❌❌❌ [ROBOTS_TXT_HIT] Google ou un crawler vérifie vos permissions !`);
-    console.log(`❌❌❌ [USER_AGENT] ${ua}`);
-    console.log(`❌❌❌ =====================================================`);
     res.type('text/plain');
     res.send("User-agent: *\nAllow: /favicon.png\nAllow: /\n\n# PetitsDjobs : Autorise Google à indexer le logo");
 });
 
 // Génération dynamique du favicon à partir de votre code SVG pour Google
 app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
-    const now = new Date().toLocaleTimeString();
-    const ua = req.headers['user-agent'] || '';
-    const isGoogle = /googlebot|google-favicon|google-imageproxy/i.test(ua);
-
-    console.log(`❌❌❌ >>> [LOGO_DETECT] ${now}`);
-    console.log(`❌❌❌ [URL_DEMANDÉE] ${req.url}`);
-    
-    if (isGoogle) {
-        console.log(`❌❌❌ [ALERTE_GOOGLE] !!! GOOGLEBOT EST EN TRAIN DE LIRE VOTRE LOGO !!!`);
-    } else {
-        console.log(`❌❌❌ [VISITEUR_HUMAIN] Requête standard navigateur.`);
-    }
-
-    // Diagnostic des Headers (Google cherche souvent des infos spécifiques)
-    if (req.headers['if-modified-since']) {
-        console.log(`❌❌❌ [CACHE_INFO] Le client demande si le logo a changé depuis : ${req.headers['if-modified-since']}`);
-    }
-
     const svgLogo = `
     <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="48" fill="white" /> <!-- Fond blanc pour visibilité -->
@@ -1519,15 +1496,11 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         
         const isIco = req.path.includes('.ico');
         res.set('Content-Type', isIco ? 'image/x-icon' : 'image/png');
-        
-        // Désactivation du cache pendant les tests pour forcer l'affichage
-        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-        
-        console.log(`❌❌❌ <<< [LOGO_ENVOYÉ] Taille: ${pngBuffer.length} octets`);
-        console.log(`❌❌❌ =====================================================`);
+        res.set('Cache-Control', 'public, max-age=604800, immutable');
+
         return res.send(pngBuffer);
     } catch (err) {
-        console.error(`❌❌❌ [ERREUR_LOGO_CRITIQUE] ${err.message}`);
+        console.error(`[LOGO_ERROR] ${err.message}`);
         res.status(500).end();
     }
 });

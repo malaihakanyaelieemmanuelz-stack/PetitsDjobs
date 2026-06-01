@@ -8,67 +8,10 @@
     <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2">
     <link rel="apple-touch-icon" href="/favicon.png?v=2">
     <title>Accueil - PETITSDJOBS</title>
+    <!-- Ajout des icônes pour la barre du bas -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- Interface visuelle de diagnostic d'erreur Logo -->
-    <div id="diagnostic-logo-ui" style="display:none; position:fixed; top:20px; right:20px; z-index:999999; background:white; border:4px solid #ff5252; padding:15px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); text-align:center; min-width:250px;">
-        <div id="diagnostic-logo-icon" style="font-size:30px; margin-bottom:10px;">❌</div>
-        <div id="diagnostic-logo-msg" style="color:#d32f2f; font-weight:bold; font-family:sans-serif; font-size:14px; line-height:1.4;"></div>
-        <button onclick="this.parentElement.style.display='none'" style="margin-top:12px; background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Fermer l'alerte</button>
-    </div>
-
-    <script>
-        // SCRIPT DE DÉTECTION D'ERREURS LOGO
-        window.addEventListener('load', () => {
-            function showStatus(msg, isError = true, imgBlob = null) {
-                const ui = document.getElementById('diagnostic-logo-ui');
-                const text = document.getElementById('diagnostic-logo-msg');
-                const icon = document.getElementById('diagnostic-logo-icon');
-                if (ui && text) {
-                    ui.style.display = 'block';
-                    ui.style.borderColor = isError ? "#ff5252" : "#2e7d32"; 
-                    text.style.color = isError ? "#d32f2f" : "#2e7d32";
-                    icon.innerHTML = isError ? "❌" : "✅";
-                    text.innerHTML += (text.innerHTML ? '<br>' : '') + msg;
-                    
-                    if (imgBlob) {
-                        const url = URL.createObjectURL(imgBlob);
-                        text.innerHTML += `<br><p style="color:#666;font-size:10px;">Voici l'image reçue par votre navigateur :</p>
-                                          <img src="${url}" style="width:48px;height:48px;border:2px solid #5D4037;background:#eee;margin-top:5px;">`;
-                    }
-                }
-            }
-
-            const testPath = '/favicon.png?t=' + Date.now();
-            console.log("❌❌❌ [CLIENT] Tentative de chargement du logo...");
-
-            fetch(testPath)
-                .then(res => {
-                    console.log("❌❌❌ [LOGO_DIAGNOSTIC] Status HTTP: " + res.status);
-                    if (!res.ok) {
-                        showStatus("ERREUR HTTP " + res.status);
-                        return null;
-                    }
-                    return res.blob();
-                })
-                .then(blob => {
-                    if (!blob) return;
-                    const img = new Image();
-                    img.onload = function() {
-                        console.log("❌❌❌ [LOGO_DIAGNOSTIC] Chargement réussi: " + this.width + "x" + this.height);
-                        if (this.width !== this.height) showStatus("IMAGE PAS CARRÉE");
-                        else if (this.width < 48) showStatus("DIMENSION < 48px");
-                        else showStatus("LOGO CHARGÉ AVEC SUCCÈS !", false, blob);
-                    };
-                    img.src = URL.createObjectURL(blob);
-                })
-                .catch(err => {
-                    console.error("❌❌❌ [LOGO_DIAGNOSTIC_ERROR]", err);
-                    showStatus("ERREUR RÉSEAU");
-                });
-        });
-    </script>
-
     <!-- Son de notification -->
     <audio id="notif-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
@@ -95,37 +38,37 @@
                     PETITSDJOBS
                 </h1>
             </a>
-            
-            <nav id="nav-invite" class="nav-compact">
-                <a href="connexion.html">CONNEXION</a>
-                <a href="inscription.html">INSCRIPTION</a>
-            </nav>
-
-            <nav id="nav-connecte" class="nav-compact" style="display:none;">
-                <a href="/profil">MON PROFIL</a>
-                <form action="/deconnexion" method="POST" style="display:inline; margin:0;">
-                    <button type="submit">DÉCONNEXION</button>
-                </form>
-            </nav>
+            <div id="header-actions" class="nav-compact">
+                <!-- Les boutons sont gérés par le script plus bas -->
+            </div>
         </div>
     </header>
-    <p id="bandeau-connecte" style="display:none; text-align:center; margin:0; padding:14px; background:#c8e6c9; color:#1b5e20; font-weight:bold;">
-        ✓ Connexion réussie — vous êtes sur la page d'ACCUEIL. Choisissez un service ci-dessous.
-    </p>
+
+    <!-- Barre de recherche Mobile style Jumia -->
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <span>Rechercher un service ou un nom...</span>
+        </div>
+    </div>
+
+    <!-- Bandeau GPS plus discret -->
+    <div id="gps-accueil" style="padding: 10px 20px; font-size: 0.8rem; background: #fff8e1; color: #795548; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Localisation en cours...</span>
+    </div>
+
     <!-- Section Annonces désormais visible par tous -->
-    <section id="zone-client" class="app-wrap">
-        <div class="gps-banner" id="gps-accueil">
-            <strong>📢 Annonces & Partenaires</strong>
-            Découvrez les meilleures offres du moment.
+    <div id="pub-container" style="margin: 10px; background:#5D4037; padding:15px; border-radius:12px; color:white; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <strong style="display:block;">PROMO DU JOUR</strong>
+            <span>-20% sur les courses à domicile</span>
         </div>
-        <div id="pub-container" style="margin-bottom:32px; background:#fff; padding:15px; border-radius:8px; border:1px dashed #ccc; text-align:center; color:#999;">
-            Espace Publicitaire
-        </div>
-    </section>
+        <i class="fas fa-chevron-right"></i>
+    </div>
 
     <div class="app-wrap">
-        <h2 class="page-title" style="font-size:1.3rem;">Que souhaitez-vous faire ?</h2>
-        <p class="page-sub">Choisissez un service — vous sélectionnerez ensuite une personne de confiance.</p>
+        <h2 style="font-size:1rem; margin-left: 15px;">Nos catégories</h2>
     </div>
 
     <div class="service-grid" id="services-bloc">
@@ -177,6 +120,14 @@
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter">DISCUTER</button>
         </div>
+    </div>
+
+    <!-- Bottom Navigation Fixed (Style Yango/Jumia) -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item active"><i class="fas fa-home"></i>Accueil</a>
+        <a href="/discuter" class="nav-item"><i class="fas fa-search"></i>Recherche</a>
+        <a href="/prestataire-info" class="nav-item"><i class="fas fa-tasks"></i>Missions</a>
+        <a href="/profil" class="nav-item"><i class="fas fa-user"></i>Profil</a>
     </div>
 
     <section class="app-wrap" id="section-jobs" style="padding: 20px; display:none;">

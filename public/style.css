@@ -6,7 +6,28 @@ html, body {
     overflow-x: hidden; /* Empêche le défilement horizontal sur mobile */
     min-height: 100dvh; /* Utilise la hauteur dynamique du viewport */
 }
-body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background-color: #f4f4f4; 
+    position: relative;
+}
+
+/* Logo en arrière-plan (Filigrane transparent) */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/favicon.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 280px; /* Taille du logo en fond */
+    opacity: 0.04; /* Très léger (4%) pour rester discret et transparent */
+    z-index: -1; /* Derrière tout le contenu */
+    pointer-events: none; /* Ne bloque pas les clics sur les boutons */
+}
 .auth-page { display: flex; justify-content: center; align-items: center; }
 
 /* Styles spécifiques aux formulaires (CONNEXION/INSCRIPTION) */
@@ -295,6 +316,78 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
 
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
+    /* Barre de recherche style App */
+    .search-container {
+        padding: 10px 15px;
+        background: white;
+    }
+    .search-box {
+        background: #f1f1f1;
+        border-radius: 8px;
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #888;
+        font-size: 0.9rem;
+    }
+
+    /* Grille de services style Jumia (Compacte) */
+    .service-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        padding: 15px !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+        text-align: center;
+    }
+    .card img {
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 15px !important;
+        margin: 0 auto !important;
+        object-fit: cover;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .card-info { padding: 5px 0 !important; }
+    .card h3 { 
+        font-size: 0.7rem !important; 
+        margin-top: 5px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .card .price, .card button { display: none !important; } /* On cache les prix et boutons sur l'accueil pour aérer */
+
+    /* Bottom Navigation style Yango */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 65px;
+        background: white;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        border-top: 1px solid #eee;
+        z-index: 10000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+        text-align: center;
+        color: #757575;
+        text-decoration: none;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .nav-item.active { color: #5D4037; }
+    .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+
     /* native look for android: solid white background */
     body { background-color: white !important; min-height: 100dvh; }
 
@@ -372,17 +465,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; }
         box-sizing: border-box; 
     }
     
-    .service-grid { 
-        padding: 15px 10px; 
-        gap: 12px; 
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 colonnes sur mobile pour ne pas être trop long */
-    }
-
-    /* Sur très petit écran (ex: vieux Android), on passe à 1 colonne */
-    @media (max-width: 360px) {
-        .service-grid { grid-template-columns: 1fr; }
-    }
     
     .card { width: 100%; } /* Prend toute la place de sa colonne grid */
     .card img { height: 140px; }
