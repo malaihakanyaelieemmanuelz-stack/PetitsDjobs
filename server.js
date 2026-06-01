@@ -40,20 +40,28 @@ const upload = multer({
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
 
 // --- Initialisation de Supabase ---
-const supabase = createClient(
-  process.env.SUPABASE_URL, 
-  process.env.SUPABASE_KEY
-);
+let supabase;
+try {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+        throw new Error("Missing SUPABASE_URL or SUPABASE_KEY in environment variables.");
+    }
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+    console.log("🚀 [INIT] Supabase client initialized.");
+} catch (err) {
+    console.error("❌ [FATAL ERROR] Failed to initialize Supabase:", err.message);
+    // On ne coupe pas le processus ici pour laisser le temps aux logs de s'afficher sur Render
+}
 
 // --- Initialisation de Resend (Remplacement de Nodemailer pour éviter les blocages SMTP) ---
 if (!process.env.RESEND_API_KEY) {
     console.error("❌ [CRITICAL] RESEND_API_KEY est manquante. L'envoi d'emails échouera.");
 }
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 console.log("📨 [INFO] Client Resend configuré.");
 
 // --- Test de connexion pour les logs Render ---
-supabase.from('utilisateurs').select('id').limit(1)
+if (supabase) {
+    supabase.from('utilisateurs').select('id').limit(1)
     .then(({ error }) => {
         if (error) {
             console.error('❌ [DATABASE ERROR] Connexion Supabase échouée:', error.message);
@@ -62,6 +70,7 @@ supabase.from('utilisateurs').select('id').limit(1)
         }
     })
     .catch(err => console.error('❌ [FATAL] Erreur lors de l\'initialisation Supabase :', err));
+}
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
