@@ -10,8 +10,8 @@
 </head>
 <body>
     <!-- Interface visuelle de diagnostic d'erreur Logo -->
-    <div id="diagnostic-logo-ui" style="display:none; position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:999999; background:white; border:4px solid #ff5252; padding:15px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); text-align:center; min-width:300px;">
-        <div style="font-size:40px; margin-bottom:10px;">❌</div>
+    <div id="diagnostic-logo-ui" style="display:none; position:fixed; top:20px; right:20px; z-index:999999; background:white; border:4px solid #ff5252; padding:15px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.3); text-align:center; min-width:250px;">
+        <div id="diagnostic-logo-icon" style="font-size:30px; margin-bottom:10px;">❌</div>
         <div id="diagnostic-logo-msg" style="color:#d32f2f; font-weight:bold; font-family:sans-serif; font-size:14px; line-height:1.4;"></div>
         <button onclick="this.parentElement.style.display='none'" style="margin-top:12px; background:#eee; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:11px;">Fermer l'alerte</button>
     </div>
@@ -19,22 +19,27 @@
     <script>
         // SCRIPT DE DÉTECTION D'ERREURS LOGO
         window.addEventListener('load', () => {
-            function signalError(msg) {
+            function showStatus(msg, isError = true) {
                 const ui = document.getElementById('diagnostic-logo-ui');
                 const text = document.getElementById('diagnostic-logo-msg');
+                const icon = document.getElementById('diagnostic-logo-icon');
                 if (ui && text) {
                     ui.style.display = 'block';
-                    text.innerHTML += (text.innerHTML ? '<br>' : '') + "❌ " + msg;
+                    ui.style.borderColor = isError ? "#ff5252" : "#2e7d32";
+                    text.style.color = isError ? "#d32f2f" : "#2e7d32";
+                    icon.innerHTML = isError ? "❌" : "✅";
+                    text.innerHTML += (text.innerHTML ? '<br>' : '') + msg;
                 }
             }
 
             const testPath = '/favicon.png?t=' + Date.now();
-            
+            console.log("❌❌❌ [CLIENT] Tentative de chargement du logo...");
+
             fetch(testPath)
                 .then(res => {
                     console.log("❌❌❌ [LOGO_DIAGNOSTIC] Status HTTP: " + res.status);
                     if (!res.ok) {
-                        signalError("HTTP " + res.status + " sur /favicon.png");
+                        showStatus("ERREUR HTTP " + res.status);
                         return null;
                     }
                     return res.blob();
@@ -44,14 +49,15 @@
                     const img = new Image();
                     img.onload = function() {
                         console.log("❌❌❌ [LOGO_DIAGNOSTIC] Chargement réussi: " + this.width + "x" + this.height);
-                        if (this.width !== this.height) signalError("IMAGE PAS CARRÉE (" + this.width + "x" + this.height + ")");
-                        if (this.width < 48) signalError("DIMENSION < 48px");
+                        if (this.width !== this.height) showStatus("IMAGE PAS CARRÉE");
+                        else if (this.width < 48) showStatus("DIMENSION < 48px");
+                        else showStatus("LOGO CHARGÉ AVEC SUCCÈS !", false);
                     };
                     img.src = URL.createObjectURL(blob);
                 })
                 .catch(err => {
                     console.error("❌❌❌ [LOGO_DIAGNOSTIC_ERROR]", err);
-                    signalError("ERREUR RÉSEAU : " + err.message);
+                    showStatus("ERREUR RÉSEAU");
                 });
         });
     </script>

@@ -1468,15 +1468,40 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     }
 });
 
+// --- DIAGNOSTIC GOOGLE : Autorisation et Logs de passage ---
+app.get('/robots.txt', (req, res) => {
+    const ua = req.headers['user-agent'] || 'Inconnu';
+    console.log(`❌❌❌ =====================================================`);
+    console.log(`❌❌❌ [ROBOTS_TXT_HIT] Google ou un crawler vérifie vos permissions !`);
+    console.log(`❌❌❌ [USER_AGENT] ${ua}`);
+    console.log(`❌❌❌ =====================================================`);
+    res.type('text/plain');
+    res.send("User-agent: *\nAllow: /favicon.png\nAllow: /\n\n# PetitsDjobs : Autorise Google à indexer le logo");
+});
+
 // Génération dynamique du favicon à partir de votre code SVG pour Google
 app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
     const now = new Date().toLocaleTimeString();
-    console.log(`❌❌❌ >>> [START_LOGO_REQUEST] ${now} - URL: ${req.url}`);
-    console.log(`❌❌❌ [UA] ${req.headers['user-agent']}`);
+    const ua = req.headers['user-agent'] || '';
+    const isGoogle = /googlebot|google-favicon|google-imageproxy/i.test(ua);
+
+    console.log(`❌❌❌ >>> [LOGO_DETECT] ${now}`);
+    console.log(`❌❌❌ [URL_DEMANDÉE] ${req.url}`);
+    
+    if (isGoogle) {
+        console.log(`❌❌❌ [ALERTE_GOOGLE] !!! GOOGLEBOT EST EN TRAIN DE LIRE VOTRE LOGO !!!`);
+    } else {
+        console.log(`❌❌❌ [VISITEUR_HUMAIN] Requête standard navigateur.`);
+    }
+
+    // Diagnostic des Headers (Google cherche souvent des infos spécifiques)
+    if (req.headers['if-modified-since']) {
+        console.log(`❌❌❌ [CACHE_INFO] Le client demande si le logo a changé depuis : ${req.headers['if-modified-since']}`);
+    }
 
     const svgLogo = `
     <svg width="192" height="192" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <!-- Suppression du rect blanc pour transparence -->
+        <circle cx="50" cy="50" r="48" fill="white" /> <!-- Fond blanc pour visibilité -->
         <g transform="rotate(-30 50 50)">
             <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
             <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
@@ -1498,10 +1523,11 @@ app.get(['/favicon.png', '/favicon.ico'], async (req, res) => {
         // Désactivation du cache pendant les tests pour forcer l'affichage
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         
-        console.log(`❌❌❌ <<< [SUCCESS_LOGO] Image envoyée (${pngBuffer.length} octets)`);
+        console.log(`❌❌❌ <<< [LOGO_ENVOYÉ] Taille: ${pngBuffer.length} octets`);
+        console.log(`❌❌❌ =====================================================`);
         return res.send(pngBuffer);
     } catch (err) {
-        console.error(`❌❌❌ [FATAL_LOGO_ERROR] ${err.message}`);
+        console.error(`❌❌❌ [ERREUR_LOGO_CRITIQUE] ${err.message}`);
         res.status(500).end();
     }
 });
