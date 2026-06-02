@@ -13,17 +13,17 @@ const sharp = require('sharp');
 
 // --- DÉTECTION D'ERREURS GLOBALES (Pour voir pourquoi Render échoue) ---
 process.on('uncaughtException', (err) => {
-    console.error('💥 [CRITICAL] Exception non gérée (l\'application va peut-être crash) :', err);
+    console.error('❌❌❌ [DÉFAILLANCE CRITIQUE SERVEUR] ❌❌❌\nCOPIEZ CECI :\n', err);
 });
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('💥 [CRITICAL] Rejet de promesse non géré à :', promise, 'raison :', reason);
+    console.error('❌❌❌ [PROMESSE ROMPUE] ❌❌❌\nCOPIEZ CECI :\nPromise:', promise, '\nRaison:', reason);
 });
 
 console.log('📋 [SYSTEM] --- VÉRIFICATION STARTUP ---');
 const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'RESEND_API_KEY'];
 requiredVars.forEach(v => {
     if (!process.env[v]) {
-        console.error(`❌ [ERREUR] Variable manquante sur Render : ${v}. COPIEZ CECI ET VÉRIFIEZ L'ONGLET ENVIRONMENT.`);
+        console.error(`❌❌❌ [CONFIG MANQUANTE] Variable absente : ${v} ❌❌❌\nCOPIEZ CECI ET VÉRIFIEZ L'ONGLET ENVIRONMENT SUR RENDER.`);
     } else {
         console.log(`✅ [OK] Variable détectée : ${v}`);
     }
@@ -56,7 +56,7 @@ try {
     supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
     console.log("✅ [DB] Client Supabase initialisé.");
 } catch (err) {
-    console.error("❌ [ERREUR FATALE] Échec Supabase :", err.message, "📋 COPIEZ CECI POUR LE SUPPORT.");
+    console.error("❌❌❌ [ERREUR FATALE DB] Échec Supabase ❌❌❌\nMessage :", err.message, "\n📋 COPIEZ CECI POUR LE SUPPORT.");
     // On ne coupe pas le processus ici pour laisser le temps aux logs de s'afficher sur Render
 }
 
@@ -88,7 +88,7 @@ if (supabase) {
     supabase.from('utilisateurs').select('id').limit(1)
     .then(({ error }) => {
         if (error) {
-            console.error('❌ [ERREUR DB] Impossible de lire la table utilisateurs :', error.message);
+            console.error('❌❌❌ [TEST DB ÉCHOUÉ] Impossible de lire la table utilisateurs ❌❌❌\nErreur :', error.message);
         } else {
             console.log('✅ [DB OK] Connexion à la base de données réussie.');
         }
@@ -98,7 +98,7 @@ if (supabase) {
 
 const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 20;
-const RAYON_MAX_METRES = 500000; // Augmenté à 500km pour ne plus être limité
+const RAYON_MAX_METRES = 50000; // Limite standard à 50km
 const BUCKET_NAME = 'prestataires';
 const offresDiscuter = [];
 
@@ -127,6 +127,13 @@ app.use(session({
         sameSite: 'lax'
     }
 }));
+
+// --- ROUTE DE DIAGNOSTIC ANDROID ---
+app.post('/api/report-client-error', (req, res) => {
+    const { error, detail, url, userAgent } = req.body;
+    console.error(`❌❌❌ [RAPPORT ERREUR ANDROID] ❌❌❌\nURL: ${url}\nAgent: ${userAgent}\nMessage: ${error}\nDétails: ${JSON.stringify(detail)}\n❌❌❌ --- FIN DU RAPPORT --- ❌❌❌`);
+    res.json({ ok: true });
+});
 
 // ... (Le reste de ton code original reste identique ici) ...
 
@@ -460,7 +467,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     try {
         const { data, error } = await supabase.from('missions').insert(payload).select().single();
         if (error) {
-            console.error("❌ ERREUR INSERTION MISSION:", error);
+            console.error("❌❌❌ [ERREUR SUPABASE MISSION] ❌❌❌\nCOPIEZ CECI :\n", error);
             throw error;
         }
 
@@ -1496,8 +1503,7 @@ app.use(express.static(publicDir, { ...optionsCache, index: false }));
 
 // Middleware global de capture d'erreurs (Crucial pour le débogage sur Render)
 app.use((err, req, res, next) => {
-    console.error(`🚨 [ERREUR CRITIQUE SERVEUR] ${req.method} ${req.url} \n📋 COPIEZ CECI :`, err.message);
-    console.error(err.stack);
+    console.error(`❌❌❌ [ERREUR CRITIQUE SERVEUR] ${req.method} ${req.url} ❌❌❌\nMessage: ${err.message}\n📋 COPIEZ CECI :\n${err.stack}\n❌❌❌ --- FIN --- ❌❌❌`);
     res.status(500).json({ error: "Une erreur interne est survenue sur le serveur." });
 });
 
