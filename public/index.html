@@ -273,25 +273,27 @@
 
         function formatDerniereConnexion(dateStr, disponible) {
             if (disponible) return '<span style="color:#2e7d32; font-weight:bold;">En ligne</span>';
-            if (!dateStr) return 'Hors ligne';
+            if (!dateStr) return '<span style="color:#888;">Hors ligne</span>';
             
             const date = new Date(dateStr);
             const now = new Date();
-            
-            // Calcul des jours de différence (comparaison des dates sans l'heure)
             const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
             const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const diffDays = Math.round((dNow - dDate) / (1000 * 60 * 60 * 24));
 
-            const optionsHeure = { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' };
-            const heure = date.toLocaleTimeString('fr-FR', optionsHeure);
+            const optH = { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Abidjan' };
+            const heure = date.toLocaleTimeString('fr-FR', optH);
+            let txt = "";
 
-            if (diffDays === 0) return `vu à ${heure}`;
-            if (diffDays === 1) return `vu hier à ${heure}`;
-            if (diffDays === 2) return `vu avant-hier à ${heure}`;
+            if (diffDays === 0) txt = `aujourd'hui à ${heure}`;
+            else if (diffDays === 1) txt = `hier à ${heure}`;
+            else if (diffDays === 2) txt = `avant-hier à ${heure}`;
+            else {
+                const optD = { day: 'numeric', month: 'numeric', year: 'numeric' };
+                txt = `le ${date.toLocaleDateString('fr-FR', optD)} à ${heure}`;
+            }
             
-            const optionsDate = { day: 'numeric', month: 'short', timeZone: 'Africa/Abidjan' };
-            return `vu le ${date.toLocaleDateString('fr-FR', optionsDate)} à ${heure}`;
+            return `<span style="color:#666;">Hors ligne - ${txt}</span>`;
         }
 
         // Restauration et gestion des boutons du Header

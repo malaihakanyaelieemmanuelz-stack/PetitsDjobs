@@ -161,7 +161,7 @@ function distanceMetres(p, lat, lon) {
         { latitude: clientLat, longitude: clientLon },
         { latitude: prestaLat, longitude: prestaLon }
     );
-    console.log(`[DEBUG DIST] Calcule entre Client(${clientLat}, ${clientLon}) et Presta(${prestaLat}, ${prestaLon}) = ${dist}m`);
+    // Log supprimé ici pour éviter de polluer, on le gérera dans la boucle de recherche
     return dist;
 }
 
@@ -232,42 +232,43 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 };
             });
 
+        console.log(`   > Step 2: Filtrage JS terminé.`);
+        console.log(`     - Conservés: ${stats.ok} | Exclue(s) (Auto): ${stats.selfExclude} | Service non matché: ${stats.serviceMismatch} | Profils cassés: ${stats.missingUser}`);
+
         const nbTotal = eligibles.length;
 
         if (nbTotal >= 20) {
-            // ALGORITHME DE TRI COMPLEXE (Paliers de 10m)
+            console.log(`   > Step 3: Mode COMPÉTITION (20+). Tri par paliers de 10m.`);
             eligibles.sort((a, b) => {
-                // 1. Distance par paliers de 10 mètres
+                // 1. Tranches de 10 mètres
                 const bucketA = Math.floor(a.distanceM / 10);
                 const bucketB = Math.floor(b.distanceM / 10);
                 if (bucketA !== bucketB) return bucketA - bucketB;
                 
-                // 2. Statut en ligne (Priorité absolue dans le palier)
+                // 2. Dans la même tranche : En ligne d'abord
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 
-                // 3. Les plus étoilés d'abord
-                if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
-
-                // 4. Égalité d'étoiles :
                 if (a.enLigne) {
-                    // Si en ligne : Celui qui s'est inscrit en premier (ID plus petit)
+                    // En ligne : priorité aux étoiles, puis premier inscrit (ID croissant)
+                    if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
                     return a.id_num - b.id_num;
                 } else {
-                    // Si hors ligne : Celui qui a quitté la ligne en dernier (Récence)
+                    // Hors ligne : priorité à celui qui a quitté la ligne en dernier (Recence)
                     const timeA = new Date(a.dernier_acces || 0).getTime();
                     const timeB = new Date(b.dernier_acces || 0).getTime();
                     return timeB - timeA;
                 }
             });
 
-            // Limite de visibilité à 50km seulement si on a assez de monde
+            // Règle : Si on a 20+ prestataires, on arrête de chercher au-delà de 50km
             eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         } else {
-            // Moins de 20 prestataires : On affiche tout le monde (Règle demandée)
-            // Mais on trie par pertinence pour que ce soit utile (En ligne > Étoiles)
+            console.log(`   > Step 3: Moins de 20 inscrits au total. Affichage complet sans limite de distance.`);
             eligibles.sort((a, b) => {
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-                if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
+                const timeA = new Date(a.dernier_acces || 0).getTime();
+                const timeB = new Date(b.dernier_acces || 0).getTime();
+                if (timeA !== timeB) return timeB - timeA;
                 return a.distanceM - b.distanceM;
             });
         }

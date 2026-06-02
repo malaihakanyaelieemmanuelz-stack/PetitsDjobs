@@ -6,18 +6,82 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <title>Profil prestataire</title>
+    <title>Profil Prestataire - PetitsDjobs</title>
+    <style>
+        /* Design Android Professionnel Full Screen */
+        .android-profile-view {
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+        .hero-banner {
+            background: #5D4037;
+            color: white;
+            padding: 60px 20px 40px;
+            text-align: center;
+            position: relative;
+            border-radius: 0 0 40px 40px;
+            box-shadow: 0 10px 30px rgba(93, 64, 55, 0.2);
+        }
+        .hero-banner .btn-back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .hero-banner img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 5px solid white;
+            object-fit: cover;
+            margin-bottom: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .section-info {
+            background: #f8f9fa;
+            margin: 25px 20px;
+            padding: 25px;
+            border-radius: 24px;
+            border: 1px solid #eee;
+        }
+        .service-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 18px;
+            border: 1px solid #eee;
+            margin-bottom: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .service-row input {
+            width: 26px;
+            height: 26px;
+            accent-color: #5D4037;
+        }
+    </style>
 </head>
-<body>
-    <header class="home-header">
-        <a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a>
-    </header>
-    <nav class="nav-bar"><a href="javascript:history.back()">← Retour</a></nav>
-
-    <div class="app-wrap">
-        <div class="trust-card" id="carte" style="max-width: 650px; width: 100%; margin: 0 auto; background: white; text-align: left; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; border-radius: 25px;">
-            <p style="padding:40px;">Chargement du profil...</p>
-        </div>
+<body style="background:#f4f4f4; margin:0;">
+    <div id="carte" class="android-profile-view">
+        <p style="padding:60px; text-align:center; color:#666;">Chargement du profil...</p>
     </div>
 
     <script>
@@ -32,38 +96,48 @@
                 }
                 const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
                 const avis = (p.commentaires && p.commentaires.length) 
-                    ? p.commentaires.map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('') 
-                    : '<li>Pas encore d\'avis — soyez le premier !</li>';
+                    ? p.commentaires.map(c => `<li style="padding:15px 0; border-bottom:1px solid #eee; color:#555; font-size:0.95rem;">${typeof c === 'string' ? c : c.texte}</li>`).join('') 
+                    : '<li style="color:#888; padding:10px 0;">Aucun avis pour le moment.</li>';
 
-                // On transforme la chaîne en liste de cases à cocher, en excluant "Tout"
                 const listeServices = (p.services || 'Services divers')
                     .split(',')
                     .map(s => s.trim())
                     .filter(s => s.toLowerCase() !== 'tout');
 
                 const checkboxesServices = listeServices.map(s => `
-                    <label style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; cursor: pointer;">
-                        <input type="checkbox" class="service-checkbox" value="${s}" style="width: 28px; height: 28px;">
-                        <span style="font-weight: 600; color: #333; font-size: 1.1rem;">${s}</span>
+                    <label class="service-row">
+                        <input type="checkbox" class="service-checkbox" value="${s}">
+                        <span style="font-weight: 700; color: #333; font-size: 1.1rem;">${s}</span>
                     </label>
                 `).join('');
 
                 document.getElementById('carte').innerHTML = `
-                    <div class="trust-card-header">
-                        <img src="${p.photo || ''}" alt="">
-                        <h2 style="margin:0;">${nom}</h2>
-                        <p style="margin:8px 0 0; opacity:0.9;">⭐ ${p.etoiles || 0} / 5</p>
+                    <div class="hero-banner">
+                        <button class="btn-back" onclick="history.back()">←</button>
+                        <img src="${p.photo || 'default-profile.png'}" alt="">
+                        <h2 style="margin:0; font-size:1.8rem; letter-spacing:-0.5px;">${nom}</h2>
+                        <div style="margin-top:8px; font-weight:bold; font-size:1.1rem;">⭐ ${p.etoiles || 0} / 5</div>
                     </div>
-                    <div class="trust-card-body">
-                        <p><strong>Métier :</strong> ${p.profession || '-'}</p>
-                        <p style="font-style:italic; color:#555;">"${p.bio || 'Personne de confiance sur PetitsDjobs.'}"</p>
-                        <h3 style="margin-top:20px; color:#5D4037;">Sélectionnez vos besoins :</h3>
-                        <div id="services-selection" style="margin-bottom:20px;">${checkboxesServices}</div>
-                        <button id="btn-valider-multi" class="btn-primary-sm" style="width:100%; margin-bottom: 20px;" onclick="validerSelection('${p.id}')">
-                            Commander les services sélectionnés
+                    
+                    <div class="section-info">
+                        <div style="color:#888; font-size:0.7rem; text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">Spécialité</div>
+                        <div style="font-size:1.2rem; font-weight:700; color:#333;">${p.profession || '-'}</div>
+                        <div style="margin-top:20px; color:#888; font-size:0.7rem; text-transform:uppercase; font-weight:900; letter-spacing:1px; margin-bottom:5px;">À propos</div>
+                        <div style="color:#555; font-style:italic; line-height:1.5; font-size:1rem;">"${p.bio || 'Ce prestataire n\\'a pas encore rédigé de bio.'}"</div>
+                    </div>
+
+                    <div style="padding: 0 20px;">
+                        <h3 style="color:#5D4037; font-weight:900; margin-bottom:15px; padding-left:5px;">CHOISIR VOS BESOINS</h3>
+                        <div id="services-selection">${checkboxesServices}</div>
+                        
+                        <button id="btn-valider-multi" class="btn-primary-sm" style="width:100%; margin: 25px 0; min-height:70px; font-size:1.3rem; border-radius:20px; box-shadow: 0 8px 20px rgba(93, 64, 55, 0.3);" onclick="validerSelection('${p.id}')">
+                            RÉSERVER MAINTENANT
                         </button>
-                        <h3>Avis</h3>
-                        <ul style="padding-left:20px;">${avis}</ul>
+                    </div>
+
+                    <div class="section-info" style="margin-bottom:50px;">
+                        <h3 style="margin:0 0 15px 0; color:#5D4037;">Avis Clients</h3>
+                        <ul style="padding:0; list-style:none; margin:0;">${avis}</ul>
                     </div>`;
             });
         }
