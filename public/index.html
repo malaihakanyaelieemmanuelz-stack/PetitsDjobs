@@ -8,44 +8,33 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
-    <!-- DIAGNOSTIC VISUEL POUR ANDROID -->
-    <div id="android-debug-diag" style="background:#1a237e; color:white; font-size:11px; padding:8px; text-align:center; z-index:999999; position:sticky; top:0; font-family:sans-serif;">
-        📱 DIAGNOSTIC : <span id="debug-status">Initialisation...</span> | 
-        <span id="debug-w"></span>px | 
-        <span id="debug-error" style="color:#ffeb3b; font-weight:bold;"></span>
-    </div>
     <script>
         function runLayoutDiagnostic() {
-            const status = document.getElementById('debug-status');
-            const errorSpan = document.getElementById('debug-error');
-            const width = window.innerWidth;
-            document.getElementById('debug-w').innerText = width;
+            const width = document.documentElement.clientWidth;
+            const height = window.innerHeight;
+            console.log(`📱 [DIAGNOSTIC ANDROID] Dimensions : ${width}x${height}px`);
 
-            // 1. Détection du mode
             if(width > 600) {
-                status.innerText = "⚠️ MODE PC";
-                document.getElementById('android-debug-diag').style.background = '#b71c1c';
+                console.warn("⚠️ [LAYOUT] MODE PC DÉTECTÉ");
             } else {
-                status.innerText = "✅ MOBILE OPTIMISÉ";
-                document.getElementById('android-debug-diag').style.background = '#2e7d32';
+                console.log("✅ [LAYOUT] MOBILE OPTIMISÉ");
             }
 
-            // 2. Détection des éléments qui dépassent (cause du mauvais centrage)
             let elementsWithOverflow = [];
             document.querySelectorAll('*').forEach(el => {
                 const rect = el.getBoundingClientRect();
-                if (rect.right > width || rect.left < 0) {
-                    elementsWithOverflow.push(el);
-                    // Optionnel: On peut colorer en rouge l'élément qui dépasse pour le voir
-                    // el.style.outline = "1px solid red"; 
+                if (rect.width > width) {
+                    elementsWithOverflow.push({
+                        element: el.tagName + (el.className ? "." + el.className : ""),
+                        width: rect.width,
+                        excess: rect.width - width
+                    });
                 }
             });
 
             if (elementsWithOverflow.length > 0) {
-                errorSpan.innerText = "❌ OVERFLOW: " + elementsWithOverflow.length + " éléments dépassent !";
-                console.error("🚨 [LAYOUT ERROR] Ces éléments cassent le centrage sur Android:", elementsWithOverflow);
+                console.error("🚨 [LAYOUT ERROR] Éléments trop larges détectés :", elementsWithOverflow);
             } else {
-                errorSpan.innerText = "🎯 CENTRAGE OK";
                 console.log("👍 [LAYOUT OK] Aucun débordement détecté.");
             }
         }
@@ -89,6 +78,13 @@
         </div>
     </header>
 
+    <!-- Bandeau Publicitaire -->
+    <div class="app-wrap" style="margin: 5px auto; padding: 5px 15px;">
+        <div style="border: 1px dashed #bbb; border-radius: 4px; padding: 6px; text-align: center; background: rgba(255,255,255,0.6);">
+            <span style="color: #999; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Espace Publicitaire</span>
+        </div>
+    </div>
+
     <h2 style="font-size:1rem; margin: 15px 0 5px 20px; color: #5D4037;">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
@@ -117,7 +113,7 @@
             <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Chauffeur', 3000)">
-            <img src="chaufeur.jpd.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" decoding="async">
+            <img src="chauffeur.jpg.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" decoding="async">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
             <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
@@ -135,7 +131,7 @@
             <button class="btn-commander" data-service="Maquillage" data-prix="2000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Coiffure', 2500)">
-            <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'">
+            <img src="coiffure.jpg.jpg" alt="Coiffure" onerror="this.src='default-profile.png'">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
             <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
@@ -147,17 +143,10 @@
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special" onclick="location.href='/discuter'">
-            <img src="particulie.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" decoding="async">
+            <img src="particulier.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" decoding="async">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
-        </div>
-    </div>
-
-    <!-- Emplacement Publicitaire Placeholder -->
-    <div class="app-wrap" style="margin: 10px auto;">
-        <div style="border: 1px dashed #bbb; border-radius: 8px; padding: 15px; text-align: center; background: rgba(255,255,255,0.6);">
-            <span style="color: #999; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Annonce et publicité disponible ici bientôt</span>
         </div>
     </div>
 

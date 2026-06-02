@@ -8,10 +8,23 @@
     <title>Connexion</title>
 </head>
 <body>
-    <!-- Diagnostic visuel -->
-    <div id="android-debug-diag" style="background:#2e7d32; color:white; font-size:10px; padding:5px; text-align:center;">
-        ✅ CORRECTIF ANDROID ACTIF | Viewport OK
-    </div>
+    <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const w = document.documentElement.clientWidth;
+                let bad = [];
+                document.querySelectorAll('*').forEach(el => {
+                    const r = el.getBoundingClientRect();
+                    if (r.width > w) bad.push({ tag: el.tagName, class: el.className, w: r.width });
+                });
+                if (bad.length > 0) {
+                    console.error("🚨 [CONNEXION DIAG] Éléments débordants sur Android:", bad);
+                } else {
+                    console.log("👍 [CONNEXION DIAG] Layout OK");
+                }
+            }, 1000);
+        });
+    </script>
 
     <header class="home-header">
         <div class="header-content">

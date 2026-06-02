@@ -5,10 +5,11 @@
 
 html, body { 
     width: 100%; 
-    margin: 0; 
+    margin: 0;
     padding: 0; 
     overflow-x: hidden; /* Empêche le défilement horizontal sur mobile */
-    min-height: 100%;
+    min-height: 100dvh; /* S'adapte à la barre d'adresse Android */
+    overflow-y: auto;   /* Assure le défilement vertical */
 }
 html {
     background-color: #f4f4f4; /* Déplacé ici pour que le logo en filigrane soit visible par-dessus */
@@ -435,6 +436,11 @@ body::before {
         font-size: 0.9rem !important;
         min-height: 42px;
         display: flex;
+    }
+
+    /* Correctif spécifique Android pour les conteneurs tronqués */
+    .app-wrap, .service-grid {
+        max-width: 100vw !important;
     }
 }
 
