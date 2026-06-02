@@ -40,15 +40,19 @@
                     const rect = services.getBoundingClientRect();
                     console.log(`📏 [LAYOUT] Début photos : ${Math.round(rect.top)}px`);
                     if (rect.top > 200) {
-                        const msg = "❌❌❌ [ERREUR AFFICHAGE] Espace vide excessif en haut (>200px) ❌❌❌";
+                        const msg = `❌❌❌ [ERREUR AFFICHAGE] Espace vide de ${Math.round(rect.top)}px détecté ❌❌❌`;
                         console.error(msg);
-                        reportToRender(msg, { topPosition: rect.top, headerHeight: document.querySelector('.home-header').offsetHeight });
+                        const header = document.querySelector('.home-header');
+                        reportToRender(msg, { topPosition: rect.top, headerHeight: header ? header.offsetHeight : 'N/A' });
                     }
                 }
             }
 
             let elementsWithOverflow = [];
             document.querySelectorAll('*').forEach(el => {
+                // On ignore les éléments de défilement intentionnels
+                if (el.classList.contains('scroll-container') || el.id === 'container-jobs') return;
+                
                 const rect = el.getBoundingClientRect();
                 if (rect.width > width) {
                     elementsWithOverflow.push({
