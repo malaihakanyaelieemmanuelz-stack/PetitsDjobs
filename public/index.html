@@ -10,14 +10,24 @@
 <body>
     <script>
         function runLayoutDiagnostic() {
-            const width = document.documentElement.clientWidth;
+            const width = window.innerWidth;
             const height = window.innerHeight;
-            console.log(`📱 [DIAGNOSTIC ANDROID] Dimensions : ${width}x${height}px`);
+            console.log(`📱 [DIAGNOSTIC] Dimensions : ${width}x${height}px`);
 
             if(width > 600) {
                 console.warn("⚠️ [LAYOUT] MODE PC DÉTECTÉ");
             } else {
                 console.log("✅ [LAYOUT] MOBILE OPTIMISÉ");
+                
+                // Détection spécifique de l'espace vide en haut
+                const services = document.getElementById('services-bloc');
+                if (services) {
+                    const rect = services.getBoundingClientRect();
+                    console.log(`📏 [LAYOUT] Les photos commencent à ${Math.round(rect.top)}px du haut de l'écran.`);
+                    if (rect.top > 200) {
+                        console.error("🚨 [LAYOUT ERROR] Espace vide excessif détecté avant les photos !");
+                    }
+                }
             }
 
             let elementsWithOverflow = [];
@@ -73,19 +83,21 @@
                 </h1>
             </a>
             <div id="header-actions" class="nav-compact">
-                <!-- Les boutons sont gérés par le script plus bas -->
+                <!-- Valeurs par défaut pour éviter le vide au chargement -->
+                <a href="connexion.html">CONNEXION</a>
+                <a href="inscription.html">INSCRIPTION</a>
             </div>
         </div>
     </header>
 
     <!-- Bandeau Publicitaire -->
-    <div class="app-wrap" style="margin: 5px auto; padding: 5px 15px;">
+    <div class="app-wrap" id="ad-banner" style="margin: 5px auto; padding: 5px 15px;">
         <div style="border: 1px dashed #bbb; border-radius: 4px; padding: 6px; text-align: center; background: rgba(255,255,255,0.6);">
             <span style="color: #999; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Espace Publicitaire</span>
         </div>
     </div>
 
-    <h2 style="font-size:1rem; margin: 15px 0 5px 20px; color: #5D4037;">Nos catégories</h2>
+    <h2 id="cat-title" style="font-size:1rem; margin: 15px 0 5px 20px; color: #5D4037;">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
@@ -182,14 +194,15 @@
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
                     diag.innerText = diag.innerText.split('|')[0] + ` | 📍 GPS OK (${Math.round(pos.coords.accuracy)}m)`;
+
+                    // On lance le chargement immédiatement
+                    rafraichirCarrousel();
+                    chargerJobsPublics();
                     
                     fetch('/sauvegarder-position', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ lat: userLat, lon: userLon })
-                    }).then(() => {
-                        rafraichirCarrousel();
-                        chargerJobsPublics();
                     });
                 },
                 err => {
@@ -204,6 +217,7 @@
         obtenirLocalisation();
 
         function distanceLabel(m) {
+            if (m === Infinity || m == null) return 'Distance inconnue';
             if (m < 1000) return m + ' m';
             return (m / 1000).toFixed(1) + ' km';
         }
@@ -265,10 +279,10 @@
             }
             
             return `
-                <article class="profile-card" style="cursor:pointer" loading="lazy">
+                <article class="profile-card" style="cursor:pointer">
                     <div class="provider-card-top" onclick="${cardAction}">
                         <span class="badge-dispo" style="background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
-                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
+                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'" loading="lazy">
                         ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                     </div>
                     <div class="provider-card-body" onclick="event.stopPropagation(); ${cardAction}">
