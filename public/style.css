@@ -7,10 +7,8 @@ html, body {
     width: 100%; 
     margin: 0;
     padding: 0; 
-    overflow-x: hidden; /* Empêche le défilement horizontal sur mobile */
-    min-height: 100vh;   /* Fallback */
-    min-height: 100dvh; 
-    overflow-y: auto;   /* Assure le défilement vertical */
+    min-height: 100dvh;
+    overflow-x: hidden;
     background-color: #f4f4f4;
 }
 
@@ -388,25 +386,25 @@ body {
     /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important; /* minmax(0) empêche le contenu de forcer la largeur */
-        gap: 8px !important;
-        padding: 5px 15px !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+        padding: 5px 10px !important;
         justify-items: center;
         width: 100% !important;
-        max-width: 100vw !important;
+        max-width: 100% !important;
         margin-top: 0 !important;
     }
 
     .card {
         background: transparent !important;
-        width: auto !important;
-            margin: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
 
     .card img {
-        width: 60px !important;
-        height: 60px !important;
-        border-radius: 12px !important;
+        width: 65px !important;
+        height: 65px !important;
+        border-radius: 10px !important;
     }
 
     .card h3 { 
