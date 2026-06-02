@@ -342,30 +342,26 @@ body {
     /* Reset global des marges pour supprimer le vide */
     h1, h2, h3 { margin-top: 0 !important; }
 
-    /* Tous les conteneurs principaux passent en mode "App" sans bordures ni ombres */
-    .login-card, 
-    .trust-card, 
-    .checkout-card, 
-    .card-presta-mobile, 
-    .auth-page,
-    .app-wrap {
+    /* Reset des hauteurs pour les conteneurs de contenu (évite le vide de 855px) */
+    .login-card, .trust-card, .checkout-card, .card-presta-mobile, .app-wrap, section {
         width: 100% !important;
         max-width: 100% !important;
-            margin: 0 !important;
-            padding: 10px 15px !important; /* Réduit l'espacement vertical */
+        margin: 0 !important;
+        padding: 10px 15px !important;
         border: none !important;
         border-radius: 0 !important;
         box-shadow: none !important;
         box-sizing: border-box;
+        height: auto !important; 
+        min-height: 0 !important; 
     }
 
     .auth-page {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start; /* Évite que le clavier cache les champs */
-        min-height: 100dvh;
-        padding-top: 20px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 100dvh !important; /* Seulement ici pour le plein écran */
+        height: auto !important;
+        width: 100% !important;
         background-color: white !important;
     }
 
@@ -388,13 +384,15 @@ body {
     /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(4, 1fr) !important;
         gap: 6px !important;
         padding: 5px 10px !important;
         justify-items: center;
         width: 100% !important;
         max-width: 100% !important;
         margin-top: 0 !important;
+        box-sizing: border-box;
+        overflow: hidden;
     }
 
     .card {
@@ -430,23 +428,19 @@ body {
     /* Header compact et centré */
     .header-content {
         flex-direction: column !important;
+        flex-wrap: nowrap !important;
         gap: 2px !important;
         text-align: center !important;
         padding: 5px 0 !important;
         width: 100% !important;
+        box-sizing: border-box;
+        overflow: hidden;
     }
     .nav-compact { justify-content: center; width: 100%; }
 
     .home-header { 
         padding: 5px 10px !important;
         margin-bottom: 0 !important;
-    }
-
-    #ad-banner {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }
 
     #cat-title {
@@ -456,9 +450,10 @@ body {
         word-wrap: break-word;
     }
 
-    h2 {
+    h1, h2, h3 {
         max-width: 100%;
         overflow-wrap: break-word;
+        margin-top: 0 !important;
     }
     .nav-compact a, .nav-compact button {
         padding: 10px 18px !important;
@@ -467,19 +462,11 @@ body {
         display: flex;
     }
 
-    /* Correctif spécifique Android pour les conteneurs tronqués */
-    .app-wrap, .service-grid {
-        max-width: 100vw !important;
-    }
-
     /* Suppression de l'espace publicitaire sur mobile pour gagner de la place */
     #ad-banner {
-        display: none !important;
-    }
-
-    /* Remonter le titre "Nos catégories" */
-    #cat-title {
-        margin: 5px 0 5px 20px !important;
+        display: none !important; /* On tue le bandeau sur mobile pour libérer l'espace */
+        height: 0 !important;
+        margin: 0 !important;
     }
 
     /* Sécurité contre l'étirement vertical Android */

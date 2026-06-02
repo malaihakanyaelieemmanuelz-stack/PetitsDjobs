@@ -54,8 +54,8 @@
                 }
             });
 
-            if (gridRect.top > 200) {
-                reportToRender("❌❌❌ INVESTIGATION VIDE ❌❌❌", audit);
+            if (gridRect.top > 300) {
+                reportToRender("⚠️ Espace vide résiduel détecté", { top: gridRect.top });
             }
 
             let elementsWithOverflow = [];

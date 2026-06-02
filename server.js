@@ -204,7 +204,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
 
-        const eligibles = prestataires
+        let eligibles = prestataires
             .filter(p => String(p.user_id) !== String(excludeUserId)) // Comparaison en string pour éviter les bugs d'ID
             .filter(p => serviceMatch(p, service) && userMap[p.user_id])
             .map(p => {
@@ -221,29 +221,28 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                     dernier_acces: user?.dernier_acces,
                     distanceM: dist,
                 };
-            })
-            .filter(p => (lat == null || lon == null) ? true : p.distanceM <= RAYON_MAX_METRES)
-            .filter(p => {
-                if (!p.nom || p.nom === 'Prestataire') return true; 
-                return true;
-            })
-            .sort((a, b) => {
-                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-                
-                if (a.enLigne) {
-                    const etoilesA = a.etoiles || 0;
-                    const etoilesB = b.etoiles || 0;
-                    if (etoilesA !== etoilesB) return etoilesB - etoilesA;
-                    return new Date(a.created_at) - new Date(b.created_at);
-                } else {
-                    const dateA = new Date(a.dernier_acces || 0);
-                    const dateB = new Date(b.dernier_acces || 0);
-                    if (dateA.getTime() !== dateB.getTime()) return dateB - dateA;
-                    const etoilesA = a.etoiles || 0;
-                    const etoilesB = b.etoiles || 0;
-                    return etoilesB - etoilesA;
-                }
             });
+
+        // ALGORITHME DE TRI PAR PALIERS (10m)
+        eligibles.sort((a, b) => {
+            // 1. Paliers de 10 mètres
+            const bucketA = Math.floor(a.distanceM / 10);
+            const bucketB = Math.floor(b.distanceM / 10);
+            if (bucketA !== bucketB) return bucketA - bucketB;
+            
+            // 2. Statut en ligne (dans le même palier)
+            if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+            
+            // 3. Récence (dans le même palier et même statut)
+            const timeA = new Date(a.dernier_acces || 0).getTime();
+            const timeB = new Date(b.dernier_acces || 0).getTime();
+            return timeB - timeA;
+        });
+
+        // Si le nombre total est < 20, on ignore la limite des 50km
+        if (eligibles.length > 20) {
+            eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
+        }
 
         console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
         if (eligibles.length === 0) {
