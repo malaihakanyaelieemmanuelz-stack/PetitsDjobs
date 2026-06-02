@@ -1166,7 +1166,11 @@ app.post('/devenir-prestataire', upload.fields([
 app.get('/prestataire-public/:id', async (req, res) => {
     const { data: p } = await supabase.from('infos_prestataires').select('*').eq('user_id', req.params.id).maybeSingle();
     if (!p) return res.status(404).json({});
-    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom').eq('id', p.user_id).maybeSingle();
+    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom, dernier_acces').eq('id', p.user_id).maybeSingle();
+
+    const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+    const enLigne = user?.dernier_acces ? (Date.now() - new Date(user.dernier_acces).getTime() < SEUIL_EN_LIGNE_MS) : false;
+
     res.json({
         id: p.user_id,
         nom: user?.nom || 'Prestataire',
@@ -1177,7 +1181,8 @@ app.get('/prestataire-public/:id', async (req, res) => {
         services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0,
-        commentaires: p.commentaires || []
+        commentaires: p.commentaires || [],
+        enLigne: enLigne
     });
 });
 
