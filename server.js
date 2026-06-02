@@ -114,27 +114,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(session({
-    secret: 'petit-secret-job-2026',
-    resave: false,
-    saveUninitialized: false,
-    proxy: true, // Nécessaire pour Render
-    name: 'pdjobs.session',
-    cookie: { 
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // true en production (HTTPS), false en local
-        sameSite: 'lax'
-    }
-}));
-
-// --- ROUTE DE DIAGNOSTIC ANDROID ---
-app.post('/api/report-client-error', (req, res) => {
-    const { error, detail, url, userAgent } = req.body;
-    console.error(`❌❌❌ [RAPPORT ERREUR ANDROID] ❌❌❌\nURL: ${url}\nAgent: ${userAgent}\nMessage: ${error}\nDétails: ${JSON.stringify(detail)}\n❌❌❌ --- FIN DU RAPPORT --- ❌❌❌`);
-    res.json({ ok: true });
-});
-
 // ... (Le reste de ton code original reste identique ici) ...
 
 function serviceMatch(prestataire, serviceDemande) {
@@ -232,13 +211,9 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 };
             });
 
-        console.log(`   > Step 2: Filtrage JS terminé.`);
-        console.log(`     - Conservés: ${stats.ok} | Exclue(s) (Auto): ${stats.selfExclude} | Service non matché: ${stats.serviceMismatch} | Profils cassés: ${stats.missingUser}`);
-
         const nbTotal = eligibles.length;
 
         if (nbTotal >= 20) {
-            console.log(`   > Step 3: Mode COMPÉTITION (20+). Tri par paliers de 10m.`);
             eligibles.sort((a, b) => {
                 // 1. Tranches de 10 mètres
                 const bucketA = Math.floor(a.distanceM / 10);
@@ -263,7 +238,6 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             // Règle : Si on a 20+ prestataires, on arrête de chercher au-delà de 50km
             eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         } else {
-            console.log(`   > Step 3: Moins de 20 inscrits au total. Affichage complet sans limite de distance.`);
             eligibles.sort((a, b) => {
                 if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
                 const timeA = new Date(a.dernier_acces || 0).getTime();

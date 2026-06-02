@@ -8,24 +8,6 @@
     <title>Connexion</title>
 </head>
 <body>
-    <script>
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const w = document.documentElement.clientWidth;
-                let bad = [];
-                document.querySelectorAll('*').forEach(el => {
-                    const r = el.getBoundingClientRect();
-                    if (r.width > w) bad.push({ tag: el.tagName, class: el.className, w: r.width });
-                });
-                if (bad.length > 0) {
-                    console.error("🚨 [CONNEXION DIAG] Éléments débordants sur Android:", bad);
-                } else {
-                    console.log("👍 [CONNEXION DIAG] Layout OK");
-                }
-            }, 1000);
-        });
-    </script>
-
     <header class="home-header">
         <div class="header-content">
             <a href="index.html" style="text-decoration:none;">
