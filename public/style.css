@@ -23,7 +23,7 @@ html::before {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    opacity: 0.35; /* Visibilité augmentée */
+    opacity: 0.5; /* Augmenté pour être bien visible à travers la transparence */
     z-index: -1;
     pointer-events: none;
 }
@@ -352,17 +352,18 @@ body {
         border-radius: 0 !important;
         box-shadow: none !important;
         box-sizing: border-box;
-        height: auto !important; 
+        height: auto !important;
         min-height: 0 !important; 
+        background-color: rgba(255, 255, 255, 0.3) !important; /* Rendu très transparent pour voir le logo */
     }
 
     .auth-page {
         display: flex !important;
         flex-direction: column !important;
-        min-height: 100dvh !important; /* Seulement ici pour le plein écran */
+        min-height: 100dvh !important;
         height: auto !important;
         width: 100% !important;
-        background-color: white !important;
+        background-color: rgba(255, 255, 255, 0.5) !important;
     }
 
     /* Force le centrage des cartes de connexion */
@@ -381,10 +382,9 @@ body {
     /* Cacher les boutons sur mobile */
     .service-grid .card button, .service-grid .card .price { display: none !important; }
 
-    /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         gap: 6px !important;
         padding: 5px 10px !important;
         justify-items: center;
@@ -392,6 +392,7 @@ body {
         max-width: 100% !important;
         margin-top: 0 !important;
         box-sizing: border-box;
+        background-color: transparent !important; /* Transparence pour la grille */
         overflow: hidden;
     }
 
