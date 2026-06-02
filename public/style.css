@@ -354,7 +354,7 @@ body {
         box-sizing: border-box;
         height: auto !important;
         min-height: 0 !important; 
-        background-color: rgba(255, 255, 255, 0.3) !important; /* Rendu très transparent pour voir le logo */
+        background-color: transparent !important; /* Rendu transparent comme les catégories */
     }
 
     .auth-page {
@@ -421,9 +421,11 @@ body {
         gap: 15px;
     }
 
-    .profile-card {
+    .profile-card, .provider-card {
         flex: 0 0 260px !important;
         margin: 0 auto;
+        background: transparent !important;
+        box-shadow: none !important;
     }
 
     /* Header compact et centré */
