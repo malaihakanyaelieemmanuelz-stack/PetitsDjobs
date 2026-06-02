@@ -331,9 +331,14 @@ body {
         background-color: #f4f4f4 !important;
     } 
 
-    body { 
+    body {
         background-color: transparent !important;
+        display: flex;
+        flex-direction: column;
     }
+
+    /* Reset global des marges pour supprimer le vide */
+    h1, h2, h3 { margin-top: 0 !important; }
 
     /* Tous les conteneurs principaux passent en mode "App" sans bordures ni ombres */
     .login-card, 
@@ -375,7 +380,7 @@ body {
 
     /* Rendre les cartes de service cliquables directement */
     .card { cursor: pointer; }
-    /* Cacher les boutons sur mobile pour épurer la grille 4 colonnes */
+    /* Cacher les boutons sur mobile */
     .service-grid .card button, .service-grid .card .price { display: none !important; }
 
     /* Grille de services (Jumia Style) parfaitement centrée */
@@ -422,13 +427,27 @@ body {
     /* Header compact et centré */
     .header-content {
         flex-direction: column;
-        gap: 4px; /* Réduction de l'espace entre logo et boutons */
+        gap: 2px !important;
         text-align: center;
+        padding: 5px 0 !important;
     }
     .nav-compact { justify-content: center; width: 100%; }
 
     .home-header { 
-        padding: 8px 10px !important; /* Header beaucoup plus fin */
+        padding: 5px 10px !important;
+        margin-bottom: 0 !important;
+    }
+
+    #ad-banner {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #cat-title {
+        margin: 10px 0 5px 20px !important;
+        font-size: 0.9rem !important;
     }
     .nav-compact a, .nav-compact button {
         padding: 10px 18px !important;

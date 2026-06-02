@@ -38,11 +38,11 @@
                 const services = document.getElementById('services-bloc');
                 if (services) {
                     const rect = services.getBoundingClientRect();
-                    console.log(`📏 [LAYOUT] Les photos commencent à ${Math.round(rect.top)}px du haut de l'écran.`);
+                    console.log(`📏 [LAYOUT] Début photos : ${Math.round(rect.top)}px`);
                     if (rect.top > 200) {
-                        const msg = "ESPACE VIDE DÉTECTÉ (>200px)";
-                        console.error("🚨 " + msg);
-                        reportToRender(msg, { topPosition: rect.top });
+                        const msg = "❌❌❌ [ERREUR AFFICHAGE] Espace vide excessif en haut (>200px) ❌❌❌";
+                        console.error(msg);
+                        reportToRender(msg, { topPosition: rect.top, headerHeight: document.querySelector('.home-header').offsetHeight });
                     }
                 }
             }
@@ -101,13 +101,13 @@
     </header>
 
     <!-- Bandeau Publicitaire -->
-    <div class="app-wrap" id="ad-banner" style="margin: 5px auto; padding: 5px 15px;">
+    <div class="app-wrap" id="ad-banner">
         <div style="border: 1px dashed #bbb; border-radius: 4px; padding: 6px; text-align: center; background: rgba(255,255,255,0.6);">
             <span style="color: #999; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Espace Publicitaire</span>
         </div>
     </div>
 
-    <h2 id="cat-title" style="font-size:1rem; margin: 15px 0 5px 20px; color: #5D4037;">Nos catégories</h2>
+    <h2 id="cat-title">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
