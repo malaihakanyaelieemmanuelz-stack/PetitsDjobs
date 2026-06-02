@@ -15,7 +15,7 @@
     <nav class="nav-bar"><a href="javascript:history.back()">← Retour</a></nav>
 
     <div class="app-wrap">
-        <div class="trust-card" id="carte" style="max-width: 850px; width: 95%; margin: 40px auto; background: rgba(211, 47, 47, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(211, 47, 47, 0.2); border-radius: 24px; text-align: left; box-shadow: 0 8px 32px rgba(0,0,0,0.15); overflow: hidden;">
+        <div class="trust-card" id="carte" style="max-width: 100%; width: 100%; margin: 0; background: white; text-align: left; box-shadow: none; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column;">
             <p style="padding:40px;">Chargement du profil...</p>
         </div>
     </div>
@@ -42,9 +42,9 @@
                     .filter(s => s.toLowerCase() !== 'tout');
 
                 const checkboxesServices = listeServices.map(s => `
-                    <label style="display: flex; align-items: center; gap: 12px; background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; cursor: pointer;">
-                        <input type="checkbox" class="service-checkbox" value="${s}" style="width: 20px; height: 20px;">
-                        <span style="font-weight: 500; color: #333;">${s}</span>
+                    <label style="display: flex; align-items: center; gap: 15px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; cursor: pointer;">
+                        <input type="checkbox" class="service-checkbox" value="${s}" style="width: 28px; height: 28px;">
+                        <span style="font-weight: 600; color: #333; font-size: 1.1rem;">${s}</span>
                     </label>
                 `).join('');
 

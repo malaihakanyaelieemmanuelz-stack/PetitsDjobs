@@ -193,7 +193,8 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
         // Cela évite de charger 10 000 lignes pour n'en garder que 10.
         let query = supabase.from('infos_prestataires').select('*, utilisateurs:user_id(nom, prenom, dernier_acces)');
         
-        if (lat && lon && lat !== 'undefined') {
+        // On garde un périmètre large par défaut, mais on ne filtre durement que si on a beaucoup de monde
+        if (lat && lon && lat !== 'undefined' && lat !== null) {
             const delta = 0.5; // Environ 55km autour de la position
             query = query.gte('lat', parseFloat(lat) - delta)
                          .lte('lat', parseFloat(lat) + delta)
@@ -212,7 +213,8 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
         let eligibles = (prestataires || [])
             .filter(p => String(p.user_id) !== String(excludeUserId))
-            .filter(p => serviceMatch(p, service) && p.utilisateurs)
+            .filter(p => serviceMatch(p, service))
+            .filter(p => p.utilisateurs) // Sécurité : s'assurer que le compte utilisateur existe
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
                 const user = p.utilisateurs;
@@ -221,6 +223,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
                 return { 
                     ...p, 
+                    id_num: user.id,
                     nom: user?.nom || 'Prestataire', 
                     prenom: user?.prenom || '', 
                     enLigne: enLigne,
@@ -229,25 +232,39 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 };
             });
 
-        // ALGORITHME DE TRI PAR PALIERS (10m)
-        eligibles.sort((a, b) => {
-            // 1. Paliers de 10 mètres
-            const bucketA = Math.floor(a.distanceM / 10);
-            const bucketB = Math.floor(b.distanceM / 10);
-            if (bucketA !== bucketB) return bucketA - bucketB;
-            
-            // 2. Statut en ligne (dans le même palier)
-            if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-            
-            // 3. Récence (dans le même palier et même statut)
-            const timeA = new Date(a.dernier_acces || 0).getTime();
-            const timeB = new Date(b.dernier_acces || 0).getTime();
-            return timeB - timeA;
-        });
+        const nbTotal = eligibles.length;
 
-        // Si le nombre total est < 20, on ignore la limite des 50km
-        if (eligibles.length > 20) {
+        if (nbTotal >= 20) {
+            // ALGORITHME DE TRI COMPLEXE (Paliers de 10m)
+            eligibles.sort((a, b) => {
+                // 1. Distance par paliers de 10 mètres
+                const bucketA = Math.floor(a.distanceM / 10);
+                const bucketB = Math.floor(b.distanceM / 10);
+                if (bucketA !== bucketB) return bucketA - bucketB;
+                
+                // 2. Statut en ligne (Priorité absolue dans le palier)
+                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+                
+                // 3. Les plus étoilés d'abord
+                if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
+
+                // 4. Égalité d'étoiles :
+                if (a.enLigne) {
+                    // Si en ligne : Celui qui s'est inscrit en premier (ID plus petit)
+                    return a.id_num - b.id_num;
+                } else {
+                    // Si hors ligne : Celui qui a quitté la ligne en dernier (Récence)
+                    const timeA = new Date(a.dernier_acces || 0).getTime();
+                    const timeB = new Date(b.dernier_acces || 0).getTime();
+                    return timeB - timeA;
+                }
+            });
+
+            // Limite de visibilité à 50km seulement si on a assez de monde
             eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
+        } else {
+            // Moins de 20 prestataires : On trie simplement par distance pure pour afficher tout le monde
+            eligibles.sort((a, b) => a.distanceM - b.distanceM);
         }
 
         console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
@@ -1046,8 +1063,8 @@ async function uploadToSupabase(file, bucketName) {
     
     // Compression automatique avec Sharp
     const compressedBuffer = await sharp(file.path)
-        .resize({ width: 800, withoutEnlargement: true }) // Redimensionne si l'image est trop grande
-        .webp({ quality: 75 }) // Conversion en WebP (plus léger et performant)
+        .resize({ width: 400, height: 300, fit: 'cover', withoutEnlargement: true }) // Taille réduite pour mobile
+        .webp({ quality: 20, effort: 6 }) // Compression énorme (qualité 20%)
         .toBuffer();
 
     const fileName = `${Date.now()}-${path.parse(file.originalname).name}.webp`;

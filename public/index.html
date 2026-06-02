@@ -132,6 +132,14 @@
         </div>
     </div>
 
+    <!-- Barre de recherche de services -->
+    <div class="app-wrap" style="margin-bottom: 10px;">
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="search-service" placeholder="Quel service recherchez-vous ? (ex: Ménage)" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
+            <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
+        </div>
+    </div>
+
     <h2 id="cat-title">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
@@ -211,6 +219,14 @@
 
     <script>
         let connecte = false;
+
+        function rechercherService() {
+            const q = document.getElementById('search-service').value.trim();
+            if (q) {
+                window.location.href = `/choisir-prestataire?service=${encodeURIComponent(q)}`;
+            }
+        }
+
         let currentUserId = null; // Pour stocker l'ID de l'utilisateur connecté
         let userLat = null;
         let userLon = null;
@@ -527,8 +543,6 @@
         let carrouselInitialise = false;
 
         function rafraichirCarrousel() {
-            if (!userLat && !carrouselInitialise) return; // Attend le GPS
-
             let url = `/get-top-prestataires?lat=${userLat || ''}&lon=${userLon || ''}`;
 
             fetch(url).then(res => res.json()).then(data => {
@@ -549,11 +563,11 @@
         }
 
         // Premier chargement différé pour laisser le GPS répondre
-        setTimeout(() => { if (!carrouselInitialise) rafraichirCarrousel(); }, 2000);
-        setInterval(rafraichirCarrousel, 15000); // Stabilisation : rafraîchissement toutes les 15s
+        rafraichirCarrousel(); // On lance immédiatement sans attendre le GPS
+        setInterval(rafraichirCarrousel, 2000); // Rafraîchissement ultra-rapide toutes les 2s
 
         setTimeout(() => chargerJobsPublics(), 2500);
-        setInterval(chargerJobsPublics, 10000); // Stabilisation : rafraîchissement toutes les 10s
+        setInterval(chargerJobsPublics, 2000); // Mise à jour des jobs toutes les 2s
     </script>
 
     <!-- Éléments invisibles déplacés en bas pour ne pas pousser le contenu -->

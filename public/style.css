@@ -322,13 +322,15 @@ body {
 .provider-card-body .bio { color: #666; font-size: 0.85rem; line-height: 1.4; min-height: 2.5em; margin-bottom: 12px; }
 .provider-card-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .btn-outline {
-    padding: 10px 14px; background: white; color: #5D4037;
+    padding: 16px 20px; background: white; color: #5D4037;
     border: 2px solid #5D4037; border-radius: 8px; cursor: pointer;
-    font-weight: bold; font-size: 0.8rem; text-decoration: none;
+    font-weight: bold; font-size: 1.1rem; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; min-height: 56px;
 }
 .btn-primary-sm {
-    padding: 10px 16px; background: #5D4037; color: white;
+    padding: 16px 20px; background: #5D4037; color: white;
     border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem;
+    font-size: 1.1rem; display: flex; align-items: center; justify-content: center; min-height: 56px;
 }
 .trust-card {
     max-width: 420px; margin: 30px auto; background: white;
@@ -345,6 +347,19 @@ body {
 .checkout-card {
     max-width: 440px; margin: 24px auto; background: white;
     padding: 24px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.backup-info {
+    background: rgba(255, 255, 255, 0.9) !important; /* Presque opaque pour une lecture parfaite */
+    color: #5D4037 !important;
+    font-weight: 600;
+    padding: 15px;
+    border-radius: 12px;
+    border: 2px solid #5D4037;
+    margin: 20px 0;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 .checkout-row { display: flex; justify-content: space-between; margin: 10px 0; color: #444; }
 .checkout-total { font-size: 1.3rem; color: #5D4037; font-weight: bold; border-top: 2px solid #eee; padding-top: 12px; margin-top: 12px; }
@@ -393,7 +408,7 @@ body {
         box-shadow: none !important;
         box-sizing: border-box;
         height: auto !important;
-        min-height: 0 !important; 
+        min-height: 100dvh !important; /* Pleine hauteur pour Android */
         background-color: transparent !important; /* Rendu transparent comme les catégories */
     }
 
@@ -477,10 +492,10 @@ body {
     }
 
     .profile-card, .provider-card {
-        flex: 0 0 260px !important;
-        margin: 0 auto;
-        background: transparent !important;
-        box-shadow: none !important;
+        flex: 0 0 250px !important;
+        background: white !important; /* Restaure le fond blanc pour la visibilité */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; /* Restaure l'ombre des cartes */
+        border: 1px solid #eee !important;
     }
 
     /* Header compact et centré */
@@ -540,13 +555,14 @@ body {
     background-color: #d32f2f;
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 16px 20px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
     margin-top: 10px;
     transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; min-height: 56px;
 }
 .btn-danger:hover { background-color: #b71c1c; }

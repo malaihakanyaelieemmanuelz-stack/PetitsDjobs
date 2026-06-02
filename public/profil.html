@@ -32,11 +32,14 @@
         </div>
     </header>
 
-    <div class="app-wrap profile-full-screen" style="max-width: 850px; margin: 30px auto; padding: 40px; background: rgba(211, 47, 47, 0.1); border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(211, 47, 47, 0.2);">
+    <div class="app-wrap profile-full-screen" style="max-width: 100%; margin: 0; padding: 40px 20px; background: rgba(255, 255, 255, 0.95); border-radius: 0; box-shadow: none; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: none; min-height: 100vh; display: flex; flex-direction: column;">
         <h2 style="color:#5D4037; margin-top:0;">Votre compte</h2>
-        <p><strong>Nom :</strong> <span id="nom">-</span></p>
-        <p><strong>Prénom :</strong> <span id="prenom">-</span></p>
-        <p><strong>Email :</strong> <span id="email">-</span></p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Nom</small><br><span id="nom" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Prénom</small><br><span id="prenom" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Email</small><br><span id="email" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
+        </div>
 
         <hr style="margin:24px 0;">
 
