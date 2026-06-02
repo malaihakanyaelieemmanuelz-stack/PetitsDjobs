@@ -115,7 +115,7 @@
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
                 
                 // Filtre de précision pour éviter les sauts de puce du marqueur
-                if (accuracy > 60) {
+                if (accuracy > 100) {
                     document.getElementById('mission-info').innerText = `Signal GPS faible (±${Math.round(accuracy)}m)`;
                     return;
                 }

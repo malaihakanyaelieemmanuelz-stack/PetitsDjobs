@@ -147,7 +147,7 @@
         );
 
         // Rafraîchir la liste de recherche toutes les 2 secondes
-        setInterval(() => { if(!aTrouve) charger(false); }, 2000);
+        setInterval(() => { if(!aTrouve && lat) charger(false); }, 10000);
     </script>
 </body>
 </html>

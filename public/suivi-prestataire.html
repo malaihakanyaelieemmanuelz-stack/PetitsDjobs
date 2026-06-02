@@ -93,7 +93,7 @@
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
 
                 // Augmentation de la précision : on ignore les points avec une erreur > 60m
-                if (accuracy > 60) {
+                if (accuracy > 100) {
                     document.getElementById('mission-info').innerText = `Signal faible (±${Math.round(accuracy)}m)...`;
                     return;
                 }
@@ -119,11 +119,14 @@
                 if (pos.lat) {
                     clientPos = pos;
                     markerDest.setLatLng([pos.lat, pos.lon]);
+                    // On force la mise à jour de l'itinéraire dès qu'on a les deux positions
+                    const myPos = markerMe.getLatLng();
+                    if (myPos.lat !== 0) updateNav(myPos.lat, myPos.lng);
                 }
             });
         }
 
-        function updateNav(lat, lon) {
+        async function updateNav(lat, lon) {
             const p1 = L.latLng(lat, lon);
             const p2 = L.latLng(clientPos.lat, clientPos.lon);
             const dist = p1.distanceTo(p2);

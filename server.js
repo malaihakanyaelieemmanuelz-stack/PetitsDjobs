@@ -189,34 +189,40 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
         const dLon = (lon && lon !== 'undefined') ? lon : '?';
         console.log(`[DEBUG SEARCH ${timestamp}] Svc=${service || 'Tous'}, GPS=${dLat},${dLon}`);
 
-        const { data: prestataires, error: pError } = await supabase.from('infos_prestataires').select('*');
+        // 1. On pré-filtre par un "Bounding Box" (carré de ~50km) directement en SQL
+        // Cela évite de charger 10 000 lignes pour n'en garder que 10.
+        let query = supabase.from('infos_prestataires').select('*, utilisateurs:user_id(nom, prenom, dernier_acces)');
+        
+        if (lat && lon && lat !== 'undefined') {
+            const delta = 0.5; // Environ 55km autour de la position
+            query = query.gte('lat', parseFloat(lat) - delta)
+                         .lte('lat', parseFloat(lat) + delta)
+                         .gte('lon', parseFloat(lon) - delta)
+                         .lte('lon', parseFloat(lon) + delta);
+        }
+
+        const { data: prestataires, error: pError } = await query;
         
         if (pError) {
-            console.error("[DEBUG SEARCH] Erreur Supabase table infos_prestataires:", pError.message);
+            console.error("[DEBUG SEARCH] Erreur Supabase:", pError.message);
             return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
         }
 
-        if (!prestataires) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
 
-        const userIds = prestataires.map(p => p.user_id);
-        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, dernier_acces').in('id', userIds);
-        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
-
-        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000; // Réduit à 5 minutes pour plus de précision
-
-        let eligibles = prestataires
-            .filter(p => String(p.user_id) !== String(excludeUserId)) // Comparaison en string pour éviter les bugs d'ID
-            .filter(p => serviceMatch(p, service) && userMap[p.user_id])
+        let eligibles = (prestataires || [])
+            .filter(p => String(p.user_id) !== String(excludeUserId))
+            .filter(p => serviceMatch(p, service) && p.utilisateurs)
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
-                const user = userMap[p.user_id];
+                const user = p.utilisateurs;
                 const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
                 const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
                 return { 
                     ...p, 
-                    nom: userMap[p.user_id]?.nom || 'Prestataire', 
-                    prenom: userMap[p.user_id]?.prenom || '', 
+                    nom: user?.nom || 'Prestataire', 
+                    prenom: user?.prenom || '', 
                     enLigne: enLigne,
                     dernier_acces: user?.dernier_acces,
                     distanceM: dist,
