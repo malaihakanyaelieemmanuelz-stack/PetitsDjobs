@@ -4,26 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="/favicon.png?v=2">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png?v=2">
-    <link rel="apple-touch-icon" href="/favicon.png?v=2">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%238B4513'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%238B4513'/%3E%3Cpath d='M15 50 L95 50' stroke='%23000000' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%23000000' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E">
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
-    <!-- CODE DE DÉTECTION DU PROBLÈME (Diagnostic Visuel) -->
-    <div id="android-debug-diag" style="background:#2e7d32; color:white; font-size:10px; padding:5px; text-align:center; z-index:999999;">
-        ✅ CORRECTIF ANDROID ACTIF | Largeur : <span id="debug-w"></span>px
+    <!-- DIAGNOSTIC VISUEL POUR ANDROID -->
+    <div id="android-debug-diag" style="background:#1a237e; color:white; font-size:11px; padding:8px; text-align:center; z-index:999999; position:sticky; top:0; font-family:sans-serif;">
+        📱 DIAGNOSTIC : <span id="debug-status">Initialisation...</span> | 
+        <span id="debug-w"></span>px | 
+        <span id="debug-error" style="color:#ffeb3b; font-weight:bold;"></span>
     </div>
     <script>
-        function checkViewport() {
-            document.getElementById('debug-w').innerText = window.innerWidth;
-            if(window.innerWidth > 600) {
-                document.getElementById('android-debug-diag').style.background = '#d32f2f';
-                document.getElementById('android-debug-diag').innerText = "⚠️ MODE ORDINATEUR DÉTECTÉ";
+        function runLayoutDiagnostic() {
+            const status = document.getElementById('debug-status');
+            const errorSpan = document.getElementById('debug-error');
+            const width = window.innerWidth;
+            document.getElementById('debug-w').innerText = width;
+
+            // 1. Détection du mode
+            if(width > 600) {
+                status.innerText = "⚠️ MODE PC";
+                document.getElementById('android-debug-diag').style.background = '#b71c1c';
+            } else {
+                status.innerText = "✅ MOBILE OPTIMISÉ";
+                document.getElementById('android-debug-diag').style.background = '#2e7d32';
+            }
+
+            // 2. Détection des éléments qui dépassent (cause du mauvais centrage)
+            let elementsWithOverflow = [];
+            document.querySelectorAll('*').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.right > width || rect.left < 0) {
+                    elementsWithOverflow.push(el);
+                    // Optionnel: On peut colorer en rouge l'élément qui dépasse pour le voir
+                    // el.style.outline = "1px solid red"; 
+                }
+            });
+
+            if (elementsWithOverflow.length > 0) {
+                errorSpan.innerText = "❌ OVERFLOW: " + elementsWithOverflow.length + " éléments dépassent !";
+                console.error("🚨 [LAYOUT ERROR] Ces éléments cassent le centrage sur Android:", elementsWithOverflow);
+            } else {
+                errorSpan.innerText = "🎯 CENTRAGE OK";
+                console.log("👍 [LAYOUT OK] Aucun débordement détecté.");
             }
         }
-        window.addEventListener('resize', checkViewport);
-        checkViewport();
+
+        window.addEventListener('resize', runLayoutDiagnostic);
+        window.addEventListener('load', () => {
+            // On attend un peu que les images chargent pour tester le layout
+            setTimeout(runLayoutDiagnostic, 1000);
+        });
     </script>
 
     <!-- Son de notification -->
@@ -58,70 +89,75 @@
         </div>
     </header>
 
-    <div class="app-wrap">
-        <h2 style="font-size:1rem; margin-left: 15px;">Nos catégories</h2>
-    </div>
+    <h2 style="font-size:1rem; margin: 15px 0 5px 20px; color: #5D4037;">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
-            <img src="cuisine.jpg.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" width="300" height="200" fetchpriority="high" decoding="async">
+            <img src="cuisine.jpg.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" fetchpriority="high" decoding="async">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
             <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Lavage', 800)">
-            <img src="lavage.jpg.jpg" alt="Lavage" onerror="this.src='default-profile.png'" width="300" height="200" fetchpriority="high" decoding="async">
+            <img src="lavage.jpg.jpg" alt="Lavage" onerror="this.src='default-profile.png'" fetchpriority="high" decoding="async">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
             <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Vaisselle', 400)">
-            <img src="vaiselle.jpg.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="vaiselle.jpg.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" decoding="async">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
             <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Course', 500)">
-            <img src="coursier.jpg.jpg" alt="Course" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="coursier.jpg.jpg" alt="Course" onerror="this.src='default-profile.png'" decoding="async">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
             <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Chauffeur', 3000)">
-            <img src="chaufeur.jpd.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="chaufeur.jpd.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" decoding="async">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
             <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Ménage', 1000)">
-            <img src="menage.jpg.jpg" alt="Ménage" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="menage.jpg.jpg" alt="Ménage" onerror="this.src='default-profile.png'" decoding="async">
             <h3>MÉNAGE</h3>
             <p class="price">1000 F CFA</p>
             <button class="btn-commander" data-service="Ménage" data-prix="1000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Maquillage', 2000)">
-            <img src="maquillage.jpg.jpg" alt="Maquillage" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="maquillage.jpg.jpg" alt="Maquillage" onerror="this.src='default-profile.png'" decoding="async">
             <h3>MAQUILLAGE</h3>
             <p class="price">2000 F CFA</p>
             <button class="btn-commander" data-service="Maquillage" data-prix="2000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Coiffure', 2500)">
-            <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
             <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Remplacement', 500)">
-            <img src="remplacement.JPG.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="remplacement.JPG.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" decoding="async">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special" onclick="location.href='/discuter'">
-            <img src="particulie.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <img src="particulie.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" decoding="async">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
+        </div>
+    </div>
+
+    <!-- Emplacement Publicitaire Placeholder -->
+    <div class="app-wrap" style="margin: 10px auto;">
+        <div style="border: 1px dashed #bbb; border-radius: 8px; padding: 15px; text-align: center; background: rgba(255,255,255,0.6);">
+            <span style="color: #999; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Annonce et publicité disponible ici bientôt</span>
         </div>
     </div>
 
@@ -142,6 +178,41 @@
         let currentUserId = null; // Pour stocker l'ID de l'utilisateur connecté
         let userLat = null;
         let userLon = null;
+
+        // --- GESTION GPS IMMÉDIATE ---
+        function obtenirLocalisation() {
+            const diag = document.getElementById('debug-status');
+            if (!navigator.geolocation) {
+                diag.innerText += " | ❌ GPS non supporté";
+                return;
+            }
+
+            diag.innerText += " | 🛰️ Recherche GPS...";
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    userLat = pos.coords.latitude;
+                    userLon = pos.coords.longitude;
+                    diag.innerText = diag.innerText.split('|')[0] + ` | 📍 GPS OK (${Math.round(pos.coords.accuracy)}m)`;
+                    
+                    fetch('/sauvegarder-position', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lat: userLat, lon: userLon })
+                    }).then(() => {
+                        rafraichirCarrousel();
+                        chargerJobsPublics();
+                    });
+                },
+                err => {
+                    diag.innerText = diag.innerText.split('|')[0] + " | ⚠️ GPS Refusé";
+                    rafraichirCarrousel();
+                    chargerJobsPublics();
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        obtenirLocalisation();
 
         function distanceLabel(m) {
             if (m < 1000) return m + ' m';
@@ -417,11 +488,12 @@
         });
 
         let lastCarrouselHtml = "";
+        let carrouselInitialise = false;
+
         function rafraichirCarrousel() {
-            let url = '/get-top-prestataires';
-            if (userLat && userLon) {
-                url += `?lat=${userLat}&lon=${userLon}`;
-            }
+            if (!userLat && !carrouselInitialise) return; // Attend le GPS
+
+            let url = `/get-top-prestataires?lat=${userLat || ''}&lon=${userLon || ''}`;
 
             fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
@@ -436,15 +508,15 @@
                     container.innerHTML = newHtml;
                     lastCarrouselHtml = newHtml;
                 }
+                carrouselInitialise = true;
             }).catch(err => console.error("Erreur polling carrousel", err));
         }
 
-        // Premier chargement et intervalle de 2 secondes
-        rafraichirCarrousel();
+        // Premier chargement différé pour laisser le GPS répondre
+        setTimeout(() => { if (!carrouselInitialise) rafraichirCarrousel(); }, 2000);
         setInterval(rafraichirCarrousel, 15000); // Stabilisation : rafraîchissement toutes les 15s
 
-        // Initialisation des travaux demandés
-        chargerJobsPublics();
+        setTimeout(() => chargerJobsPublics(), 2500);
         setInterval(chargerJobsPublics, 10000); // Stabilisation : rafraîchissement toutes les 10s
     </script>
 </body>

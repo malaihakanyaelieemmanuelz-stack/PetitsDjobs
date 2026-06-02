@@ -119,6 +119,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     proxy: true, // Nécessaire pour Render
+    name: 'pdjobs.session',
     cookie: { 
         maxAge: 1000 * 60 * 60 * 24 * 30,
         httpOnly: true,
@@ -175,7 +176,12 @@ async function distanceMarcheReelle(lat1, lon1, lat2, lon2) {
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
         const timestamp = new Date().toLocaleTimeString();
-        console.log(`[DEBUG SEARCH ${timestamp}] Recherche pour Svc=${service}, Lat=${lat}, Lon=${lon}`);
+        
+        // Nettoyage pour les logs Render
+        const dLat = (lat && lat !== 'undefined') ? lat : '?';
+        const dLon = (lon && lon !== 'undefined') ? lon : '?';
+        console.log(`[DEBUG SEARCH ${timestamp}] Svc=${service || 'Tous'}, GPS=${dLat},${dLon}`);
+
         const { data: prestataires, error: pError } = await supabase.from('infos_prestataires').select('*');
         
         if (pError) {
@@ -378,10 +384,14 @@ app.get('/prestataires-autour', requireAuth, async (req, res) => {
 
 app.get('/get-top-prestataires', async (req, res) => {
     try {
-        const lat = req.query.lat || req.session.latClient;
-        const lon = req.query.lon || req.session.lonClient;
+        // On ignore les valeurs 'undefined' envoyées comme du texte par le navigateur
+        let lat = req.query.lat === 'undefined' ? null : req.query.lat;
+        let lon = req.query.lon === 'undefined' ? null : req.query.lon;
+
+        lat = lat || req.session.latClient;
+        lon = lon || req.session.lonClient;
+
         const userId = req.session.user?.id;
-        console.log(`[DEBUG TOP] Demande de Top Prestataires pour User ${userId || 'Inconnu'}. GPS: ${lat}, ${lon}`);
         const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
         
         // On garde tous les prestataires, même s'ils sont inactifs depuis longtemps
