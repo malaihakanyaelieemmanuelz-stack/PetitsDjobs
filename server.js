@@ -12,13 +12,6 @@ const { Resend } = require('resend');
 const sharp = require('sharp');
 
 // --- DÉTECTION D'ERREURS GLOBALES (Pour voir pourquoi Render échoue) ---
-process.on('uncaughtException', (err) => {
-    console.error('❌❌❌ [DÉFAILLANCE CRITIQUE SERVEUR] ❌❌❌\nCOPIEZ CECI :\n', err);
-});
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌❌❌ [PROMESSE ROMPUE] ❌❌❌\nCOPIEZ CECI :\nPromise:', promise, '\nRaison:', reason);
-});
-
 console.log('📋 [SYSTEM] --- VÉRIFICATION STARTUP ---');
 const requiredVars = ['SUPABASE_URL', 'SUPABASE_KEY', 'RESEND_API_KEY'];
 requiredVars.forEach(v => {
@@ -30,7 +23,21 @@ requiredVars.forEach(v => {
 });
 
 const app = express();
-// Mise à jour structure table : synchronisation avec infos_prestataires
+
+// --- CONFIGURATION DES SESSIONS (Rétablie et Sécurisée) ---
+app.use(session({
+    secret: 'pdjobs-secure-key-2026',
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
+    name: 'pdjobs.sid',
+    cookie: { 
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semaine
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+    }
+}));
 
 // AJOUT : Indispensable pour que Render accepte les cookies de session
 app.set('trust proxy', 1);
@@ -287,17 +294,19 @@ function prixDistanceFcfa(distanceMetres) {
     return Math.round(km * PRIX_PAR_KM);
 }
 
+// --- FIX : estConnecte ultra-sécurisé contre les "TypeError" ---
 function estConnecte(req) {
-    return !!(req.session.user && req.session.user.email);
+    if (!req || !req.session || !req.session.user) return false;
+    return !!(req.session.user.email);
 }
 
 function requireAuth(req, res, next) {
-    if (estConnecte(req)) return next();
+    if (req && req.session && estConnecte(req)) return next();
     return res.redirect('/connexion');
 }
 
 function redirectSiConnecte(req, res, next) {
-    if (estConnecte(req)) return res.redirect('/index.html');
+    if (req && req.session && estConnecte(req)) return res.redirect('/index.html');
     next();
 }
 
@@ -397,8 +406,8 @@ app.get('/get-top-prestataires', async (req, res) => {
         let lat = req.query.lat === 'undefined' ? null : req.query.lat;
         let lon = req.query.lon === 'undefined' ? null : req.query.lon;
 
-        lat = lat || (req.session ? req.session.latClient : null);
-        lon = lon || (req.session ? req.session.lonClient : null);
+        lat = lat || req.session?.latClient;
+        lon = lon || req.session?.lonClient;
 
         const userId = req.session?.user?.id;
         const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
@@ -952,6 +961,7 @@ app.post('/connexion', async (req, res) => {
             // Mise à jour de l'activité
             await supabase.from('utilisateurs').update({ dernier_acces: new Date().toISOString() }).eq('id', compte.id);
 
+            console.log("[DIAGNOSTIC] Mot de passe OK, création de session...");
             // On vérifie séparément s'il est prestataire
             const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
             req.session.user = { ...compte };
@@ -968,7 +978,7 @@ app.post('/connexion', async (req, res) => {
             }
             delete req.session.user.password;
         } catch (err) {
-            console.error("Erreur de connexion :", err);
+            console.error("[DIAGNOSTIC CRASH CONNEXION]", err.stack);
             return res.redirect('/connexion.html?erreur=serveur');
         }
     }
@@ -986,12 +996,14 @@ app.post('/connexion', async (req, res) => {
         req.session.user.lon = req.session.lonClient;
     }
 
+    console.log("[DIAGNOSTIC] Sauvegarde session et redirection...");
     req.session.save(() => {
         res.redirect('/index.html?connecte=1');
     });
 });
 
 app.post('/inscription', async (req, res) => {
+    console.log(`[DIAGNOSTIC INSCRIPTION] Début pour: ${req.body.email}`);
     if (estConnecte(req)) return res.redirect('/index.html');
 
     const locOk = req.body.locAccepted === '1' || req.body.locAccepted === 'on';
@@ -1021,8 +1033,12 @@ app.post('/inscription', async (req, res) => {
         };
         
         const { data: newUser, error } = await supabase.from('utilisateurs').insert(userData).select().single();
-        if (error) throw error;
+        if (error) {
+            console.error("[DIAGNOSTIC DB INSCRIPTION ERROR]", error.message);
+            throw error;
+        }
 
+        console.log("[DIAGNOSTIC] Inscription DB réussie, initialisation session...");
         req.session.user = { ...newUser };
         req.session.user.isPrestataire = false;
         delete req.session.user.password;
