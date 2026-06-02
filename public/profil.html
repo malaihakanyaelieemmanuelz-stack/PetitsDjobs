@@ -2,73 +2,111 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%238B4513'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%238B4513'/%3E%3Cpath d='M15 50 L95 50' stroke='%23000000' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%23000000' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E">
     <title>Mon Profil</title>
+    <style>
+        /* Style spécifique pour le plein écran Android */
+        .profile-container {
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 650px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        .info-label {
+            color: #888;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .section-title {
+            color: #5D4037;
+            font-size: 1.3rem;
+            margin: 25px 0 15px;
+            font-weight: 800;
+        }
+        .action-block {
+            margin-bottom: 30px;
+        }
+        .danger-zone {
+            margin-top: auto;
+            background: #fff5f5;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px dashed #ffcdd2;
+        }
+    </style>
 </head>
-<body>
-    <header class="home-header">
-        <div class="header-content">
-            <a href="index.html" style="text-decoration:none;">
-                <h1>
-                    <svg class="home-logo" viewBox="0 0 100 100">
-                        <g transform="rotate(-30 50 50)">
-                            <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
-                            <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
-                            <path d="M15 50 L95 50" stroke="#000000" stroke-width="12" stroke-dasharray="3 3"/>
-                            <path d="M50 15 L50 85" stroke="#000000" stroke-width="2" stroke-dasharray="1 1"/>
-                            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
-                        </g>
-                    </svg>
-                    MON PROFIL
-                </h1>
-            </a>
-            <nav class="nav-compact">
-                <a href="index.html">ACCUEIL</a>
-                <form action="/deconnexion" method="POST" style="display:inline;">
-                    <button type="submit" style="color:#c62828;">DÉCONNEXION</button>
-                </form>
-            </nav>
-        </div>
-    </header>
-
-    <div class="app-wrap profile-full-screen" style="max-width: 100%; margin: 0; padding: 40px 20px; background: rgba(255, 255, 255, 0.95); border-radius: 0; box-shadow: none; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: none; min-height: 100vh; display: flex; flex-direction: column;">
-        <h2 style="color:#5D4037; margin-top:0;">Votre compte</h2>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Nom</small><br><span id="nom" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Prénom</small><br><span id="prenom" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee;"><small style="color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Email</small><br><span id="email" style="font-size: 1.1rem; font-weight: 600;">-</span></div>
+<body style="background:transparent; margin:0;">
+    <div class="profile-container">
+        <!-- Header Immersif -->
+        <div class="profile-header">
+            <button onclick="location.href='index.html'" class="btn-outline" style="min-height:60px; width:60px; padding:0;">←</button>
+            <h2 style="margin:0; color:#5D4037; font-weight:900;">MON COMPTE</h2>
+            <form action="/deconnexion" method="POST">
+                <button type="submit" class="btn-outline" style="color:#c62828; border-color:#c62828; min-height:60px; width:60px; padding:0;">OFF</button>
+            </form>
         </div>
 
-        <hr style="margin:24px 0;">
+        <!-- Infos Utilisateur -->
+        <div class="info-card">
+            <div class="info-label">Identité</div>
+            <div class="info-value"><span id="prenom">-</span> <span id="nom" style="text-transform:uppercase;">-</span></div>
+            <div style="margin-top:10px;" class="info-label">E-mail</div>
+            <div class="info-value" id="email" style="font-size:1rem;">-</div>
+        </div>
 
-        <h3 style="color:#5D4037;">Vous êtes client</h3>
-        <p style="color:#666; font-size:0.95rem;">Sur l'accueil, choisissez un service : le GPS vous montre qui est disponible autour de vous.</p>
-        <button onclick="window.location.href='index.html'" class="btn-primary-sm" style="width:100%; padding:12px; margin-top:8px;">
-            Commander un service
-        </button>
-
-        <hr style="margin:24px 0;">
-
-        <h3 style="color:#5D4037;">Vous voulez travailler ?</h3>
-        <p style="color:#666; font-size:0.95rem;">Créez votre carte de visite : photo, métiers, disponibilité. Les clients vous trouvent par géolocalisation.</p>
-        <button id="btn-devenir" onclick="window.location.href='/prestataire'" class="btn-outline" style="width:100%; text-align:center; margin-top:8px; padding:12px;">
-            Devenir prestataire
-        </button>
-        <button id="btn-espace" onclick="window.location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; padding:12px; margin-top:8px;">
-            Voir ma carte de visite
-        </button>
-
-        <hr style="margin:24px 0;">
-        <div style="background: #fff5f5; padding: 16px; border-radius: 12px; border: 1px solid #ffcdd2;">
-            <h3 style="color:#c62828; margin-top:0; font-size: 1.1rem;">Zone de danger</h3>
-            <p style="color:#666; font-size:0.85rem; margin-bottom: 12px;">Gérez la visibilité de vos données ou fermez votre compte.</p>
-            
-            <button id="btn-supprimer-carte" onclick="supprimerMaCarte()" class="btn-danger" style="display:none; width:100%; margin-bottom: 10px; background-color: #f44336;">
-                Supprimer ma carte de visite
+        <!-- Section Client -->
+        <div class="action-block">
+            <div class="section-title">BESOIN D'UN SERVICE ?</div>
+            <button onclick="location.href='index.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem;">
+                COMMANDER MAINTENANT
             </button>
-            <button onclick="supprimerCompte()" class="btn-danger" style="width:100%;">Supprimer mon compte</button>
+        </div>
+
+        <!-- Section Prestataire -->
+        <div class="action-block">
+            <div class="section-title">VOTRE TRAVAIL</div>
+            <button id="btn-devenir" onclick="location.href='/prestataire'" class="btn-outline" style="width:100%; min-height:65px; font-size:1.2rem;">
+                DEVENIR PRESTATAIRE
+            </button>
+            <button id="btn-espace" onclick="location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; min-height:65px; font-size:1.2rem; background:#333;">
+                MA CARTE DE VISITE
+            </button>
+        </div>
+
+        <!-- Zone Critique -->
+        <div class="danger-zone">
+            <div class="info-label" style="color:#c62828; margin-bottom:10px;">Options de compte</div>
+            <button id="btn-supprimer-carte" onclick="supprimerMaCarte()" class="btn-danger" style="display:none; width:100%; margin-bottom:10px; background:#f44336; min-height:60px;">SUPPRIMER MA CARTE</button>
+            <button onclick="supprimerCompte()" class="btn-danger" style="width:100%; min-height:60px;">SUPPRIMER MON COMPTE</button>
         </div>
     </div>
 

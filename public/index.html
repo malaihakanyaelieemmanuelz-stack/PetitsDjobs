@@ -547,8 +547,20 @@
 
             fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
+                
+                // Règle demandée : Si GPS inactif, message spécifique
+                if (!userLat && !userLon) {
+                    container.innerHTML = `
+                        <div style="width:100%; padding:20px; text-align:center; background:rgba(93, 64, 55, 0.05); border-radius:15px; border:1px dashed #5D4037;">
+                            <p style="color:#5D4037; font-weight:bold; margin:0;">📍 GPS INACTIF</p>
+                            <p style="color:#666; font-size:0.9rem; margin:5px 0 0;">Veuillez activer votre GPS pour voir les candidats disponibles pour votre service et leur distance.</p>
+                        </div>`;
+                    lastCarrouselHtml = "";
+                    return;
+                }
+
                 if (!data || !data.length) {
-                    container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé.</p>';
+                    container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé dans votre zone.</p>';
                     lastCarrouselHtml = "";
                     return;
                 }

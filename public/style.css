@@ -400,8 +400,8 @@ body {
     /* Reset des hauteurs pour les conteneurs de contenu (évite le vide de 855px) */
     .login-card, .trust-card, .checkout-card, .card-presta-mobile, .app-wrap, section {
         width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 !important;
+        max-width: 650px !important;
+        margin: 0 auto !important;
         padding: 10px 15px !important;
         border: none !important;
         border-radius: 0 !important;

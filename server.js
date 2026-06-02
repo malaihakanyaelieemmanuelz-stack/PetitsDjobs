@@ -191,7 +191,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
         // 1. On pré-filtre par un "Bounding Box" (carré de ~50km) directement en SQL
         // Cela évite de charger 10 000 lignes pour n'en garder que 10.
-        let query = supabase.from('infos_prestataires').select('*, utilisateurs:user_id(nom, prenom, dernier_acces)');
+        let query = supabase.from('infos_prestataires').select('*, utilisateurs:user_id(id, nom, prenom, dernier_acces)');
         
         // On garde un périmètre large par défaut, mais on ne filtre durement que si on a beaucoup de monde
         if (lat && lon && lat !== 'undefined' && lat !== null) {
@@ -263,8 +263,13 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             // Limite de visibilité à 50km seulement si on a assez de monde
             eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         } else {
-            // Moins de 20 prestataires : On trie simplement par distance pure pour afficher tout le monde
-            eligibles.sort((a, b) => a.distanceM - b.distanceM);
+            // Moins de 20 prestataires : On affiche tout le monde (Règle demandée)
+            // Mais on trie par pertinence pour que ce soit utile (En ligne > Étoiles)
+            eligibles.sort((a, b) => {
+                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+                if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
+                return a.distanceM - b.distanceM;
+            });
         }
 
         console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
