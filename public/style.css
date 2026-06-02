@@ -8,7 +8,7 @@ html, body {
     margin: 0;
     padding: 0; 
     min-height: 100dvh;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
     background-color: #f4f4f4;
 }
 
@@ -327,14 +327,16 @@ body {
     html { 
         font-size: 15px; 
         background-color: #f4f4f4 !important;
-        overflow-x: hidden;
+        overflow-x: hidden !important;
+        height: auto !important;
     } 
 
     body {
         background-color: transparent !important;
         display: block !important; /* On retire le flex sur mobile pour éviter l'étirement vertical */
-        width: 100vw;
-        overflow-x: hidden;
+        width: 100% !important;
+        overflow-x: hidden !important;
+        height: auto !important;
     }
 
     /* Reset global des marges pour supprimer le vide */
@@ -386,7 +388,7 @@ body {
     /* Grille de services (Jumia Style) parfaitement centrée */
     .service-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         gap: 6px !important;
         padding: 5px 10px !important;
         justify-items: center;
@@ -478,6 +480,13 @@ body {
     /* Remonter le titre "Nos catégories" */
     #cat-title {
         margin: 5px 0 5px 20px !important;
+    }
+
+    /* Sécurité contre l'étirement vertical Android */
+    header, section, .app-wrap, .service-grid {
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
+        min-height: 0 !important;
     }
 }
 

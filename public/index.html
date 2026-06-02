@@ -27,25 +27,35 @@
         function runLayoutDiagnostic() {
             const width = window.innerWidth;
             const height = window.innerHeight;
-            console.log(`📱 [DIAGNOSTIC] Dimensions : ${width}x${height}px`);
+            const grid = document.getElementById('services-bloc');
+            if (!grid) return;
+            const gridRect = grid.getBoundingClientRect();
 
-            if(width > 600) {
-                console.warn("⚠️ [LAYOUT] MODE PC DÉTECTÉ");
-            } else {
-                console.log("✅ [LAYOUT] MOBILE OPTIMISÉ");
-                
-                // Détection spécifique de l'espace vide en haut
-                const services = document.getElementById('services-bloc');
-                if (services) {
-                    const rect = services.getBoundingClientRect();
-                    console.log(`📏 [LAYOUT] Début photos : ${Math.round(rect.top)}px`);
-                    if (rect.top > 200) {
-                        const msg = `❌❌❌ [ERREUR AFFICHAGE] Espace vide de ${Math.round(rect.top)}px détecté ❌❌❌`;
-                        console.error(msg);
-                        const header = document.querySelector('.home-header');
-                        reportToRender(msg, { topPosition: rect.top, headerHeight: header ? header.offsetHeight : 'N/A' });
-                    }
+            // INVESTIGATION MINUTIEUSE DU "GAP"
+            let audit = {
+                viewport: `${width}x${height}`,
+                gridTop: Math.round(gridRect.top),
+                trace: []
+            };
+
+            // On examine chaque élément pour trouver qui prend de la place inutilement
+            document.querySelectorAll('body > *').forEach(el => {
+                const r = el.getBoundingClientRect();
+                if (r.height > 0 || r.top > 0) {
+                    audit.trace.push({
+                        tag: el.tagName + (el.id ? '#'+el.id : '') + (el.className ? '.'+el.className.split(' ').join('.') : ''),
+                        h: Math.round(r.height),
+                        t: Math.round(r.top),
+                        b: Math.round(r.bottom),
+                        display: window.getComputedStyle(el).display,
+                        pos: window.getComputedStyle(el).position,
+                        margin: window.getComputedStyle(el).margin
+                    });
                 }
+            });
+
+            if (gridRect.top > 200) {
+                reportToRender("❌❌❌ INVESTIGATION VIDE ❌❌❌", audit);
             }
 
             let elementsWithOverflow = [];
