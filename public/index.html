@@ -10,6 +10,22 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
+    <!-- CODE DE DÉTECTION DU PROBLÈME (Diagnostic Visuel) -->
+    <div id="android-debug-diag" style="background:#2e7d32; color:white; font-size:10px; padding:5px; text-align:center; z-index:999999;">
+        ✅ CORRECTIF ANDROID ACTIF | Largeur : <span id="debug-w"></span>px
+    </div>
+    <script>
+        function checkViewport() {
+            document.getElementById('debug-w').innerText = window.innerWidth;
+            if(window.innerWidth > 600) {
+                document.getElementById('android-debug-diag').style.background = '#d32f2f';
+                document.getElementById('android-debug-diag').innerText = "⚠️ MODE ORDINATEUR DÉTECTÉ";
+            }
+        }
+        window.addEventListener('resize', checkViewport);
+        checkViewport();
+    </script>
+
     <!-- Son de notification -->
     <audio id="notif-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
@@ -28,8 +44,8 @@
                         <g transform="rotate(-30 50 50)">
                             <rect x="20" y="20" width="20" height="60" fill="#8B4513"/>
                             <rect x="50" y="30" width="30" height="40" fill="#8B4513"/>
-                            <path d="M15 50 L95 50" stroke="#FFFFFF" stroke-width="12" stroke-dasharray="3 3"/>
-                            <path d="M50 15 L50 85" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="1 1"/>
+                            <path d="M15 50 L95 50" stroke="#000000" stroke-width="12" stroke-dasharray="3 3"/>
+                            <path d="M50 15 L50 85" stroke="#000000" stroke-width="2" stroke-dasharray="1 1"/>
                             <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
                         </g>
                     </svg>
@@ -48,34 +64,46 @@
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
-            <img src="cuisine.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="cuisine.jpg.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" width="300" height="200" fetchpriority="high" decoding="async">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
             <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Lavage', 800)">
-            <img src="lavage.jpg" alt="Lavage" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="lavage.jpg.jpg" alt="Lavage" onerror="this.src='default-profile.png'" width="300" height="200" fetchpriority="high" decoding="async">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
             <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Vaisselle', 400)">
-            <img src="vaisselle.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="vaiselle.jpg.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
             <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Course', 500)">
-            <img src="course.jpg" alt="Course" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="coursier.jpg.jpg" alt="Course" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
             <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Chauffeur', 3000)">
-            <img src="chauffeur.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="chaufeur.jpd.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
             <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
+        </div>
+        <div class="card" onclick="allerCommander('Ménage', 1000)">
+            <img src="menage.jpg.jpg" alt="Ménage" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <h3>MÉNAGE</h3>
+            <p class="price">1000 F CFA</p>
+            <button class="btn-commander" data-service="Ménage" data-prix="1000">Choisir ce service</button>
+        </div>
+        <div class="card" onclick="allerCommander('Maquillage', 2000)">
+            <img src="maquillage.jpg.jpg" alt="Maquillage" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
+            <h3>MAQUILLAGE</h3>
+            <p class="price">2000 F CFA</p>
+            <button class="btn-commander" data-service="Maquillage" data-prix="2000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Coiffure', 2500)">
             <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'" width="300" height="200">
@@ -84,13 +112,13 @@
             <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Remplacement', 500)">
-            <img src="remplacement.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="remplacement.JPG.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special" onclick="location.href='/discuter'">
-            <img src="particulier.jpg" alt="Particulier" onerror="this.src='default-profile.png'" width="300" height="200">
+            <img src="particulie.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" width="300" height="200" decoding="async">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>

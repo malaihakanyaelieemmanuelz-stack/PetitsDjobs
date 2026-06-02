@@ -1,15 +1,22 @@
 /* --- Base --- */
+* {
+    box-sizing: border-box; /* Empêche les éléments de déborder */
+}
+
 html, body { 
     width: 100%; 
     margin: 0; 
     padding: 0; 
     overflow-x: hidden; /* Empêche le défilement horizontal sur mobile */
-    min-height: 100dvh; /* Utilise la hauteur dynamique du viewport */
+    min-height: 100%;
+    height: auto;
 }
 body { 
     font-family: 'Segoe UI', Arial, sans-serif; 
     background-color: #f4f4f4; 
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Logo en arrière-plan (Filigrane transparent) */
@@ -34,7 +41,7 @@ body::before {
 .login-card { 
     background: white; padding: 40px; border-radius: 12px; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
-    text-align: center; border-top: 6px solid #333333; 
+    text-align: center; border-top: 6px solid #333333; margin: 10px;
 }
 .login-card h1 { color: #333333; font-size: 2.5rem; margin-bottom: 25px; text-transform: uppercase; }
 .login-card input { 
@@ -189,7 +196,7 @@ body::before {
 .card-special { border: 2px dashed #333333; }
 
 /* --- Parcours confiance (AlloVoisins / TaskRabbit) --- */
-.app-wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.app-wrap { width: 100%; max-width: 1100px; margin: 0 auto; padding: 15px; }
 .card-presta-mobile { 
     max-width: 520px; margin: 0 auto 40px; background:white; 
     padding:24px; border-radius:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
@@ -318,7 +325,10 @@ body::before {
 /* --- AJUSTEMENTS DYNAMIQUES POUR ANDROID / MOBILE --- */
 @media (max-width: 600px) {
     /* RÈGLE UNIVERSELLE PLEIN ÉCRAN ANDROID */
-    body { background-color: white !important; }
+    body { 
+        background-color: white !important;
+        min-height: 100dvh;
+    }
 
     /* Tous les conteneurs principaux passent en mode "App" sans bordures ni ombres */
     .login-card, 
@@ -329,17 +339,18 @@ body::before {
     .app-wrap {
         width: 100% !important;
         max-width: 100% !important;
-        margin: 0 auto !important;
-        padding: 20px !important;
+        margin: 0 !important;
+        padding: 15px !important;
         border: none !important;
         border-radius: 0 !important;
         box-shadow: none !important;
-        box-sizing: border-box;
-        min-height: calc(100dvh - 60px);
+    }
+
+    .auth-page {
         display: flex;
-        flex-direction: column;
-        align-items: center; /* Centrage horizontal de tout le contenu */
-        justify-content: flex-start;
+        align-items: center;
+        justify-content: center;
+        min-height: 80dvh;
     }
 
     /* Centrage des titres et formulaires */
