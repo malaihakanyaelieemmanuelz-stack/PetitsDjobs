@@ -397,10 +397,10 @@ app.get('/get-top-prestataires', async (req, res) => {
         let lat = req.query.lat === 'undefined' ? null : req.query.lat;
         let lon = req.query.lon === 'undefined' ? null : req.query.lon;
 
-        lat = lat || req.session.latClient;
-        lon = lon || req.session.lonClient;
+        lat = lat || (req.session ? req.session.latClient : null);
+        lon = lon || (req.session ? req.session.lonClient : null);
 
-        const userId = req.session.user?.id;
+        const userId = req.session?.user?.id;
         const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
         
         // On garde tous les prestataires, même s'ils sont inactifs depuis longtemps
