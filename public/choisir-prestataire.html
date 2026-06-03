@@ -6,88 +6,103 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <title>Choisir Prestataire</title>
+    <title>Choisir un Prestataire - PetitsDjobs</title>
 </head>
-<body class="auth-page">
-    <div style="max-width: 600px; margin: 30px auto; padding: 20px;">
-        <h1 id="titre-recherche" style="color:#5D4037;">Prestataires les plus proches</h1>
-        <div id="compteur-total" style="background: #333; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">
-            Chargement de la communauté...
+<body style="background-color: #f4f4f4;">
+    <header class="home-header">
+        <div class="header-content">
+            <a href="index.html" style="text-decoration:none;">
+                <h1 style="font-size: 1.2rem; color: #5D4037;">⬅️ RETOUR</h1>
+            </a>
+            <h1 id="titre-service" style="font-size: 1.1rem; color: #333; text-transform: uppercase;">Recherche...</h1>
         </div>
-        <p id="info-rayon" style="color:#666; font-size:0.9rem; font-weight: bold;">Recherche GPS active (incréments de 10m)...</p>
-        <div id="liste-prestataires"></div>
+    </header>
+
+    <div class="app-wrap" style="padding: 20px;">
+        <div id="status-recherche" style="text-align: center; margin-bottom: 20px;">
+            <div class="loader-gps" id="loader" style="position: static; margin: 20px auto;"></div>
+            <p id="info-rayon" style="color:#8B4513; font-weight: bold;">Localisation en cours...</p>
+        </div>
+
+        <div class="service-grid" id="liste-prestataires">
+            <!-- Les cartes s'afficheront ici -->
+        </div>
+
         <button id="btn-plus" style="display:none; width:100%; padding:12px; margin-top:16px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">
             VOIR 20 PRESTATAIRES DE PLUS
         </button>
-        <p stylne="text-align:center; margin-top:16px;"><a href="/commande">Retour commande</a></p>
     </div>
+
     <script>
         const params = new URLSearchParams(window.location.search);
         const service = params.get('service') || '';
         const isBackupMode = params.get('mode') === 'backup';
 
-        if (isBackupMode) {
-            document.getElementById('titre-recherche').innerText = "Choisir un prestataire de secours";
-        }
+        document.getElementById('titre-service').innerText = service || "Prestataires";
 
         let offset = 0;
-        let lat, lon;
-        let rayonVirtuel = 0;
+        let userLat = null, userLon = null;
         let aTrouve = false;
 
         const container = document.getElementById('liste-prestataires');
         const info = document.getElementById('info-rayon');
         const btnPlus = document.getElementById('btn-plus');
+        const loader = document.getElementById('loader');
 
-        // Afficher le nombre total de prestataires inscrits
-        fetch('/api/total-prestataires')
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('compteur-total').innerText = `🚀 ${data.total} PRESTATAIRES PRÊTS À VOUS AIDER`;
-            });
-
-        function simulerRechercheExpansion() {
-            if (aTrouve) return;
-            
-            if (rayonVirtuel < 100) {
-                rayonVirtuel += 10;
-                info.innerText = `🔍 Recherche locale : ${rayonVirtuel} m...`;
-                setTimeout(simulerRechercheExpansion, 200);
-            } else if (rayonVirtuel < 50000) {
-                rayonVirtuel += 1000;
-                const km = (rayonVirtuel / 1000).toFixed(0);
-                info.innerText = `🔍 Élargissement du périmètre : ${km} km...`;
-                setTimeout(simulerRechercheExpansion, 400);
-            }
+        function distanceLabel(m) {
+            if (m === Infinity || m == null) return 'Distance inconnue';
+            if (m < 1000) return m + ' m';
+            return (m / 1000).toFixed(1) + ' km';
         }
 
-        function afficherListe(items, append) {
-            if (!append) container.innerHTML = '';
-            if (!items.length && !append) {
-                container.innerHTML = '<p>Aucun prestataire disponible pour ce service. Élargissement du rayon...</p>';
-                return;
-            }
-            aTrouve = true;
-            items.forEach(p => {
-                const div = document.createElement('div');
-                div.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px; margin:8px 0; background:#fff; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.08);';
-                div.innerHTML = `
-                    <img src="${p.photo || ''}" width="56" height="56" style="border-radius:50%; object-fit:cover;">
-                    <div style="flex:1;">
-                        <strong>${p.nom}</strong> — ${p.profession || ''}<br>
-                        <small>${p.distanceM} m · ⭐ ${p.etoiles || 0}</small>
+        function formatDerniereConnexion(dateStr, disponible) {
+            return `<span style="color:${disponible ? '#2e7d32' : '#666'};">${dateStr}</span>`;
+        }
+
+        function createCard(p) {
+            const nomComplet = [p.prenom, p.nom].filter(Boolean).join(' ');
+            const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
+            
+            return `
+                <article class="profile-card" style="text-align:center; padding: 20px; border: 2px solid #8B4513; border-radius: 20px; background:white;">
+                    <div class="profile-circle" style="margin: 0 auto 10px; width:80px; height:80px;">
+                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'" style="width:100%; height:100%; object-fit:cover;">
                     </div>
-                    <button type="button" data-id="${p.id}" class="btn-select" style="padding:8px 12px; background:#5D4037; color:#fff; border:none; border-radius:6px; cursor:pointer;">Solliciter ${p.nom}</button>
-                `;
-                container.appendChild(div);
-                div.querySelector('.btn-select').onclick = () => selectionner(p.id);
+                    <h3 style="margin: 5px 0; font-size:1.1rem;">${nomComplet}</h3>
+                    <p style="font-size:0.7rem; color:#888; margin-bottom:10px;">${statusTxt}</p>
+                    <p style="color:#8B4513; font-weight:bold; font-size:0.85rem; margin-bottom:5px;">${p.profession || '-'}</p>
+                    <span class="badge-distance" style="position:static; margin-bottom:10px;">📍 ${distanceLabel(p.distanceM)}</span>
+                    <div style="margin-bottom:15px; color:#fbc02d; font-weight:bold;">⭐ ${p.etoiles || 0} <small style="color:#999; font-weight:normal;">(${p.nbAvis || 0} avis)</small></div>
+                    <button onclick="selectionner('${p.id}')" class="btn-primary-sm" style="width:100%; border-radius:10px; padding:12px;">CHOISIR</button>
+                </article>
+            `;
+        }
+
+        async function charger(append = false) {
+            if (!append) loader.style.display = 'block';
+            
+            const res = await fetch('/chercher-prestataires', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat: userLat, lon: userLon, service, offset })
             });
+            const data = await res.json();
+            
+            loader.style.display = 'none';
+            if (!append) container.innerHTML = '';
+
+            if (data.prestataires && data.prestataires.length > 0) {
+                info.innerText = `${data.total} prestataires trouvés pour "${service}"`;
+                data.prestataires.forEach(p => {
+                    container.innerHTML += createCard(p);
+                });
+                btnPlus.style.display = data.hasMore ? 'block' : 'none';
+            } else {
+                info.innerText = "Aucun prestataire trouvé. Essayez un autre service.";
+            }
         }
 
         async function selectionner(id) {
-            aTrouve = true; // Arrête immédiatement la recherche
-            info.innerText = "Sélection du prestataire...";
-            
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -105,49 +120,23 @@
             window.location.href = '/commande';
         }
 
-        async function charger(append) {
-            console.log("[DEBUG] Chargement prestataires avec GPS:", lat, lon);
-            const res = await fetch('/chercher-prestataires', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat, lon, service, offset })
-            });
-            const data = await res.json();
-            if (data.error) {
-                info.innerText = data.error;
-                return;
-            }
-            info.innerText = `Rayon atteint : ~${data.rayonMetres} m · ${data.prestataires.length} affiché(s)`;
-            afficherListe(data.prestataires, append);
-            btnPlus.style.display = data.hasMore ? 'block' : 'none';
-        }
-
         btnPlus.onclick = () => {
             offset += 20;
             charger(true);
         };
 
+        // Initialisation avec GPS
         navigator.geolocation.getCurrentPosition(
             async pos => {
-                lat = pos.coords.latitude;
-                lon = pos.coords.longitude;
-                console.log("[DEBUG] Position capturée:", lat, lon);
-                simulerRechercheExpansion();
-                await fetch('/sauvegarder-position', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat, lon })
-                });
-                await charger(false);
+                userLat = pos.coords.latitude;
+                userLon = pos.coords.longitude;
+                charger();
             },
             () => {
-                info.innerText = 'Activez le GPS pour voir les prestataires proches.';
-                container.innerHTML = '<p>Localisation refusée.</p>';
+                info.innerText = 'GPS refusé. Affichage des meilleurs profils nationaux.';
+                charger();
             }
         );
-
-        // Rafraîchir la liste de recherche toutes les 2 secondes
-        setInterval(() => { if(!aTrouve && lat) charger(false); }, 10000);
     </script>
 </body>
 </html>

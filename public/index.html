@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%238B4513'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%238B4513'/%3E%3Cpath d='M15 50 L95 50' stroke='%23000000' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%23000000' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E">
     <!-- Préchargement des images du haut de page pour un affichage instantané -->
-    <link rel="preload" as="image" href="cuisine.jpg.jpg" fetchpriority="high">
-    <link rel="preload" as="image" href="lavage.jpg.jpg" fetchpriority="high">
+    <link rel="preload" as="image" href="cuisine.jpg" fetchpriority="high">
+    <link rel="preload" as="image" href="lavage.jpg" fetchpriority="high">
 
     <title>Accueil - PETITSDJOBS</title>
 </head>
@@ -57,61 +57,61 @@
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
-            <img src="cuisine.jpg.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" fetchpriority="high" loading="eager" width="300" height="200">
+            <img src="cuisine.jpg" alt="Cuisine" onerror="this.src='default-profile.png'" fetchpriority="high" loading="eager" width="300" height="200">
             <h3>CUISINE À DOMICILE</h3>
             <p class="price">1500 F CFA</p>
             <button class="btn-commander" data-service="Cuisine" data-prix="1500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Lavage', 800)">
-            <img src="lavage.jpg.jpg" alt="Lavage" onerror="this.src='default-profile.png'" fetchpriority="high" loading="eager" width="300" height="200">
+            <img src="lavage.jpg" alt="Lavage" onerror="this.src='default-profile.png'" fetchpriority="high" loading="eager" width="300" height="200">
             <h3>LAVAGE MOBILE</h3>
             <p class="price">800 F CFA</p>
             <button class="btn-commander" data-service="Lavage" data-prix="800">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Vaisselle', 400)">
-            <img src="vaiselle.jpg.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="vaiselle.jpg" alt="Vaisselle" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>VAISSELLE</h3>
             <p class="price">400 F CFA</p>
             <button class="btn-commander" data-service="Vaisselle" data-prix="400">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Course', 500)">
-            <img src="coursier.jpg.jpg" alt="Course" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="coursier.jpg" alt="Course" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>COURSE</h3>
             <p class="price">200 F / km</p>
             <button class="btn-commander" data-service="Course" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Chauffeur', 3000)">
-            <img src="chauffeur.jpg.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="chauffeur.jpg" alt="Chauffeur" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>CHAUFFEUR</h3>
             <p class="price">3000 F CFA</p>
             <button class="btn-commander" data-service="Chauffeur" data-prix="3000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Ménage', 1000)">
-            <img src="menage.jpg.jpg" alt="Ménage" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="menage.jpg" alt="Ménage" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>MÉNAGE</h3>
             <p class="price">1000 F CFA</p>
             <button class="btn-commander" data-service="Ménage" data-prix="1000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Maquillage', 2000)">
-            <img src="maquillage.jpg.jpg" alt="Maquillage" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="maquillage.jpg" alt="Maquillage" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>MAQUILLAGE</h3>
             <p class="price">2000 F CFA</p>
             <button class="btn-commander" data-service="Maquillage" data-prix="2000">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Coiffure', 2500)">
-            <img src="coiffure.jpg.jpg" alt="Coiffure" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="coiffure.jpg" alt="Coiffure" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>COIFFURE</h3>
             <p class="price">2500 F CFA</p>
             <button class="btn-commander" data-service="Coiffure" data-prix="2500">Choisir ce service</button>
         </div>
         <div class="card" onclick="allerCommander('Remplacement', 500)">
-            <img src="remplacement.JPG.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="remplacement.jpg" alt="Remplacement" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>REMPLACEMENT</h3>
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
         <div class="card card-special" onclick="location.href='/discuter'">
-            <img src="particulier.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
+            <img src="particulier.jpg" alt="Particulier" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
             <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
@@ -167,7 +167,7 @@
                 err => {
                     console.warn("⚠️ GPS Indisponible ou Refusé");
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
             );
         }
 
@@ -218,18 +218,22 @@
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
             return `
-                <article class="profile-card" style="cursor:pointer">
-                    <div class="provider-card-top" onclick="${cardAction}">
-                        <span class="badge-dispo" style="background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
-                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'" loading="lazy">
-                        ${p.distanceM != null ? `<span class="badge-distance">📍 ${distanceLabel(p.distanceM)}</span>` : ''}
-                    </div>
-                    <div class="provider-card-body" onclick="event.stopPropagation(); ${cardAction}">
-                        <h3>${nomComplet}</h3>
+                <article class="profile-card" style="cursor:pointer; text-align:center; padding: 25px; border: 2px solid #8B4513; border-radius: 20px;">
+                    <div onclick="${cardAction}">
+                        <div class="profile-circle" style="margin: 0 auto 15px;">
+                            <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                        <span class="badge-dispo" style="position:static; display:inline-block; margin-bottom:10px; background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
+                        
+                        <h3 style="margin: 10px 0; color: #333;">${nomComplet}</h3>
                         <p style="font-size:0.75rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
-                        <p class="prof">${p.profession || '-'}</p>
+                        <p class="prof" style="color:#8B4513; font-weight:bold; margin-bottom:5px;">${p.profession || '-'}</p>
                         <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
-                        <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden;">${servicesAffiche}</p>
+                        
+                        ${p.distanceM != null ? `<p style="margin:8px 0;"><span class="badge-distance" style="background:#f0f0f0; color:#5D4037; border:1px solid #ddd; position:static;">📍 ${distanceLabel(p.distanceM)}</span></p>` : ''}
+                        
+                        <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden; margin: 10px 0;">${servicesAffiche}</p>
+                        
                         <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
                             <div style="display:flex; align-items:center; gap:5px;">
                                 <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
@@ -240,8 +244,8 @@
                             </div>
                         </div>
                     </div>
-                    <div style="margin-top:12px;">
-                        <button onclick="selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')" class="btn-primary-sm" style="width:100%; padding:10px; font-size:0.8rem;">CHOISIR CE PRESTATAIRE</button>
+                    <div style="margin-top:15px;">
+                        <button onclick="selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')" class="btn-primary-sm" style="width:100%; padding:12px; font-size:0.9rem; border-radius:10px;">CHOISIR CE PRESTATAIRE</button>
                     </div>
                 </article>`;
         }
@@ -317,56 +321,37 @@
             bandeau.style.display = 'block';
         }
 
+        // Chargement immédiat des données sans attendre le GPS ou la session
+        rafraichirCarrousel();
+        chargerJobsPublics();
+
         fetch('/session-status').then(r => r.json())
         .then(s => {
             connecte = s.loggedIn;
-            mettreAJourHeader(connecte); // On affiche les bons boutons immédiatement
-            if (!connecte) return null;
-            
-            return fetch('/get-user-data').then(r => r.json());
+            mettreAJourHeader(connecte);
+            if (connecte) return fetch('/get-user-data').then(r => r.json());
         }).then(userData => {
-            if (!userData || !connecte) return;
+            if (!userData) return;
             
             currentUserId = userData.id;
 
-            if (navigator.geolocation) {
-                // Si c'est un prestataire, on surveille les missions entrantes sur l'accueil
-                if (userData.isPrestataire) {
-                    let missionCount = 0;
-                    setInterval(async () => {
-                        const rM = await fetch('/api/mes-missions-prestataire');
-                        const mData = await rM.json();
-                        const flash = document.getElementById('alerte-mission-flash');
-                        if (mData && mData.length > 0) {
-                            if (mData.length > missionCount) {
-                                document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));
-                            }
-                            flash.style.display = 'block';
-                        } else {
-                            flash.style.display = 'none';
+            // Si c'est un prestataire, on surveille les missions entrantes
+            if (userData.isPrestataire) {
+                let missionCount = 0;
+                setInterval(async () => {
+                    const rM = await fetch('/api/mes-missions-prestataire');
+                    const mData = await rM.json();
+                    const flash = document.getElementById('alerte-mission-flash');
+                    if (mData && mData.length > 0) {
+                        if (mData.length > missionCount) {
+                            document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));
                         }
-                        missionCount = mData.length;
-                    }, 2000);
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        const { latitude: lat, longitude: lon } = pos.coords;
-                        userLat = lat;
-                        userLon = lon;
-                        fetch('/sauvegarder-position', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ lat, lon })
-                        });
-                        chargerJobsPublics();
-                        // La fonction chargerProches a été retirée car elle ciblait un élément non existant ou non pertinent ici.
-                    },
-                    () => {
-                        // On charge quand même les jobs même si le GPS échoue pour que l'utilisateur voit SES tâches
-                        chargerJobsPublics();
+                        flash.style.display = 'block';
+                    } else {
+                        flash.style.display = 'none';
                     }
-                );
+                    missionCount = mData.length;
+                }, 2000);
             }
         }).catch(() => {});
 
@@ -383,26 +368,8 @@
                 body: JSON.stringify({ service, prix })
             });
 
-            // Étape 2 : Trouver automatiquement le plus proche pour sauter l'étape de recherche
-            const res = await fetch(`/prestataires-autour?service=${encodeURIComponent(service)}`);
-            const data = await res.json();
-
-            if (data.prestataires && data.prestataires.length > 0) {
-                const proche = data.prestataires[0]; // Le premier est le plus proche
-                console.log("[DEBUG CLIENT] Prestataire trouvé, sélection automatique...");
-                
-                // On sélectionne le prestataire en arrière-plan pour aller direct au paiement
-                await fetch('/selectionner-prestataire', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prestataireId: proche.id, serviceChoisi: service })
-                });
-                
-                window.location.href = '/commande';
-            } else {
-                console.warn("[DEBUG CLIENT] Aucun prestataire trouvé à proximité, redirection vers recherche.");
-                window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
-            }
+            // Redirection directe vers la liste de choix pour laisser le client décider
+            window.location.href = `/choisir-prestataire?service=${encodeURIComponent(service)}`;
         }
 
         async function selectionnerPrestataireDirect(id, service) {
@@ -461,12 +428,9 @@
             }).catch(err => console.error("Erreur polling carrousel", err));
         }
 
-        // Premier chargement différé pour laisser le GPS répondre
-        rafraichirCarrousel();
-        setInterval(rafraichirCarrousel, 3000);
-
-        setTimeout(() => chargerJobsPublics(), 2500);
-        setInterval(chargerJobsPublics, 2000); // Mise à jour des jobs toutes les 2s
+        // Polling des données
+        setInterval(rafraichirCarrousel, 5000);
+        setInterval(chargerJobsPublics, 5000);
     </script>
 
     <!-- Éléments invisibles déplacés en bas pour ne pas pousser le contenu -->

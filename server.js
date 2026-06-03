@@ -207,16 +207,16 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
         const dLon = (lon && lon !== 'undefined') ? lon : '?';
         console.log(`[DEBUG SEARCH ${timestamp}] Svc=${service || 'Tous'}, GPS=${dLat},${dLon}`);
 
-        // 1. On récupère les prestataires (on enlève la jointure qui pose erreur)
+        // 1. On récupère un pool plus large de prestataires pour garantir des résultats
         let query = supabase.from('infos_prestataires').select('*');
         
         if (lat && lon && lat !== 'undefined' && lat !== null) {
-            const delta = 0.5; // Environ 55km autour de la position
-            query = query.gte('lat', parseFloat(lat) - delta)
-                         .lte('lat', parseFloat(lat) + delta)
-                         .gte('lon', parseFloat(lon) - delta)
-                         .lte('lon', parseFloat(lon) + delta);
+            // On tente d'abord de filtrer par zone large (1 degré ~= 110km)
+            const delta = 1.0; 
+            query = query.gte('lat', parseFloat(lat) - delta).lte('lat', parseFloat(lat) + delta);
         }
+
+        query = query.order('etoiles', { ascending: false }).limit(100);
 
         const { data: prestataires, error: pError } = await query;
         
@@ -1115,7 +1115,9 @@ app.post('/inscription', async (req, res) => {
             password: hashedPassword,
             nom: (req.body.nom || '').trim(),
             prenom: (req.body.prenom || '').trim(),
-            age: parseInt(req.body.age, 10)
+            age: parseInt(req.body.age, 10),
+            telephone: (req.body.telephone || '').trim(),
+            autorise_contact_client: req.body.autorise_contact_client === 'on' || req.body.autorise_contact_client === '1'
         };
         
         const { data: newUser, error } = await supabase.from('utilisateurs').insert(userData).select().single();

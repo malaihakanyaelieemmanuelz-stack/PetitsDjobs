@@ -212,7 +212,7 @@ body {
 .card { background: white; width: 300px; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 15px rgba(0,0,0,0.1); transition: transform 0.3s; border: 1px solid #eee; }
 
 /* Optimisation du chargement visuel des images */
-.card img, .provider-card-top img, .profile-card img { 
+.card img { 
     width: 100%; 
     height: 200px; 
     object-fit: cover; 
@@ -294,7 +294,7 @@ body {
     width: 100px;
     height: 100px;
     background-color: #f0f0f0;
-    border: 2px dashed #8B4513;
+    border: 2px solid #8B4513;
     border-radius: 50%;
     margin: 0 auto 20px auto;
     overflow: hidden;
@@ -476,42 +476,45 @@ body {
 
 .premium-header {
     background-color: #5d4037;
-    height: 140px;
+    height: 120px;
     width: 100%;
-    border-radius: 0 0 40px 40px;
+    border-radius: 15px 15px 0 0;
     position: relative;
     color: white;
     padding: 0 !important;
-    box-shadow: 0 10px 25px rgba(93, 64, 55, 0.2);
+    background: linear-gradient(135deg, #5d4037 0%, #3e2723 100%);
 }
 
 .premium-avatar {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     background: #ccc;
     border-radius: 50%;
-    border: 4px solid white;
+    border: 3px solid white;
     position: absolute;
-    top: 60px;
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
     object-fit: cover;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 2;
 }
 
 .premium-body {
-    margin-top: 55px;
-    padding: 20px;
+    margin-top: 50px;
+    padding: 15px;
     text-align: center;
     flex-grow: 1;
+    background: white;
+    border-radius: 0 0 15px 15px;
 }
 
 .info-tile {
     background: #ffffff;
     padding: 15px;
     border-radius: 18px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    border: 1px solid #f0f0f0;
+    box-shadow: none;
+    border: 1px solid #f5f5f5;
     text-align: center;
     transition: transform 0.2s;
 }
