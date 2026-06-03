@@ -66,17 +66,6 @@
         let aAlerteSecurite = false;
         let dernierMessageDistance = null;
 
-        // Fonction pour faire parler l'application
-        function parler(message) {
-            if ('speechSynthesis' in window) {
-                const synth = window.speechSynthesis;
-                const utterThis = new SpeechSynthesisUtterance(message);
-                utterThis.lang = 'fr-FR';
-                utterThis.rate = 1.0;
-                synth.speak(utterThis);
-            }
-        }
-
         const providerIcon = L.divIcon({
             className: 'custom-icon',
             html: '<div style="background:#007bff; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 0 5px rgba(0,0,0,0.5);"></div>',
@@ -116,6 +105,19 @@
                     serviceUrl: 'https://router.project-osrm.org/route/v1/foot'
                 })
             }).addTo(map);
+
+            // Capture des instructions de navigation pour guider le prestataire
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                const summary = routes[0].summary;
+                const instructions = routes[0].instructions;
+                if (instructions && instructions.length > 0 && isProvider) {
+                    // On affiche l'instruction la plus pertinente (la prochaine étape)
+                    const nextStep = instructions[1] || instructions[0];
+                    document.getElementById('navigation-hint').innerHTML = `<b>Guidage :</b> ${nextStep.text} <br> <small>Distance restante : ${Math.round(summary.totalDistance)} mètres</small>`;
+                    document.getElementById('navigation-hint').style.display = 'block';
+                }
+            });
         }
 
         initMap();
@@ -142,7 +144,6 @@
                 if (user.id === cmd.prestataireId) {
                     console.log("[DEBUG SUIVI] Rôle détecté: PRESTATAIRE");
                     isProvider = true;
-                    parler("Navigation activée. Suivez l'itinéraire pour rejoindre le client.");
                     demarrerSuiviGPS();
                     document.getElementById('btn-sos').style.display = 'block';
                     document.getElementById('sos-warning').style.display = 'block';
@@ -150,7 +151,6 @@
                 } else {
                     console.log("[DEBUG SUIVI] Rôle détecté: CLIENT");
                     demarrerSuiviGPS(); // Le client suit aussi son GPS pour les alertes SOS
-                    parler("Suivi activé. Votre prestataire est en route.");
                     const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
                     const statData = await resStat.json();
                     
@@ -240,23 +240,14 @@
                 `🛵 Le prestataire est à <strong>${label}</strong> de vous.`;
 
             // Guidance vocale selon la distance (tous les 500m ou à l'arrivée)
-            if (isProvider && (dernierMessageDistance === null || Math.abs(dernierMessageDistance - distArrondie) > 500)) {
-                parler(`Vous êtes à ${label} de votre destination.`);
-                dernierMessageDistance = distArrondie;
-            }
 
             fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json()).then(data => {
                 if (data.statut === 'en_route' && dist < 50) {
                     if (isProvider) document.getElementById('group-presta-arrive').style.display = 'flex';
-                    if (isProvider && dernierMessageDistance !== "arrive") {
-                        parler("Vous êtes arrivé à destination. Veuillez confirmer votre présence.");
-                        dernierMessageDistance = "arrive";
-                    }
                 }
                 
                 if (data.statut === 'attente_securite' && dist > 15 && !aAlerteSecurite) {
                     aAlerteSecurite = true;
-                    parler("Attention. Vous quittez la zone. Confirmez que vous êtes en sécurité.");
                     document.getElementById('modal-securite').style.display = 'flex';
                 }
             });
@@ -346,14 +337,16 @@
                     lastLat = latitude; lastLon = longitude;
                     console.log(`[GPS DEVICE] MAJ Position : ${latitude}, ${longitude} (Précision: ${accuracy}m)`);
 
-                    // On centre la carte seulement la première fois pour ne pas bloquer l'utilisateur
-                    if (!markerProvider.getLatLng().lat) {
-                        map.setView([latitude, longitude], 17);
-                    }
-                    
                     // On met à jour le marqueur correspondant au rôle
-                    if (isProvider) markerProvider.setLatLng([latitude, longitude]);
-                    else markerClient.setLatLng([latitude, longitude]);
+                    if (isProvider) {
+                        markerProvider.setLatLng([latitude, longitude]);
+                        // NAVIGATION ACTIVE : La carte suit le prestataire
+                        map.panTo([latitude, longitude]);
+                    } else {
+                        markerClient.setLatLng([latitude, longitude]);
+                        // Pour le client, on centre seulement au premier signal
+                        if (!markerClient.getLatLng().lat) map.setView([latitude, longitude], 16);
+                    }
 
                     // Déclenche la vérification de proximité
                     verifierDistance(latitude, longitude);

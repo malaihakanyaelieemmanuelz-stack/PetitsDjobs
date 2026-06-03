@@ -257,17 +257,23 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
             
             if (a.enLigne) {
-                // Si les deux sont en ligne : plus proche d'abord (tranches de 10m)
-                const bucketA = Math.floor(a.distanceM / 10);
-                const bucketB = Math.floor(b.distanceM / 10);
-                if (bucketA !== bucketB) return bucketA - bucketB;
-                // Si même distance : meilleures étoiles
+                // Gestion des cas sans GPS (Distance = Infinity)
+                if (a.distanceM === Infinity && b.distanceM !== Infinity) return 1;
+                if (a.distanceM !== Infinity && b.distanceM === Infinity) return -1;
+                
+                if (a.distanceM !== Infinity && b.distanceM !== Infinity) {
+                    const bucketA = Math.floor(a.distanceM / 10);
+                    const bucketB = Math.floor(b.distanceM / 10);
+                    if (bucketA !== bucketB) return bucketA - bucketB;
+                }
+                // Si même distance ou les deux sans GPS : meilleures étoiles
                 return (b.etoiles || 0) - (a.etoiles || 0);
             } else {
                 // Si les deux sont hors ligne : le plus récemment connecté d'abord
                 const timeA = new Date(a.dernier_acces || 0).getTime();
                 const timeB = new Date(b.dernier_acces || 0).getTime();
-                return timeB - timeA;
+                if (timeA !== timeB) return timeB - timeA;
+                return a.distanceM - b.distanceM;
             }
         });
 

@@ -13,10 +13,10 @@
 <body class="tracking-body">
     <div id="map"></div>
 
-    <div class="floating-top-info">
+    <div class="floating-top-info" style="background: #5D4037; color: white;">
         <div id="navigation-hint" class="nav-hint-google">⬆️ Suivez l'itinéraire bleu</div>
-        <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #333;">Navigation vers le client</h2>
-        <p id="mission-info" style="color:#666; font-size: 0.85rem; margin: 3px 0 0;">Calcul de la précision GPS...</p>
+        <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: white;">NAVIGATEUR PRESTATAIRE</h2>
+        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.85rem; margin: 3px 0 0;">Précision GPS en cours...</p>
     </div>
 
     <div class="floating-bottom-actions">
@@ -46,14 +46,6 @@
         let lastDist = null;
         let aConfirmeSecurite = false;
 
-        function parler(txt) {
-            if ('speechSynthesis' in window) {
-                const u = new SpeechSynthesisUtterance(txt);
-                u.lang = 'fr-FR';
-                window.speechSynthesis.speak(u);
-            }
-        }
-
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
         const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
@@ -79,7 +71,6 @@
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
                 missionId = cmd.missionId;
-                parler("Navigation activée. Rejoignez votre client.");
                 startGPS();
                 setInterval(pollClient, 3000);
                 setInterval(checkStatus, 2000);
@@ -139,7 +130,6 @@
             const data = await res.json();
 
             if (data.statut === 'en_route' && dist < 50 && (!lastDist || lastDist >= 50)) {
-                parler("Vous êtes arrivé. Confirmez votre présence.");
                 document.getElementById('group-presta-arrive').style.display = 'flex';
             }
 

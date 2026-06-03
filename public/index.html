@@ -151,16 +151,13 @@
                 return;
             }
 
-            navigator.geolocation.getCurrentPosition(
+            // watchPosition est plus performant sur Android pour capter le signal en mouvement
+            navigator.geolocation.watchPosition(
                 pos => {
                     userLat = pos.coords.latitude;
                     userLon = pos.coords.longitude;
                     console.log(`📍 GPS OK (${Math.round(pos.coords.accuracy)}m)`);
 
-                    // On lance le chargement immédiatement
-                    rafraichirCarrousel();
-                    chargerJobsPublics();
-                    
                     fetch('/sauvegarder-position', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -168,11 +165,9 @@
                     });
                 },
                 err => {
-                    console.warn("⚠️ GPS Refusé");
-                    rafraichirCarrousel();
-                    chargerJobsPublics();
+                    console.warn("⚠️ GPS Indisponible ou Refusé");
                 },
-                { enableHighAccuracy: true, timeout: 8000 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
             );
         }
 
@@ -458,28 +453,25 @@
         let carrouselInitialise = false;
 
         function rafraichirCarrousel() {
+            // On appelle le serveur même si lat/lon sont vides
             let url = `/get-top-prestataires?lat=${userLat || ''}&lon=${userLon || ''}`;
 
             fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
                 
-                // Règle demandée : Si GPS inactif, message spécifique
-                if (!userLat && !userLon) {
-                    container.innerHTML = `
-                        <div style="width:100%; padding:20px; text-align:center; background:rgba(93, 64, 55, 0.05); border-radius:15px; border:1px dashed #5D4037;">
-                            <p style="color:#5D4037; font-weight:bold; margin:0;">📍 GPS INACTIF</p>
-                            <p style="color:#666; font-size:0.9rem; margin:5px 0 0;">Veuillez activer votre GPS pour voir les candidats disponibles pour votre service et leur distance.</p>
-                        </div>`;
+                // bandeau discret si pas de GPS
+                const gpsBanner = (!userLat && !userLon) ? 
+                    `<div style="width:100%; padding:10px; margin-bottom:10px; font-size:0.8rem; background:#fff3e0; color:#e65100; border-radius:10px; text-align:center;">
+                        📍 Activez le GPS pour voir les distances exactes.
+                    </div>` : '';
+
+                if (!data || !data.length) {
+                    container.innerHTML = gpsBanner + '<p style="width:100%; text-align:center; color:#666;">Recherche de prestataires...</p>';
                     lastCarrouselHtml = "";
                     return;
                 }
 
-                if (!data || !data.length) {
-                    container.innerHTML = '<p style="width:100%; text-align:center; color:#666;">Aucun prestataire trouvé dans votre zone.</p>';
-                    lastCarrouselHtml = "";
-                    return;
-                }
-                const newHtml = data.map(p => miniCard(p)).join('');
+                const newHtml = gpsBanner + data.map(p => miniCard(p)).join('');
                 // Ne met à jour que si les données ont changé pour ne pas casser le défilement
                 if (newHtml !== lastCarrouselHtml) {
                     container.innerHTML = newHtml;
@@ -490,8 +482,8 @@
         }
 
         // Premier chargement différé pour laisser le GPS répondre
-        rafraichirCarrousel(); // On lance immédiatement sans attendre le GPS
-        setInterval(rafraichirCarrousel, 2000); // Rafraîchissement ultra-rapide toutes les 2s
+        rafraichirCarrousel();
+        setInterval(rafraichirCarrousel, 3000);
 
         setTimeout(() => chargerJobsPublics(), 2500);
         setInterval(chargerJobsPublics, 2000); // Mise à jour des jobs toutes les 2s

@@ -347,6 +347,69 @@ body {
 }
 .trust-card:hover { transform: translateY(-5px); }
 
+/* --- Nouvelle Carte de Visite Professionnelle (Plein Écran) --- */
+.profile-full-screen {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.premium-header {
+    background: linear-gradient(135deg, #5D4037 0%, #3e2723 100%);
+    color: white;
+    padding: 50px 20px 40px;
+    text-align: center;
+    border-radius: 0 0 40px 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    position: relative;
+}
+
+.premium-avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.2);
+    object-fit: cover;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    margin-bottom: 15px;
+}
+
+.premium-body {
+    padding: 25px 20px;
+    flex-grow: 1;
+}
+
+.info-tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.info-tile {
+    background: white;
+    padding: 15px;
+    border-radius: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border: 1px solid #f0f0f0;
+    text-align: center;
+}
+
+.tile-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; font-weight: 800; display: block; margin-bottom: 4px; }
+.tile-value { font-size: 0.95rem; color: #333; font-weight: 700; }
+
+.premium-bio-box {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border-left: 5px solid #5D4037;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
 .trust-card-header { 
     background: linear-gradient(135deg, #5D4037 0%, #3e2723 100%); 
     color: white; 
@@ -471,6 +534,15 @@ body {
         height: auto !important;
         min-height: auto !important;
         background-color: white !important;
+    }
+
+    .app-wrap, section {
+        width: 100% !important;
+        margin: 5px auto !important; /* Réduit pour remonter la page vers le haut */
+        padding: 10px 15px !important;
+        background-color: transparent !important; /* Restaure la transparence pour voir le logo */
+        border: none !important;
+        box-shadow: none !important;
     }
 
     /* Carte de profil immersive et transparente */

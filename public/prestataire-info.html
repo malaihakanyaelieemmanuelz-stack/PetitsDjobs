@@ -33,31 +33,32 @@
         </div>
     </header>
 
-    <div class="app-wrap profile-full-screen">
+    <div class="profile-full-screen">
         <p id="msg-ok" style="display:none; text-align:center; color:#2e7d32; padding:12px; background:#e8f5e9; margin:0;">
             ✓ Votre carte de visite est en ligne.
         </p>
 
-        <div id="zone-missions" style="display:none; padding: 0 20px;">
+        <!-- Alertes Missions : Positionnées en haut pour être immanquables -->
+        <div id="zone-missions" style="display:none; padding: 15px 20px; background: #fff5f5;">
             <h3 style="color:#b71c1c; margin-bottom:10px;">🔔 NOUVELLES DEMANDES</h3>
             <div id="liste-missions-attente"></div>
         </div>
 
-        <div class="trust-card" id="ma-carte" style="box-shadow:none; margin:0; width:100%;">
-            <p style="padding:40px;">Chargement...</p>
+        <div id="ma-carte-container">
+            <!-- Le contenu sera injecté ici par JS -->
+             <p style="padding:40px; text-align:center;">Chargement de votre profil...</p>
         </div>
 
-        <div style="padding: 20px;">
-            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; text-align:center; margin-bottom:10px;">
-                Modifier ma fiche
+        <div style="padding: 25px 20px; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); margin-top: auto;">
+            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; margin-bottom:12px; border-radius:15px; min-height:50px;">
+                ⚙️ MODIFIER MA FICHE
             </button>
-            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; padding:12px;">
-                Retour profil
+            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; border-radius:15px; min-height:55px;">
+                RETOUR PROFIL
             </button>
 
-            <div style="margin-top: 30px; padding: 15px; background: #fff5f5; border-radius: 12px; border: 1px solid #ffcdd2; text-align: center;">
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Vous ne souhaitez plus être prestataire ?</p>
-                <button onclick="supprimerMaCarte()" class="btn-danger" style="width:100%; margin-bottom: 8px;">Supprimer ma carte de visite</button>
+            <div style="margin-top: 40px; text-align: center; opacity: 0.6;">
+                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:0.8rem; cursor:pointer; text-decoration:underline;">Supprimer ma carte de visite</button><br><br>
                 <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:0.8rem; cursor:pointer; text-decoration:underline;">Supprimer définitivement mon compte</button>
             </div>
         </div>
@@ -76,23 +77,27 @@
             const nom = [data.prenom, data.nom].filter(Boolean).join(' ');
             const avis = (data.commentaires || []).length
                 ? (data.commentaires || []).map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('')
-                : '<li>Vos futurs clients pourront laisser un avis ici.</li>';
+                : '<li>Aucun avis client pour le moment.</li>';
 
-            document.getElementById('ma-carte').innerHTML = `
-                <div class="trust-card-header">
-                    <img src="${data.photo || ''}" alt="Votre photo">
-                    <h2 style="margin:0;">${nom}</h2>
-                    <p style="margin:8px 0 0;">⭐ ${data.etoiles ?? 0} / 5 · Profil Confiance</p>
+            document.getElementById('ma-carte-container').innerHTML = `
+                <div class="premium-header">
+                    <img src="${data.photo || 'default-profile.png'}" class="premium-avatar" alt="Photo">
+                    <h2 style="margin:0; font-size:1.8rem;">${nom}</h2>
+                    <p style="margin:5px 0 0; opacity:0.8; font-weight:bold;">⭐ ${data.etoiles ?? 0} / 5 · PRESTATAIRE VÉRIFIÉ</p>
                 </div>
-                <div class="trust-card-body">
-                    <p><strong>Âge :</strong> ${data.age || '-'}</p>
-                    <p><strong>Ville :</strong> ${data.ville || '-'}</p>
-                    <p><strong>Profession :</strong> ${data.profession || '-'}</p>
-                    <p><strong>Je propose :</strong> ${data.services || '-'}</p>
-                    <p style="font-style:italic;">"${data.bio || 'Ajoutez une courte présentation dans Modifier ma fiche.'}"</p>
-                    <h3>Commentaires</h3>
-                    <ul style="padding-left:20px;">${avis}</ul>
-                    <p style="font-size:0.85rem; color:#888; margin-top:16px;">
+                <div class="premium-body">
+                    <div class="info-tile-grid">
+                        <div class="info-tile"><span class="tile-label">Âge</span><span class="tile-value">${data.age || '-'} ans</span></div>
+                        <div class="info-tile"><span class="tile-label">Ville</span><span class="tile-value">${data.ville || '-'}</span></div>
+                        <div class="info-tile" style="grid-column: span 2;"><span class="tile-label">Profession</span><span class="tile-value">${data.profession || '-'}</span></div>
+                    </div>
+                    <div class="premium-bio-box">
+                        <span class="tile-label" style="margin-bottom:8px; color:#5D4037;">À propos de moi</span>
+                        <p style="margin:0; font-style:italic; color:#444;">"${data.bio || 'Aucune présentation renseignée.'}"</p>
+                    </div>
+                    <h3 style="font-size:1rem; color:#5D4037; margin-bottom:10px;">💬 DERNIERS AVIS</h3>
+                    <ul style="padding-left:20px; font-size:0.9rem; color:#666;">${avis}</ul>
+                    <p style="font-size:0.75rem; color:#999; margin-top:30px; text-align:center;">
                         Votre pièce d'identité reste privée — seuls votre visage et votre réputation sont visibles.
                     </p>
                 </div>`;
