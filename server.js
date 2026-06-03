@@ -169,25 +169,33 @@ async function distanceMarcheReelle(lat1, lon1, lat2, lon2) {
 /**
  * Formate la date de dernière connexion de façon humaine
  */
-function formaterDernierAcces(dateIso) {
-    if (!dateIso) return "Jamais connecté";
+function formaterDernierAcces(dateIso, enLigne) {
+    if (enLigne) return "En ligne";
+    if (!dateIso) return "Hors ligne - Jamais connecté";
+    
     const date = new Date(dateIso);
     const maintenant = new Date();
-    const diffJours = Math.floor((maintenant - date) / (1000 * 60 * 60 * 24));
+    
+    // Comparaison des jours calendaires (minuit à minuit)
+    const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const d2 = new Date(maintenant.getFullYear(), maintenant.getMonth(), maintenant.getDate());
+    const diffJours = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     
     const heures = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const heureFormatee = `${heures}:${minutes}`;
 
+    let info = "";
     if (diffJours === 0) {
-        return `Aujourd'hui à ${heureFormatee}`;
+        info = `aujourd'hui à ${heureFormatee}`;
     } else if (diffJours === 1) {
-        return `Hier à ${heureFormatee}`;
+        info = `hier à ${heureFormatee}`;
     } else if (diffJours === 2) {
-        return `Avant-hier à ${heureFormatee}`;
+        info = `avant-hier à ${heureFormatee}`;
     } else {
-        return `le ${date.toLocaleDateString('fr-FR')} à ${heureFormatee}`;
+        info = `le ${date.toLocaleDateString('fr-FR')} à ${heureFormatee}`;
     }
+    return `Hors ligne - ${info}`;
 }
 
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
@@ -249,27 +257,29 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 };
             });
 
-        const nbTotal = eligibles.length;
+        const nbTotalInscrits = eligibles.length;
 
         // 3. Logique de tri ultra-précise
         eligibles.sort((a, b) => {
-            // Règle 1 : En ligne d'abord
+            // Gestion des cas sans GPS (Distance = Infinity)
+            if (a.distanceM === Infinity && b.distanceM !== Infinity) return 1;
+            if (a.distanceM !== Infinity && b.distanceM === Infinity) return -1;
+
+            if (a.distanceM !== Infinity && b.distanceM !== Infinity) {
+                // Règle des buckets de 10 mètres pour l'expansion du rayon
+                const bucketA = Math.floor(a.distanceM / 10);
+                const bucketB = Math.floor(b.distanceM / 10);
+                if (bucketA !== bucketB) return bucketA - bucketB;
+            }
+
+            // Dans le même bucket, "En ligne" d'abord
             if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-            
+
             if (a.enLigne) {
-                // Gestion des cas sans GPS (Distance = Infinity)
-                if (a.distanceM === Infinity && b.distanceM !== Infinity) return 1;
-                if (a.distanceM !== Infinity && b.distanceM === Infinity) return -1;
-                
-                if (a.distanceM !== Infinity && b.distanceM !== Infinity) {
-                    const bucketA = Math.floor(a.distanceM / 10);
-                    const bucketB = Math.floor(b.distanceM / 10);
-                    if (bucketA !== bucketB) return bucketA - bucketB;
-                }
-                // Si même distance ou les deux sans GPS : meilleures étoiles
+                // En ligne -> priorité aux meilleures étoiles
                 return (b.etoiles || 0) - (a.etoiles || 0);
             } else {
-                // Si les deux sont hors ligne : le plus récemment connecté d'abord
+                // Hors ligne -> priorité au plus récemment connecté
                 const timeA = new Date(a.dernier_acces || 0).getTime();
                 const timeB = new Date(b.dernier_acces || 0).getTime();
                 if (timeA !== timeB) return timeB - timeA;
@@ -277,42 +287,41 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             }
         });
 
-        // Règle de sécurité : Si on a assez de monde, on limite à 50km
-        if (nbTotal > limit) {
-            eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
+        // Règle : si plus de 20 inscrits au total, on applique la limite des 50km
+        let results = eligibles;
+        if (nbTotalInscrits >= 20) {
+            results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
         console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
-        if (eligibles.length === 0) {
-            console.log(`[DEBUG SEARCH] Raisons possibles du vide : GPS Client=${lat}/${lon}, Svc=${service}, ExclureID=${excludeUserId}`);
-        }
 
         const limitFixe = limit || 20;
-        const page = eligibles.slice(offset, offset + limitFixe);
+        const page = results.slice(offset, offset + limitFixe);
 
         return {
             prestataires: page.map(p => ({
-            id: p.user_id,
-            nom: p.nom,
-            prenom: p.prenom,
-            profession: p.profession,
-            bio: p.bio,
-            photo: p.photo_profil_url,
-            ville: p.ville,
-            services: p.services,
-            etoiles: p.etoiles,
-            nbAvis: (p.commentaires || []).length,
-            distanceM: Math.round(p.distanceM),
-            distanceKm: (p.distanceM / 1000).toFixed(2),
-            disponible: p.enLigne,
-            dernierAcces: formaterDernierAcces(p.dernier_acces),
-            telephone: p.autorise_numero_deconnexion ? p.telephone : null
+                id: p.user_id,
+                nom: p.nom,
+                prenom: p.prenom,
+                profession: p.profession,
+                bio: p.bio,
+                photo: p.photo_profil_url,
+                ville: p.ville,
+                services: p.services,
+                etoiles: p.etoiles,
+                nbAvis: (p.commentaires || []).length,
+                distanceM: Math.round(p.distanceM),
+                distanceKm: (p.distanceM / 1000).toFixed(2),
+                disponible: p.enLigne,
+                dernierAcces: formaterDernierAcces(p.dernier_acces, p.enLigne),
+                telephone: p.autorise_numero_deconnexion ? p.telephone : null
             })),
             rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
-            hasMore: eligibles.length > offset + limitFixe,
-            total: eligibles.length
+            hasMore: results.length > offset + limitFixe,
+            total: nbTotalInscrits
         };
     } catch (err) {
+        console.error("SEARCH ERROR:", err);
         return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
     }
 }
@@ -440,7 +449,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         lon = lon || req.session?.lonClient;
 
         const userId = req.session?.user?.id;
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 50, userId);
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, 20, userId);
         
         // On garde tous les prestataires, même s'ils sont inactifs depuis longtemps
         const filtered = result.prestataires;

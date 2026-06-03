@@ -393,27 +393,28 @@ body {
     gap: 20px; margin-top: 16px;
 }
 
-/* --- Nouveau : Conteneur pour défilement horizontal (Top Prestataires) --- */
+/* --- Conteneur pour défilement VERTICAL (Top Prestataires) --- */
 .scroll-container {
     display: flex;             /* Aligne tout en ligne */
-    flex-direction: row;       /* Force la ligne */
-    overflow-x: auto;          /* Active le défilement horizontal */
-    overflow-y: hidden;        /* Empêche le défilement vertical */
-    justify-content: flex-start; /* Changé de center pour permettre le scroll fluide */
+    flex-direction: column;    /* Passage en VERTICAL */
+    overflow-y: auto;          /* Active le défilement vertical */
+    overflow-x: hidden;        /* Empêche le défilement horizontal */
+    align-items: center;       /* Centre les cartes */
     gap: 15px;                 /* Espace */
     padding: 20px 10px;
     width: 100%;               /* Prend toute la largeur */
+    max-height: 600px;         /* Limite de hauteur pour créer un défilement interne */
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Fluidité Android */
     scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
     scrollbar-width: none;
 }
 .scroll-container::-webkit-scrollbar { display: none; }
 
 .profile-card {
-    flex: 0 0 250px;           /* Largeur fixe, ne change JAMAIS */
-    width: 250px;
+    flex: 0 0 auto;            /* Taille automatique selon le contenu */
+    width: 100%;               /* Prend toute la largeur dispo */
+    max-width: 350px;          /* Largeur idéale pour Android */
     border: 1px solid #ddd;
     border-radius: 12px;
     padding: 15px;
