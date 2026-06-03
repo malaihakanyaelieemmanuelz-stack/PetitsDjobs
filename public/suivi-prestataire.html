@@ -16,7 +16,7 @@
     <div class="floating-top-info" style="background: #5D4037; color: white;">
         <div id="navigation-hint" class="nav-hint-google">⬆️ Suivez l'itinéraire bleu</div>
         <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: white;">NAVIGATEUR PRESTATAIRE</h2>
-        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.85rem; margin: 3px 0 0;">Précision GPS en cours...</p>
+        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.7rem; margin: 3px 0 0;">Initialisation...</p>
     </div>
 
     <div class="floating-bottom-actions">
@@ -46,6 +46,11 @@
         let lastDist = null;
         let aConfirmeSecurite = false;
 
+        function logDebug(msg) {
+            console.log("[DEBUG SUIVI] " + msg);
+            document.getElementById('mission-info').innerText = msg;
+        }
+
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
         const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
@@ -70,30 +75,33 @@
             }).addTo(map);
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
+                if (!cmd.missionId) {
+                    logDebug("Erreur : ID Mission manquant dans la session.");
+                    alert("Code Erreur: M1-NULL (Mission introuvable)");
+                    return;
+                }
                 missionId = cmd.missionId;
+                logDebug("Mission " + missionId + " chargée. Recherche GPS...");
                 startGPS();
                 setInterval(pollClient, 3000);
                 setInterval(checkStatus, 2000);
-            });
+            }).catch(e => logDebug("Erreur chargement session: " + e.message));
         }
 
         let isUpdatingStatus = false;
 
         function startGPS() {
+            if (!navigator.geolocation) {
+                alert("Erreur: Votre téléphone ne supporte pas le GPS.");
+                return;
+            }
             navigator.geolocation.watchPosition(pos => {
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-
-                // Augmentation de la précision : on ignore les points avec une erreur > 60m
-                if (accuracy > 100) {
-                    document.getElementById('mission-info').innerText = `Signal faible (±${Math.round(accuracy)}m)...`;
-                    return;
-                }
+                logDebug(`GPS OK (±${Math.round(accuracy)}m). Lat:${lat.toFixed(4)}`);
 
                 const newPos = [lat, lon];
                 markerMe.setLatLng(newPos);
-                if (!map.getCenter().lat) map.setView(newPos, 17);
-                
-                document.getElementById('mission-info').innerText = `GPS : Précision excellente (±${Math.round(accuracy)}m)`;
+                if (map.getZoom() < 10) map.setView(newPos, 17);
 
                 fetch('/sauvegarder-position', {
                     method: 'POST',
@@ -108,11 +116,14 @@
         function pollClient() {
             fetch('/api/suivi-client-gps?missionId=' + missionId).then(r => r.json()).then(pos => {
                 if (pos.lat) {
+                    logDebug("Position client reçue.");
                     clientPos = pos;
                     markerDest.setLatLng([pos.lat, pos.lon]);
                     // On force la mise à jour de l'itinéraire dès qu'on a les deux positions
                     const myPos = markerMe.getLatLng();
                     if (myPos.lat !== 0) updateNav(myPos.lat, myPos.lng);
+                } else {
+                    logDebug("En attente de la position du client...");
                 }
             });
         }
