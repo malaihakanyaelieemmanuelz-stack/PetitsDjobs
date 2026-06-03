@@ -227,7 +227,7 @@
             const nomEscapedJS = nomComplet.replace(/'/g, "\\'"); // Protection contre les apostrophes
             const cardAction = p.disponible 
                 ? `location.href='/voir-prestataire?id=${p.id}'` 
-                : `afficherContactHorsLigne('${p.id}', '${nomEscapedJS}')`;
+                : `afficherContactHorsLigne('${p.id}', '${nomEscapedJS}', '${servicesAffiche.replace(/'/g, "\\'")}')`;
             
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
@@ -266,19 +266,19 @@
                 </article>`;
         }
 
-        function afficherContactHorsLigne(id, nom) {
-            fetch('/get-prestataire-contact/' + id)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.telephone) {
-                        if (confirm(`PRESTATAIRE HORS LIGNE\n\n${nom} n'est pas connecté actuellement.\n\nSouhaitez-vous le contacter directement au : ${data.telephone} ?\n\n⚠️ RAPPEL : Toute rencontre en dehors du site et tout paiement pour ce service hors de ce site est passible de poursuites judiciaires.`)) {
-                            window.location.href = "tel:" + data.telephone;
-                        }
-                    } 
-                    else {
-                        alert(`${nom} est hors ligne et n'a pas laissé de numéro de secours. Réessayez plus tard.`);
-                    }
-                });
+        function afficherContactHorsLigne(id, nom, service) {
+            if (!connecte) { window.location.href = '/connexion.html'; return; }
+            
+            // On sélectionne le prestataire en session avant de rediriger
+            fetch('/selectionner-prestataire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prestataireId: id, serviceChoisi: service })
+            }).then(res => {
+                if (res.ok) {
+                    window.location.href = '/appele';
+                }
+            });
         }
 
         async function chargerJobsPublics() {

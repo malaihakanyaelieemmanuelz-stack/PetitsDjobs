@@ -381,6 +381,7 @@ app.get('/attente-prestataire', requireAuth, (req, res) => res.sendFile(path.joi
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
 app.get('/mes-commandes', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'mes-commandes.html')));
+app.get('/appele', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'appele.html')));
 
 app.post('/deconnexion', async (req, res) => {
     if (req.session.user) {

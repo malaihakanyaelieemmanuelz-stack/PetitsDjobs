@@ -9,28 +9,33 @@
     <title>Appel Prestataire - PETITSDJOBS</title>
 </head>
 <body class="auth-page">
-    <div class="login-card" style="max-width: 400px;">
-        <h1 style="font-size: 1.5rem; color: #5D4037;">APPEL DE CONFIRMATION</h1>
-        <p style="color: #666; font-size: 0.9rem;">Veuillez appeler le prestataire pour confirmer sa disponibilité pour votre commande.</p>
+    <div class="login-card" style="max-width: 420px; border-top: 6px solid #8B4513;">
+        <h1 style="font-size: 1.6rem; color: #8B4513; font-weight: 900;">CONTACT PRESTATAIRE</h1>
+        
+        <div style="background: #fff5f5; color: #b71c1c; padding: 15px; border-radius: 12px; border: 1px solid #ffcdd2; font-size: 0.85rem; margin-bottom: 20px; font-weight: bold; text-align: left; line-height: 1.4;">
+            ⚠️ ATTENTION : Tout paiement effectué en dehors de la plateforme PetitsDjobs est passible de poursuites judiciaires. Votre sécurité n'est plus garantie si vous contournez le site.
+        </div>
+
+        <p style="color: #555; font-size: 0.95rem; margin-bottom: 20px;">Appelez ce prestataire pour vérifier sa disponibilité immédiate.</p>
         
         <div id="info-presta" class="provider-pick" style="justify-content: center; margin: 20px 0;">
-             <img id="call-photo" src="default-profile.png" style="width: 70px; height: 70px; border-radius: 50%;">
+             <img id="call-photo" src="default-profile.png" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #8B4513; object-fit: cover;">
              <div style="text-align: left;">
                  <strong id="call-nom">Chargement...</strong><br>
-                 <small id="call-tel">-- -- -- --</small>
+                 <small id="call-tel" style="font-size: 1.15rem; color: #8B4513; font-weight: 900;">-- -- -- --</small>
              </div>
         </div>
 
-        <a id="link-appel" href="#" class="btn-primary-sm" style="display:block; text-decoration:none; background:#2e7d32; padding:15px; margin-bottom:20px;">
-            📞 LANCER L'APPEL
+        <a id="link-appel" href="#" class="btn-primary-sm" style="display:flex; text-decoration:none; background:#2e7d32; padding:15px; margin-bottom:25px; border-radius: 50px;">
+            📞 APPELER MAINTENANT
         </a>
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-        <p style="font-size:0.9rem; margin-bottom: 15px;">Le prestataire a-t-il accepté ?</p>
-        <div style="display:flex; gap:10px;">
-            <button onclick="location.href='/commande'" style="flex:1; background:#5D4037; color:white; border:none; border-radius:6px; padding:12px; cursor:pointer; font-weight:bold;">OUI, ACCEPTÉ</button>
-            <button onclick="location.href='/index.html?erreur=refus_appel'" style="flex:1; background:#333; color:white; border:none; border-radius:6px; padding:12px; cursor:pointer; font-weight:bold;">NON, REFUSÉ</button>
+        <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 10px;">
+            <p style="font-size:1rem; margin-bottom: 15px; font-weight: bold; color: #333;">Le prestataire a-t-il accepté ?</p>
+            <div style="display:flex; flex-direction: column; gap:12px;">
+                <button onclick="location.href='/commande'" class="btn-primary-sm" style="width:100%; background:#8B4513; border: none;">OUI, IL A ACCEPTÉ</button>
+                <button onclick="location.href='/index.html?erreur=refus_appel'" class="btn-danger" style="width:100%; border: none;">NON, IL A REFUSÉ</button>
+            </div>
         </div>
     </div>
 
