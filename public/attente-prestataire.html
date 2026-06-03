@@ -67,7 +67,8 @@
 
         // Charger les infos du prestataire pour la session
         fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-            if (cmd.prestataireNom) {
+            if (cmd.missionId) {
+                missionId = cmd.missionId;
                 document.getElementById('wait-prenom').innerText = cmd.prestatairePrenom || 'votre prestataire';
                 document.getElementById('wait-service').innerText = cmd.service || 'Service';
                 if (cmd.prestatairePhoto) document.getElementById('wait-photo').src = cmd.prestatairePhoto;
@@ -87,17 +88,23 @@
         }, 1000);
 
         const poll = setInterval(async () => {
-            const res = await fetch('/api/statut-mission');
+            if (!missionId) return;
+
+            // On passe explicitement le missionId pour éviter les problèmes de session
+            const res = await fetch('/api/statut-mission?missionId=' + missionId);
             const data = await res.json();
             
             if (data.statut === 'en_route') {
                 clearInterval(countdown);
                 clearInterval(poll);
                 window.location.href = '/suivi';
-            } else if (data.statut === 'refuse') {
+            } else if (data.statut === 'refuse' || data.statut === 'annule_faute_de_prestataire') {
+                // Si le prestataire refuse ou si le système annule faute de réponse
                 clearInterval(countdown);
                 clearInterval(poll);
-                alert("Le prestataire a refusé la mission. Vous allez être redirigé vers la recherche.");
+                
+                const msg = data.statut === 'refuse' ? "Le prestataire a refusé votre offre, recherchez un autre prestataire stp." : "Le délai est expiré et aucun prestataire n'est disponible.";
+                alert(msg + " Vous allez être redirigé vers la recherche.");
                 window.location.href = '/choisir-prestataire';
             }
         }, 2000); // Polling toutes les 2 secondes

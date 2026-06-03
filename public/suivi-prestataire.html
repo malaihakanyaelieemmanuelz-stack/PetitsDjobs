@@ -76,7 +76,12 @@
 
             routingControl = L.Routing.control({
                 waypoints: [],
-                lineOptions: { styles: [{ color: '#007bff', opacity: 0.8, weight: 6 }] },
+                lineOptions: { 
+                    styles: [
+                        { color: 'white', opacity: 0.8, weight: 11 }, // Contour blanc pour le relief
+                        { color: '#1a73e8', opacity: 1, weight: 7 }    // Bleu "Google Maps" vif
+                    ] 
+                },
                 createMarker: () => null,
                 addWaypoints: false,
                 show: false,
@@ -125,9 +130,10 @@
                 const newPos = [lat, lon];
                 markerMe.setLatLng(newPos);
                 
-                if (!hasCentered) {
-                    map.setView(newPos, 17);
-                    hasCentered = true;
+                // Suit le prestataire au fur et à mesure de son déplacement
+                if (!hasCentered || map.getBounds().contains(newPos) === false) {
+                    map.panTo(newPos);
+                    if(!hasCentered) { map.setZoom(17); hasCentered = true; }
                 }
 
                 fetch('/sauvegarder-position', {
