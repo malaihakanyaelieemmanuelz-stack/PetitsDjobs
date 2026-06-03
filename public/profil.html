@@ -80,7 +80,21 @@
             <div class="info-value" id="email" style="font-size:1rem;">-</div>
         </div>
 
+        <!-- Bouton de validation de fin de mission (Apparaît si mission finie mais départ non validé) -->
+        <div id="zone-depart-urgent" style="display:none; margin-bottom:20px;">
+            <button onclick="location.href='/suivi'" class="btn-primary-sm" style="background:#333; width:100%; border:3px solid #ff9800;">
+                📢 VALIDER LE DÉPART DU PRESTATAIRE
+            </button>
+        </div>
+
         <!-- Section Client -->
+            // Vérifier s'il y a une mission en attente de départ
+            fetch('/api/mes-commandes-futures').then(r => r.json()).then(missions => {
+                const active = missions.find(m => m.statut === 'attente_securite');
+                if (active) {
+                    document.getElementById('zone-depart-urgent').style.display = 'block';
+                }
+            });
         <div class="action-block">
             <div class="section-title">BESOIN D'UN SERVICE ?</div>
             <button onclick="location.href='index.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem;">

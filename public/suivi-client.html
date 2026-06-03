@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -13,18 +13,18 @@
 <body class="tracking-body">
     <div id="map"></div>
 
-    <div class="floating-top-info" style="background: white; border-bottom: 2px solid #5D4037;">
+    <div class="floating-top-info" style="background: white; border: 1px solid #eee;">
         <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #5D4037;">SUIVI DE VOTRE PRESTATAIRE</h2>
-        <p id="mission-info" style="color:#666; font-size: 0.7rem; margin: 3px 0 0;">Initialisation...</p>
+        <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
     </div>
 
     <div class="floating-bottom-actions">
-        <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #ff5252; font-size: 1rem;">Localisation du prestataire...</div>
+        <div id="gps-info" style="font-weight: 800; margin-bottom: 15px; color: #ff5252; font-size: 1.1rem;">Recherche du prestataire...</div>
         
-        <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">L'INTERVENANT EST ARRIVÉ</button>
-        <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm" style="display:none; background:#5D4037; width:100%; height:50px; margin-bottom:10px;">TERMINER LA TÂCHE</button>
-        <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; width:100%; height:50px;">🆘 SIGNALER UN DANGER</button>
-        <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#333; width:100%; height:50px;">VALIDER LE DÉPART ET PAYER</button>
+        <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%;">L'INTERVENANT EST ARRIVÉ</button>
+        <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm" style="display:none; width:100%;">LA TÂCHE EST FINIE</button>
+        <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; width:100%; margin-top:10px;">🆘 SIGNALER UN DANGER</button>
+        <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm" style="display:none; background:#333; width:100%;">DÉPART DU PRESTATAIRE</button>
     </div>
 
     <!-- Modal de notation -->
@@ -174,12 +174,13 @@
                 switch(data.statut) {
                     case 'en_route':
                         btnArrive.style.display = 'block';
-                        btnSos.style.display = 'none';
+                        btnFin.style.display = 'none';
                         btnDepart.style.display = 'none';
                         statusTxt.innerText = "Le prestataire arrive...";
                         break;
                     case 'travail_en_cours':
                         btnArrive.style.display = 'none';
+                        btnFin.style.display = 'block';
                         btnSos.style.display = 'block';
                         btnDepart.style.display = 'none';
                         statusTxt.innerText = "Intervention en cours";

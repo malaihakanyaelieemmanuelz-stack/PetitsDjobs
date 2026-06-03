@@ -74,27 +74,56 @@
                 window.location.href = '/prestataire';
                 return;
             }
-            const nom = [data.prenom, data.nom].filter(Boolean).join(' ');
+            const nomComplet = [data.prenom, data.nom].filter(Boolean).join(' ');
             const avis = (data.commentaires || []).length
                 ? (data.commentaires || []).map(c => '<li>' + (typeof c === 'string' ? c : c.texte) + '</li>').join('')
                 : '<li>Aucun avis client pour le moment.</li>';
 
+            // Calcul du statut (Disponible / Hors ligne)
+            const SEUIL_MS = 5 * 60 * 1000;
+            const enLigne = data.dernier_acces ? (Date.now() - new Date(data.dernier_acces).getTime() < SEUIL_MS) : false;
+            
+            // Formatage de la date comme sur l'accueil
+            const statusLabel = enLigne ? 
+                '<span style="color:#4caf50; font-weight:bold;">● Disponible actuellement</span>' : 
+                '<span style="color:#757575; font-weight:bold;">○ Hors ligne</span>';
+
             document.getElementById('ma-carte-container').innerHTML = `
                 <div class="premium-header">
                     <div style="position:relative; display:inline-block;">
-                        <img src="${data.photo || 'default-profile.png'}" class="premium-avatar" alt="Photo">
-                        <div style="position:absolute; bottom:5px; right:10px; background:#4caf50; color:white; width:30px; height:30px; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">✓</div>
+                        <img src="${data.photo || 'default-profile.png'}" class="premium-avatar" style="border-color:${enLigne ? '#4caf50' : '#ffffff'}" alt="Photo">
+                        <div style="position:absolute; bottom:5px; right:10px; background:${enLigne ? '#4caf50' : '#ccc'}; color:white; width:30px; height:30px; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                            ${enLigne ? '✓' : ''}
+                        </div>
                     </div>
-                    <h2 style="margin:15px 0 5px; font-size:2rem; font-weight:900; letter-spacing:-0.5px;">${nom}</h2>
-                    <div style="background:rgba(255,255,255,0.15); display:inline-block; padding:5px 15px; border-radius:20px; font-size:0.85rem; font-weight:600;">
-                        ⭐ ${data.etoiles ?? 0} / 5 · Profil Certifié
+                    <h2 style="margin:15px 0 5px; font-size:2rem; font-weight:900; letter-spacing:-0.5px;">${nomComplet}</h2>
+                    <div style="margin-bottom:10px; font-size:0.9rem; opacity:0.9;">${statusLabel}</div>
+                    
+                    <div style="background:rgba(255,255,255,0.1); display:inline-block; padding:10px 20px; border-radius:25px; backdrop-filter:blur(5px);">
+                        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:5px;">
+                            <span style="font-weight:900; font-size:1.2rem;">⭐ ${data.etoiles ?? 0}</span>
+                            <small style="opacity:0.8;">(${data.commentaires?.length || 0} avis)</small>
+                        </div>
+                        <div style="width:120px; height:6px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden;">
+                            <div style="width:${Math.min((data.etoiles || 0) * 20, 100)}%; height:100%; background:#ffffff;"></div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="premium-body">
                     <div class="info-tile-grid">
                         <div class="info-tile"><span class="tile-label">Âge</span><span class="tile-value">${data.age || '-'} ans</span></div>
                         <div class="info-tile"><span class="tile-label">Ville</span><span class="tile-value">${data.ville || '-'}</span></div>
                         <div class="info-tile" style="grid-column: span 2; background:#fbfbfb;"><span class="tile-label">Domaine d'expertise</span><span class="tile-value" style="color:#5D4037;">${data.profession || '-'}</span></div>
+                        <div class="info-tile" style="grid-column: span 2;">
+                            <span class="tile-label">Services proposés</span>
+                            <span class="tile-value" style="font-size:0.9rem; color:#666;">${data.services || '-'}</span>
+                        </div>
+                    </div>
+
+                    <div class="info-tile" style="margin-bottom:20px; text-align:left; padding:20px;">
+                        <span class="tile-label">Contact enregistré</span>
+                        <span class="tile-value">📞 ${data.telephone || 'Non renseigné'}</span>
                     </div>
                     <div class="premium-bio-box">
                         <span class="tile-label" style="margin-bottom:10px; color:#5D4037; font-size:0.8rem;">Bio Professionnelle</span>

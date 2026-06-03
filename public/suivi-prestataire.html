@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -16,18 +18,18 @@
     <div class="floating-top-info" style="background: #5D4037; color: white;">
         <div id="navigation-hint" class="nav-hint-google">⬆️ Suivez l'itinéraire bleu</div>
         <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: white;">NAVIGATEUR PRESTATAIRE</h2>
-        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.7rem; margin: 3px 0 0;">Initialisation...</p>
+        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Initialisation du GPS...</p>
     </div>
 
     <div class="floating-bottom-actions">
-        <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #1a73e8; font-size: 1rem;">Initialisation...</div>
+        <div id="gps-info" style="font-weight: 800; margin-bottom: 15px; color: #5D4037; font-size: 1.1rem;">Calcul de la distance...</div>
         
         <div id="group-presta-arrive" style="display:none; flex-direction:column; gap:10px; margin-bottom:10px;">
             <p style="font-size:0.85rem; color:#1a73e8; font-weight:bold;">📍 Vous êtes à destination</p>
-            <button onclick="marquerArrivee()" class="btn-primary-sm" style="background:#1a73e8; height:50px;">JE SUIS ARRIVÉ</button>
+            <button onclick="marquerArrivee()" class="btn-primary-sm" style="background:#2e7d32; height:60px; font-size:1.2rem; border-radius:18px;">JE SUIS ARRIVÉ</button>
         </div>
 
-        <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">MARQUER TÂCHE TERMINÉE</button>
+        <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#5D4037; width:100%; height:60px; border-radius:18px;">MARQUER TÂCHE TERMINÉE</button>
         
         <div id="group-securite" style="display:none; flex-direction:column; gap:10px; margin-bottom:10px;">
             <p style="font-size:0.85rem; color:#5D4037; font-weight:bold;">Tâche finie. Éloignez-vous de 20m pour valider ou confirmez ici :</p>
