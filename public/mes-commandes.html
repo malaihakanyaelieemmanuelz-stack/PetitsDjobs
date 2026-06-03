@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes commandes - PETITSDJOBS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/profil" style="text-decoration:none; color:#5D4037; font-weight:bold;">← RETOUR PROFIL</a>
+            <h1>MES COMMANDES</h1>
+        </div>
+    </header>
+
+    <main class="app-wrap">
+        <h2 class="page-title">Suivi de vos services</h2>
+        <p class="page-sub">Retrouvez ici vos prestations en cours ou prévues.</p>
+
+        <div id="liste-commandes">
+            <div style="text-align:center; padding:50px;">
+                <p>Chargement de vos commandes...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const statusLabels = {
+            'en_attente_prestataire': '⏳ En attente du prestataire',
+            'en_route': '🚗 Prestataire en route',
+            'travail_en_cours': '🛠️ Travail en cours',
+            'attente_securite': '🛡️ Vérification sécurité'
+        };
+
+        async function chargerCommandes() {
+            const res = await fetch('/api/mes-commandes-futures');
+            const missions = await res.json();
+            const container = document.getElementById('liste-commandes');
+
+            if (!missions || missions.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px; background:white; border-radius:15px;">
+                        <p style="font-size:1.2rem; color:#888;">Vous n'avez aucune commande prévue pour le moment.</p>
+                        <a href="/index.html" class="btn-primary-sm" style="display:inline-flex; margin-top:20px;">Réserver un service</a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = missions.map(m => `
+                <div class="mission-future-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                        <span class="status-badge">${statusLabels[m.statut] || m.statut}</span>
+                        <small style="color:#999;">Commandé le ${new Date(m.created_at).toLocaleDateString('fr-FR')}</small>
+                    </div>
+                    <h3 style="margin:5px 0; color:#333;">${m.service}</h3>
+                    <p style="margin:5px 0; color:#5D4037; font-weight:bold;">Prestataire : ${m.prestataire.prenom} ${m.prestataire.nom}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+                        <span style="font-weight:bold; font-size:1.1rem;">${m.prix} FCFA</span>
+                        ${m.statut === 'en_attente_prestataire' ? 
+                            `<button onclick="location.href='/attente-prestataire?missionId=${m.id}'" class="btn-primary-sm" style="min-height:35px; padding:5px 15px; font-size:0.8rem;">VOIR LE SUIVI</button>` : 
+                            `<button onclick="location.href='/suivi?missionId=${m.id}'" class="btn-primary-sm" style="min-height:35px; padding:5px 15px; font-size:0.8rem;">SUIVRE LE GPS</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        chargerCommandes();
+    </script>
+</body>
+</html>

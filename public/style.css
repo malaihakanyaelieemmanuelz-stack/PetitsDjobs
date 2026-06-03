@@ -64,23 +64,25 @@ body {
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     border: none !important;
     background-color: transparent !important;
+    outline: none;
+    color: transparent; /* Masque tout texte accidentel */
 }
 
 /* Oeil barré (Code masqué) - État par défaut */
 .toggle-password {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23666' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.477 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.822 7.822L21 21m-2.278-2.278L15.07 15.07m-5.14-5.14l1.393 1.393m0 0l.82 1.05M12 12l.33.22' /%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.477 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.822 7.822L21 21m-2.278-2.278L15.07 15.07m-5.14-5.14l1.393 1.393m0 0l.82 1.05M12 12l.33.22' /%3E%3C/svg%3E");
 }
 
 /* Oeil ouvert (Code visible) - Quand la classe .visible est ajoutée */
 .toggle-password.visible {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23333' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z' /%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%235D4037' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z' /%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /%3E%3C/svg%3E");
 }
 
 .login-card h1 { color: #333333; font-size: 2.5rem; margin-bottom: 25px; text-transform: uppercase; }
@@ -334,17 +336,29 @@ body {
     font-size: 1.1rem; display: flex; align-items: center; justify-content: center; min-height: 56px;
 }
 .trust-card {
-    max-width: 420px; margin: 30px auto; background: white;
-    border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    max-width: 550px; /* Augmentation de la largeur maximale */
+    margin: 40px auto; 
+    background: white;
+    border-radius: 20px; 
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
     overflow: hidden; text-align: center;
+    border: 1px solid #eee;
+    transition: transform 0.3s ease;
 }
-.trust-card-header { background: #5D4037; color: white; padding: 24px 20px 20px; }
+.trust-card:hover { transform: translateY(-5px); }
+
+.trust-card-header { 
+    background: linear-gradient(135deg, #5D4037 0%, #3e2723 100%); 
+    color: white; 
+    padding: 35px 20px; 
+}
 .trust-card-header img {
-    width: 110px; height: 110px; border-radius: 50%;
+    width: 120px; height: 120px; border-radius: 50%;
     border: 4px solid white; object-fit: cover; margin-bottom: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
-.trust-card-body { padding: 24px; text-align: left; }
-.trust-card-body p { margin: 8px 0; color: #444; }
+.trust-card-body { padding: 24px; text-align: center; } /* Centrage du contenu */
+.trust-card-body p { margin: 12px 0; color: #444; line-height: 1.5; font-size: 1rem; }
 .checkout-card {
     max-width: 440px; margin: 24px auto; background: white;
     padding: 24px; border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -367,6 +381,52 @@ body {
 .provider-pick {
     display: flex; align-items: center; gap: 12px;
     background: #f9f9f9; padding: 12px; border-radius: 10px; margin: 16px 0;
+}
+
+/* --- Animations pour la page d'attente --- */
+.pulse-avatar {
+    position: relative;
+    display: inline-block;
+}
+.pulse-avatar::before {
+    content: '';
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: #5D4037;
+    opacity: 0.3;
+    animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+    z-index: -1;
+}
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+.progress-container {
+    width: 100%; height: 6px; background: #eee;
+    border-radius: 10px; margin: 20px 0; overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%; width: 100%; background: #5D4037;
+    transition: width 1s linear;
+}
+
+.mission-future-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 5px solid #5D4037;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.status-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: bold;
+    background: #eee;
+    color: #666;
 }
 .provider-pick img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
 .steps-bar {
@@ -399,26 +459,33 @@ body {
     h1, h2, h3 { margin-top: 0 !important; }
 
     /* Reset des hauteurs pour les conteneurs de contenu (évite le vide de 855px) */
-    .login-card, .trust-card, .checkout-card, .card-presta-mobile, .app-wrap, section {
-        width: 100% !important;
-        max-width: 650px !important;
-        margin: 0 auto !important;
-        padding: 10px 15px !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
+    .login-card, .checkout-card, .card-presta-mobile, .app-wrap, section {
+        width: 95% !important;
+        max-width: 500px !important;
+        margin: 20px auto !important;
+        padding: 25px 20px !important;
+        border: 1px solid #eee !important;
+        border-radius: 15px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
         box-sizing: border-box;
         height: auto !important;
-        min-height: 100dvh !important; /* Pleine hauteur pour Android */
-        background-color: transparent !important; /* Rendu transparent comme les catégories */
+        min-height: auto !important;
+        background-color: white !important;
     }
 
     /* Carte de profil immersive et transparente */
     .trust-card {
-        min-height: 100dvh !important;
+        width: 95% !important;
+        max-width: 520px !important;
+        margin: 30px auto !important; /* Centrage forcé sur mobile */
+        border-radius: 20px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+        background-color: white !important;
+        border: 1px solid #eee !important;
+        min-height: auto !important;
+        display: block !important;
     }
-    .trust-card-header { background: transparent !important; }
-    .trust-card-header img { border-color: #5D4037 !important; }
+    .trust-card-header { padding: 30px 15px !important; }
 
     .auth-page {
         display: flex !important;

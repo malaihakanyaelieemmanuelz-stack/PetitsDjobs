@@ -166,6 +166,30 @@ async function distanceMarcheReelle(lat1, lon1, lat2, lon2) {
     return null; // Retourne null en cas d'échec pour repli sur Haversine
 }
 
+/**
+ * Formate la date de dernière connexion de façon humaine
+ */
+function formaterDernierAcces(dateIso) {
+    if (!dateIso) return "Jamais connecté";
+    const date = new Date(dateIso);
+    const maintenant = new Date();
+    const diffJours = Math.floor((maintenant - date) / (1000 * 60 * 60 * 24));
+    
+    const heures = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const heureFormatee = `${heures}:${minutes}`;
+
+    if (diffJours === 0) {
+        return `Aujourd'hui à ${heureFormatee}`;
+    } else if (diffJours === 1) {
+        return `Hier à ${heureFormatee}`;
+    } else if (diffJours === 2) {
+        return `Avant-hier à ${heureFormatee}`;
+    } else {
+        return `le ${date.toLocaleDateString('fr-FR')} à ${heureFormatee}`;
+    }
+}
+
 async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
     try {
         const timestamp = new Date().toLocaleTimeString();
@@ -175,11 +199,9 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
         const dLon = (lon && lon !== 'undefined') ? lon : '?';
         console.log(`[DEBUG SEARCH ${timestamp}] Svc=${service || 'Tous'}, GPS=${dLat},${dLon}`);
 
-        // 1. On pré-filtre par un "Bounding Box" (carré de ~50km) directement en SQL
-        // Cela évite de charger 10 000 lignes pour n'en garder que 10.
-        let query = supabase.from('infos_prestataires').select('*, utilisateurs:user_id(id, nom, prenom, dernier_acces)');
+        // 1. On récupère les prestataires (on enlève la jointure qui pose erreur)
+        let query = supabase.from('infos_prestataires').select('*');
         
-        // On garde un périmètre large par défaut, mais on ne filtre durement que si on a beaucoup de monde
         if (lat && lon && lat !== 'undefined' && lat !== null) {
             const delta = 0.5; // Environ 55km autour de la position
             query = query.gte('lat', parseFloat(lat) - delta)
@@ -195,15 +217,24 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
         }
 
+        // 2. On récupère les infos utilisateurs séparément pour éviter l'erreur de relationship
+        const userIds = prestataires.map(p => p.user_id);
+        const { data: users } = await supabase
+            .from('utilisateurs')
+            .select('id, nom, prenom, dernier_acces')
+            .in('id', userIds);
+
+        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
 
         let eligibles = (prestataires || [])
             .filter(p => String(p.user_id) !== String(excludeUserId))
             .filter(p => serviceMatch(p, service))
-            .filter(p => p.utilisateurs) // Sécurité : s'assurer que le compte utilisateur existe
+            .filter(p => userMap[p.user_id]) // Sécurité
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
-                const user = p.utilisateurs;
+                const user = userMap[p.user_id];
                 const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
                 const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
@@ -220,38 +251,29 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
         const nbTotal = eligibles.length;
 
-        if (nbTotal >= 20) {
-            eligibles.sort((a, b) => {
-                // 1. Tranches de 10 mètres
+        // 3. Logique de tri ultra-précise
+        eligibles.sort((a, b) => {
+            // Règle 1 : En ligne d'abord
+            if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+            
+            if (a.enLigne) {
+                // Si les deux sont en ligne : plus proche d'abord (tranches de 10m)
                 const bucketA = Math.floor(a.distanceM / 10);
                 const bucketB = Math.floor(b.distanceM / 10);
                 if (bucketA !== bucketB) return bucketA - bucketB;
-                
-                // 2. Dans la même tranche : En ligne d'abord
-                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-                
-                if (a.enLigne) {
-                    // En ligne : priorité aux étoiles, puis premier inscrit (ID croissant)
-                    if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
-                    return a.id_num - b.id_num;
-                } else {
-                    // Hors ligne : priorité à celui qui a quitté la ligne en dernier (Recence)
-                    const timeA = new Date(a.dernier_acces || 0).getTime();
-                    const timeB = new Date(b.dernier_acces || 0).getTime();
-                    return timeB - timeA;
-                }
-            });
-
-            // Règle : Si on a 20+ prestataires, on arrête de chercher au-delà de 50km
-            eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
-        } else {
-            eligibles.sort((a, b) => {
-                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+                // Si même distance : meilleures étoiles
+                return (b.etoiles || 0) - (a.etoiles || 0);
+            } else {
+                // Si les deux sont hors ligne : le plus récemment connecté d'abord
                 const timeA = new Date(a.dernier_acces || 0).getTime();
                 const timeB = new Date(b.dernier_acces || 0).getTime();
-                if (timeA !== timeB) return timeB - timeA;
-                return a.distanceM - b.distanceM;
-            });
+                return timeB - timeA;
+            }
+        });
+
+        // Règle de sécurité : Si on a assez de monde, on limite à 50km
+        if (nbTotal > limit) {
+            eligibles = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
         console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
@@ -277,7 +299,7 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             distanceM: Math.round(p.distanceM),
             distanceKm: (p.distanceM / 1000).toFixed(2),
             disponible: p.enLigne,
-            dernierAcces: p.dernier_acces,
+            dernierAcces: formaterDernierAcces(p.dernier_acces),
             telephone: p.autorise_numero_deconnexion ? p.telephone : null
             })),
             rayonMetres: page.length ? Math.max(...page.map(p => p.distanceM)) : 0,
@@ -352,6 +374,7 @@ app.get('/suivi', requireAuth, (req, res) => {
 app.get('/attente-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'attente-prestataire.html')));
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
+app.get('/mes-commandes', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'mes-commandes.html')));
 
 app.post('/deconnexion', async (req, res) => {
     if (req.session.user) {
@@ -790,6 +813,38 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
     res.json(result);
+});
+
+app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        
+        // Récupérer les missions du client qui ne sont pas encore terminées ou annulées
+        const { data: missions, error: mError } = await supabase
+            .from('missions')
+            .select('*')
+            .eq('client_id', userId)
+            .in('statut', ['en_attente_prestataire', 'en_route', 'travail_en_cours', 'attente_securite'])
+            .order('created_at', { ascending: false });
+
+        if (mError) throw mError;
+        if (!missions || missions.length === 0) return res.json([]);
+
+        // Récupérer les noms des prestataires manuellement pour éviter l'erreur de jointure
+        const prestataireIds = missions.map(m => m.prestataire_id);
+        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', prestataireIds);
+        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+
+        const result = missions.map(m => ({
+            ...m,
+            prestataire: userMap[m.prestataire_id] || { nom: 'Prestataire', prenom: '' }
+        }));
+
+        res.json(result);
+    } catch (err) {
+        console.error("[API MES COMMANDES] Erreur:", err.message);
+        res.status(500).json({ error: "Erreur lors de la récupération des commandes." });
+    }
 });
 
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
