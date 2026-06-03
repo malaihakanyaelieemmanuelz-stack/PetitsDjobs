@@ -104,7 +104,7 @@ if (supabase) {
 }
 
 const PRIX_PAR_KM = 200;
-const BATCH_PRESTATAIRES = 20;
+const BATCH_PRESTATAIRES = 50;
 const RAYON_MAX_METRES = 50000; // Limite standard à 50km
 const BUCKET_NAME = 'prestataires';
 const offresDiscuter = [];
@@ -198,25 +198,20 @@ function formaterDernierAcces(dateIso, enLigne) {
     return `Hors ligne - ${info}`;
 }
 
-async function chercherParRayonCroissant(lat, lon, service, offset, limit, excludeUserId) {
+async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, excludeUserId, type = 'service') {
     try {
         const timestamp = new Date().toLocaleTimeString();
         
         // Nettoyage pour les logs Render
         const dLat = (lat && lat !== 'undefined') ? lat : '?';
         const dLon = (lon && lon !== 'undefined') ? lon : '?';
-        console.log(`[DEBUG SEARCH ${timestamp}] Svc=${service || 'Tous'}, GPS=${dLat},${dLon}`);
+        console.log(`[DEBUG SEARCH ${timestamp}] Type=${type}, Query=${query_text || 'Tous'}, GPS=${dLat},${dLon}`);
 
         // 1. On récupère un pool plus large de prestataires pour garantir des résultats
         let query = supabase.from('infos_prestataires').select('*');
         
-        if (lat && lon && lat !== 'undefined' && lat !== null) {
-            // On tente d'abord de filtrer par zone large (1 degré ~= 110km)
-            const delta = 1.0; 
-            query = query.gte('lat', parseFloat(lat) - delta).lte('lat', parseFloat(lat) + delta);
-        }
-
-        query = query.order('etoiles', { ascending: false }).limit(100);
+        // On récupère les 200 meilleurs profils sans filtre géographique initial
+        query = query.order('etoiles', { ascending: false }).limit(200);
 
         const { data: prestataires, error: pError } = await query;
         
@@ -242,18 +237,15 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
                 const user = userMap[p.user_id];
                 if (!user) return false;
 
-                // 1. Recherche par service (logique existante)
-                const matchSvc = serviceMatch(p, service);
-                if (matchSvc) return true;
-
-                // 2. Recherche par nom/prénom si une recherche textuelle est présente
-                if (service) {
-                    const q = service.trim().toLowerCase();
+                if (type === 'nom' && query_text) {
+                    const q = query_text.trim().toLowerCase();
                     const nomComplet = `${user.prenom || ''} ${user.nom || ''}`.toLowerCase();
                     return nomComplet.includes(q);
                 }
-                
-                return true;
+
+                // Par défaut : Recherche par service
+                if (!query_text) return true;
+                return serviceMatch(p, query_text);
             })
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
@@ -302,9 +294,9 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             }
         });
 
-        // Règle : si plus de 50 inscrits au total, on applique la limite des 50km
+        // Règle : si plus de 50 inscrits au total, on applique la limite des 50km (Service uniquement)
         let results = eligibles;
-        if (nbTotalInscrits >= 50) {
+        if (type === 'service' && nbTotalInscrits >= 50) {
             results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
@@ -479,7 +471,7 @@ app.get('/get-top-prestataires', async (req, res) => {
         lon = lon || req.session?.lonClient;
 
         const userId = req.session?.user?.id;
-        const result = await chercherParRayonCroissant(lat, lon, null, 0, 20, userId);
+        const result = await chercherParRayonCroissant(lat, lon, null, 0, BATCH_PRESTATAIRES, userId);
         
         // On garde tous les prestataires, même s'ils sont inactifs depuis longtemps
         const filtered = result.prestataires;
@@ -700,19 +692,19 @@ app.post('/sauvegarder-position', async (req, res) => {
 });
 
 app.post('/chercher-prestataires', async (req, res) => {
-    const { lat, lon, service, offset } = req.body;
+    const { lat, lon, service, offset, type } = req.body;
     const latC = lat ?? req.session.latClient;
     const lonC = lon ?? req.session.lonClient;
     const svc = service || req.session.commande?.service;
 
-    if (latC == null || lonC == null) {
+    if (type !== 'nom' && (latC == null || lonC == null)) {
         return res.status(400).json({ error: 'Position GPS requise' });
     }
 
     req.session.latClient = parseFloat(latC);
     req.session.lonClient = parseFloat(lonC);
 
-    const result = await chercherParRayonCroissant(latC, lonC, svc, parseInt(offset, 10) || 0, BATCH_PRESTATAIRES, req.session.user?.id);
+    const result = await chercherParRayonCroissant(latC, lonC, svc, parseInt(offset, 10) || 0, BATCH_PRESTATAIRES, req.session.user?.id, type);
     res.json(result);
 });
 

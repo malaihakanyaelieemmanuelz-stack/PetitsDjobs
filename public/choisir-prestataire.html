@@ -36,6 +36,7 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const service = params.get('service') || '';
+        const searchType = params.get('type') || 'service';
         const isBackupMode = params.get('mode') === 'backup';
 
         document.getElementById('titre-service').innerText = service || "Prestataires";
@@ -84,7 +85,7 @@
             const res = await fetch('/chercher-prestataires', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat: userLat, lon: userLon, service, offset })
+                body: JSON.stringify({ lat: userLat, lon: userLon, service, offset, type: searchType })
             });
             const data = await res.json();
             
@@ -92,7 +93,8 @@
             if (!append) container.innerHTML = '';
 
             if (data.prestataires && data.prestataires.length > 0) {
-                info.innerText = `${data.total} prestataires trouvés pour "${service}"`;
+                const label = searchType === 'nom' ? 'correspondant à' : 'trouvés pour';
+                info.innerText = `${data.total} prestataires ${label} "${service}"`;
                 data.prestataires.forEach(p => {
                     container.innerHTML += createCard(p);
                 });
@@ -125,18 +127,23 @@
             charger(true);
         };
 
-        // Initialisation avec GPS
-        navigator.geolocation.getCurrentPosition(
-            async pos => {
-                userLat = pos.coords.latitude;
-                userLon = pos.coords.longitude;
-                charger();
-            },
-            () => {
-                info.innerText = 'GPS refusé. Affichage des meilleurs profils nationaux.';
-                charger();
-            }
-        );
+        if (searchType === 'nom') {
+            // Recherche par nom : Pas besoin de GPS
+            charger();
+        } else {
+            // Recherche par service : Initialisation avec GPS
+            navigator.geolocation.getCurrentPosition(
+                async pos => {
+                    userLat = pos.coords.latitude;
+                    userLon = pos.coords.longitude;
+                    charger();
+                },
+                () => {
+                    info.innerText = 'GPS refusé. Affichage des meilleurs profils nationaux.';
+                    charger();
+                }
+            );
+        }
     </script>
 </body>
 </html>

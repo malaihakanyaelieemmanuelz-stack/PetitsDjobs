@@ -46,10 +46,16 @@
     </div>
 
     <!-- Barre de recherche de services -->
-    <div class="app-wrap" style="margin-bottom: 10px;">
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="search-service" placeholder="Chercher un service ou un nom (ex: Ménage, Jean...)" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
-            <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
+    <div class="app-wrap" style="margin-bottom: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <select id="search-type" style="padding: 10px; border-radius: 10px; border: 2px solid #5D4037; font-weight: bold; background: white; font-size: 1rem;">
+                <option value="service">Rechercher par SERVICE (proximité)</option>
+                <option value="nom">Rechercher par NOM (sans GPS)</option>
+            </select>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="search-service" placeholder="Ex: Ménage, Cuisine ou le nom d'un ami..." style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
+                <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
+            </div>
         </div>
     </div>
 
@@ -135,8 +141,9 @@
 
         function rechercherService() {
             const q = document.getElementById('search-service').value.trim();
+            const type = document.getElementById('search-type').value;
             if (q) {
-                window.location.href = `/choisir-prestataire?service=${encodeURIComponent(q)}`;
+                window.location.href = `/choisir-prestataire?service=${encodeURIComponent(q)}&type=${type}`;
             }
         }
 
