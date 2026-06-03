@@ -19,6 +19,7 @@
         <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
         
         <div class="nav-actions-top">
+            <button onclick="location.href='/chat.html?missionId='+missionId" class="btn-primary-sm btn-nav" style="background:#8B4513;">💬 CHAT</button>
             <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm btn-nav" style="display:none; background:#2e7d32;">IL EST ARRIVÉ</button>
             <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm btn-nav" style="display:none;">TÂCHE FINIE</button>
             <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm btn-nav" style="display:none; background:#333;">VALIDER DÉPART</button>

@@ -413,17 +413,122 @@ body {
 
 .profile-card {
     flex: 0 0 auto;            /* Taille automatique selon le contenu */
-    width: 100%;               /* Prend toute la largeur dispo */
-    max-width: 350px;          /* Largeur idéale pour Android */
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 15px;
+    width: 280px;              /* Largeur fixe pour un beau carrousel */
+    border-radius: 20px;
+    padding: 0;                /* Reset padding pour le header */
     background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: inline-block;     /* Sécurité pour le flex */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
     scroll-snap-align: start;
     white-space: normal;       /* Permet au texte interne de revenir à la ligne */
     vertical-align: top;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(139, 69, 19, 0.15);
+}
+
+.card-header-banner {
+    height: 80px;
+    background: linear-gradient(135deg, #8B4513 0%, #5D4037 100%);
+    width: 100%;
+}
+
+.card-avatar-wrapper {
+    width: 90px;
+    height: 90px;
+    margin: -45px auto 10px;
+    position: relative;
+    z-index: 2;
+}
+
+.card-avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid white;
+    object-fit: cover;
+    background: #f0f0f0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-status-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+.card-status-dot.online { background: #4caf50; box-shadow: 0 0 5px #4caf50; }
+.card-status-dot.offline { background: #bbb; }
+
+.card-body-content {
+    padding: 10px 15px 20px;
+    text-align: center;
+}
+
+.card-body-content h3 { 
+    margin: 5px 0; 
+    font-weight: 800; 
+    color: #333; 
+    font-size: 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-body-content .profession { 
+    color: #8B4513; 
+    font-weight: 700; 
+    font-size: 0.85rem; 
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-pill { 
+    display: inline-flex; 
+    gap: 10px; 
+    background: #fdfaf9; 
+    padding: 6px 12px; 
+    border-radius: 12px; 
+    font-size: 0.8rem; 
+    margin-bottom: 15px; 
+    font-weight: 800; 
+    color: #5D4037;
+    border: 1px solid #f2ece9;
+}
+
+.services-txt { 
+    font-size: 0.75rem; 
+    color: #888; 
+    margin-bottom: 15px; 
+    height: 1.1rem; 
+    overflow: hidden; 
+    font-style: italic;
+}
+
+.card-action-btn {
+    width: 100%; 
+    padding: 12px; 
+    background: #5D4037; 
+    color: white; 
+    border: none; 
+    border-radius: 10px; 
+    font-weight: 800; 
+    cursor: pointer;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    transition: background 0.2s;
 }
 
 .provider-card {

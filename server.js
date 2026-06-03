@@ -581,6 +581,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 // Cette fonction tourne en arrière-plan toutes les 15 secondes pour vérifier les délais
 setInterval(async () => {
     const UNE_MINUTE_EN_MS = 60 * 1000;
+    const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
     const seuilExpiration = new Date(Date.now() - UNE_MINUTE_EN_MS).toISOString();
 
     // 1. Trouver les missions qui n'ont pas été acceptées à temps
@@ -593,6 +594,14 @@ setInterval(async () => {
     if (!missionsExpirees || missionsExpirees.length === 0) return;
 
     for (const mission of missionsExpirees) {
+        // VÉRIFICATION : Le prestataire est-il en ligne ?
+        const { data: user } = await supabase.from('utilisateurs').select('dernier_acces').eq('id', mission.prestataire_id).maybeSingle();
+        const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
+        const estEnLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
+
+        // RÈGLE : On n'expire automatiquement QUE si le prestataire est EN LIGNE
+        if (!estEnLigne) continue; 
+
         const backups = mission.backup_ids || [];
         
         if (backups.length > 0) {
@@ -608,7 +617,8 @@ setInterval(async () => {
                 .update({
                     prestataire_id: nouveauPrestaId,
                     backup_ids: resteBackups,
-                    created_at: new Date().toISOString() // On reset le timer pour le nouveau
+                    created_at: new Date().toISOString(), // On reset le timer pour le nouveau
+                    statut: 'en_attente_prestataire'
                 })
                 .eq('id', mission.id);
 
@@ -638,7 +648,10 @@ setInterval(async () => {
         } else {
             // PLUS DE SECOURS : ANNULATION FINALE
             console.log(`[AUTO-ANNULATION] Mission ${mission.id} : Aucun prestataire disponible.`);
-            await supabase.from('missions').update({ statut: 'annule_faute_de_prestataire' }).eq('id', mission.id);
+            await supabase.from('missions').update({ 
+                statut: 'refuse', 
+                raison_refus: "Temps de réponse expiré (Prestataire en ligne)" 
+            }).eq('id', mission.id);
             
             const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
             if (client?.email) {

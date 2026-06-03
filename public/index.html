@@ -53,7 +53,7 @@
                 <option value="nom">Rechercher par NOM (sans GPS)</option>
             </select>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="search-service" placeholder="Ex: Ménage, Cuisine ou le nom d'un ami..." style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
+                <input type="text" id="search-service" placeholder="EX: MENA ou CUISINE" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
                 <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
             </div>
         </div>
@@ -138,6 +138,16 @@
 
     <script>
         let connecte = false;
+
+        // Mise à jour dynamique du placeholder selon le type de recherche
+        document.getElementById('search-type').addEventListener('change', function() {
+            const input = document.getElementById('search-service');
+            if (this.value === 'service') {
+                input.placeholder = "EX: MENA ou CUISINE";
+            } else {
+                input.placeholder = "EX: JUPON";
+            }
+        });
 
         function rechercherService() {
             const q = document.getElementById('search-service').value.trim();
@@ -225,37 +235,24 @@
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
             return `
-                <article class="profile-card" style="cursor:pointer; text-align:center; padding: 25px; border: 2px solid #8B4513; border-radius: 20px; background: white;">
-                    <div onclick="${cardAction}">
-                        <div class="profile-circle" style="margin: 0 auto 15px;">
-                            <img src="${p.photo ? p.photo : 'default-profile.png'}" 
-                                 alt="${nomComplet}" 
-                                 onerror="this.onerror=null; this.src='default-profile.png';" 
-                                 loading="lazy" style="width:100%; height:100%; object-fit:cover;">
-                        </div>
-                        <span class="badge-dispo" style="position:static; display:inline-block; margin-bottom:10px; background:${p.disponible ? '#2e7d32' : '#757575'}">${p.disponible ? 'Disponible' : 'Hors ligne'}</span>
-                        
-                        <h3 style="margin: 10px 0; color: #333;">${nomComplet}</h3>
-                        <p style="font-size:0.75rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
-                        <p class="prof" style="color:#8B4513; font-weight:bold; margin-bottom:5px;">${p.profession || '-'}</p>
-                        <p style="font-size:0.8rem; color:#666; margin: 4px 0;">📍 ${p.ville || '-'}</p>
-                        
-                        ${p.distanceM != null ? `<p style="margin:8px 0;"><span class="badge-distance" style="background:#f0f0f0; color:#5D4037; border:1px solid #ddd; position:static;">📍 ${distanceLabel(p.distanceM)}</span></p>` : ''}
-                        
-                        <p style="font-size:0.8rem; color:#5D4037; font-weight:bold; height:1.2rem; overflow:hidden; margin: 10px 0;">${servicesAffiche}</p>
-                        
-                        <div style="margin-top:8px; display:flex; flex-direction:column; align-items:center; gap:2px;">
-                            <div style="display:flex; align-items:center; gap:5px;">
-                                <span style="font-weight:bold; color:#5D4037;">⭐ ${p.etoiles || 0}</span>
-                                <small style="font-size:0.7rem; color:#999;">(${p.nbAvis || 0} avis)</small>
-                            </div>
-                            <div style="width:100px; height:6px; background:#eee; border-radius:3px; overflow:hidden;">
-                                <div style="width:${Math.min((p.etoiles || 0) * 20, 100)}%; height:100%; background:#5D4037;"></div>
-                            </div>
-                        </div>
+                <article class="profile-card" onclick="${cardAction}">
+                    <div class="card-header-banner"></div>
+                    <div class="card-avatar-wrapper">
+                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
+                        <div class="card-status-dot ${p.disponible ? 'online' : 'offline'}"></div>
                     </div>
-                    <div style="margin-top:15px;">
-                        <button onclick="selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')" class="btn-primary-sm" style="width:100%; padding:12px; font-size:0.9rem; border-radius:10px;">CHOISIR CE PRESTATAIRE</button>
+                    <div class="card-body-content">
+                        <p style="font-size:0.7rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
+                        <h3>${nomComplet}</h3>
+                        <p class="profession">${p.profession || '-'}</p>
+                        <div class="stats-pill">
+                            <span>⭐ ${p.etoiles || 0}</span>
+                            ${p.distanceM != null ? `<span>📍 ${distanceLabel(p.distanceM)}</span>` : ''}
+                        </div>
+                        <p class="services-txt">${servicesAffiche}</p>
+                        <button class="card-action-btn" onclick="event.stopPropagation(); selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')">
+                            VOIR LE PROFIL
+                        </button>
                     </div>
                 </article>`;
         }

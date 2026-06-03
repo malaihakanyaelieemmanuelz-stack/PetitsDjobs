@@ -65,16 +65,24 @@
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
             return `
-                <article class="profile-card" style="text-align:center; padding: 20px; border: 2px solid #8B4513; border-radius: 20px; background:white;">
-                    <div class="profile-circle" style="margin: 0 auto 10px; width:80px; height:80px;">
-                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'" style="width:100%; height:100%; object-fit:cover;">
+                <article class="profile-card" style="width:100%; max-width:320px; margin: 10px auto;" onclick="selectionner('${p.id}')">
+                    <div class="card-header-banner"></div>
+                    <div class="card-avatar-wrapper">
+                        <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
+                        <div class="card-status-dot ${p.disponible ? 'online' : 'offline'}"></div>
                     </div>
-                    <h3 style="margin: 5px 0; font-size:1.1rem;">${nomComplet}</h3>
-                    <p style="font-size:0.7rem; color:#888; margin-bottom:10px;">${statusTxt}</p>
-                    <p style="color:#8B4513; font-weight:bold; font-size:0.85rem; margin-bottom:5px;">${p.profession || '-'}</p>
-                    <span class="badge-distance" style="position:static; margin-bottom:10px;">📍 ${distanceLabel(p.distanceM)}</span>
-                    <div style="margin-bottom:15px; color:#fbc02d; font-weight:bold;">⭐ ${p.etoiles || 0} <small style="color:#999; font-weight:normal;">(${p.nbAvis || 0} avis)</small></div>
-                    <button onclick="selectionner('${p.id}')" class="btn-primary-sm" style="width:100%; border-radius:10px; padding:12px;">CHOISIR</button>
+                    <div class="card-body-content">
+                        <p style="font-size:0.7rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
+                        <h3>${nomComplet}</h3>
+                        <p class="profession">${p.profession || '-'}</p>
+                        <div class="stats-pill">
+                            <span>⭐ ${p.etoiles || 0}</span>
+                            <span>📍 ${distanceLabel(p.distanceM)}</span>
+                        </div>
+                        <button class="card-action-btn">
+                            SÉLECTIONNER
+                        </button>
+                    </div>
                 </article>
             `;
         }
