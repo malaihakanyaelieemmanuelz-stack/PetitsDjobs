@@ -88,13 +88,6 @@
         </div>
 
         <!-- Section Client -->
-            // Vérifier s'il y a une mission en attente de départ
-            fetch('/api/mes-commandes-futures').then(r => r.json()).then(missions => {
-                const active = missions.find(m => m.statut === 'attente_securite');
-                if (active) {
-                    document.getElementById('zone-depart-urgent').style.display = 'block';
-                }
-            });
         <div class="action-block">
             <div class="section-title">BESOIN D'UN SERVICE ?</div>
             <button onclick="location.href='index.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem;">
@@ -133,6 +126,14 @@
                     document.getElementById('btn-espace').style.display = 'block';
                     document.getElementById('btn-supprimer-carte').style.display = 'block';
                 }
+
+                // Vérifier s'il y a une mission en attente de départ
+                fetch('/api/mes-commandes-futures').then(r => r.json()).then(missions => {
+                    const active = missions.find(m => m.statut === 'attente_securite');
+                    if (active) {
+                        document.getElementById('zone-depart-urgent').style.display = 'block';
+                    }
+                });
             });
 
         async function supprimerMaCarte() {

@@ -255,17 +255,41 @@ body {
 .gps-banner strong { display: block; font-size: 1.1rem; margin-bottom: 4px; }
 
 /* --- Gestion de la Carte Plein Écran --- */
-#map { height: 300px; width: 100%; border-radius: 12px; margin-bottom: 20px; z-index: 1; }
+#map { height: 300px; width: 100%; border-radius: 12px; margin-bottom: 20px; z-index: 1; background: #f0f0f0; }
 
-.tracking-body #map {
-    position: fixed !important;
-    top: 0; left: 0; right: 0; bottom: 0;
+.tracking-body {
     height: 100dvh !important;
     width: 100vw !important;
+    overflow: hidden !important; /* Empêche le scroll sur Android */
+    position: fixed;
+    margin: 0 !important; padding: 0 !important;
+    background: #f0f0f0; /* Fond gris neutre au lieu de bleu */
+}
+
+.tracking-body #map {
+    position: absolute !important;
+    top: 0; left: 0;
+    height: 100% !important;
+    width: 100% !important;
     margin: 0 !important;
     border-radius: 0 !important;
     z-index: 0;
 }
+
+/* --- Indicateur de chargement discret --- */
+.loader-gps {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #5d4037; /* Marron PetitsDjobs */
+    border-radius: 50%;
+    width: 45px; height: 45px;
+    animation: spin-gps 1s linear infinite;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+}
+
+@keyframes spin-gps { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* --- Éléments de Navigation Flottants (Style Maps Android) --- */
 .floating-top-info {
@@ -398,37 +422,35 @@ body {
 }
 
 .premium-header {
-    background: linear-gradient(180deg, #3e2723 0%, #5D4037 100%);
-    color: white;
-    padding: 60px 20px 80px;
-    text-align: center;
+    background-color: #5d4037;
+    height: 100px;
+    width: 100%;
     border-radius: 0 0 50px 50px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
     position: relative;
+    color: white;
+    padding: 0 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .premium-avatar {
-    width: 150px;
-    height: 150px;
+    width: 110px;
+    height: 110px;
+    background: #ccc;
     border-radius: 50%;
-    border: 6px solid #ffffff;
+    border: 4px solid white;
+    position: absolute;
+    top: 45px; /* Chevauchement parfait à 50% */
+    left: 50%;
+    transform: translateX(-50%);
     object-fit: cover;
-    box-shadow: 0 12px 25px rgba(0,0,0,0.3);
-    margin-bottom: -10px;
-    background: white;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
 }
 
 .premium-body {
-    padding: 0 25px 40px;
+    margin-top: 65px; /* Espace pour l'avatar qui descend */
+    padding: 20px;
+    text-align: center;
     flex-grow: 1;
-    margin-top: -30px; /* Chevauchement élégant sur le header */
-}
-
-.info-tile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 20px;
 }
 
 .info-tile {

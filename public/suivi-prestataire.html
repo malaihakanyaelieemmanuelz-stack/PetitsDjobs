@@ -13,6 +13,7 @@
     <title>Navigation Prestataire - PetitsDjobs</title>
 </head>
 <body class="tracking-body">
+    <div class="loader-gps" id="main-loader"></div>
     <div id="map"></div>
 
     <div class="floating-top-info" style="background: #5D4037; color: white;">
@@ -47,6 +48,7 @@
         let clientPos = null;
         let lastDist = null;
         let aConfirmeSecurite = false;
+        let hasCentered = false;
 
         function logDebug(msg) {
             console.log("[DEBUG SUIVI] " + msg);
@@ -55,6 +57,11 @@
 
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
         const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+
+        // Initialisation avec délai pour Android
+        window.addEventListener('load', () => {
+            setTimeout(init, 500);
+        });
 
         function init() {
             map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
@@ -93,17 +100,26 @@
         let isUpdatingStatus = false;
 
         function startGPS() {
-            if (!navigator.geolocation) {
-                alert("Erreur: Votre téléphone ne supporte pas le GPS.");
-                return;
-            }
+            const gpsOptions = {
+                enableHighAccuracy: false, // Plus rapide pour l'initialisation sur Android
+                maximumAge: 5000,
+                timeout: 10000
+            };
+
             navigator.geolocation.watchPosition(pos => {
+                // On cache le loader dès qu'on a le premier signal
+                document.getElementById('main-loader').style.display = 'none';
+
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-                logDebug(`GPS OK (±${Math.round(accuracy)}m). Lat:${lat.toFixed(4)}`);
+                logDebug(`GPS OK (±${Math.round(accuracy)}m)`);
 
                 const newPos = [lat, lon];
                 markerMe.setLatLng(newPos);
-                if (map.getZoom() < 10) map.setView(newPos, 17);
+                
+                if (!hasCentered) {
+                    map.setView(newPos, 17);
+                    hasCentered = true;
+                }
 
                 fetch('/sauvegarder-position', {
                     method: 'POST',
@@ -112,7 +128,7 @@
                 });
 
                 if (clientPos) updateNav(lat, lon);
-            }, null, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+            }, (err) => logDebug("Erreur GPS: " + err.message), gpsOptions);
         }
 
         function pollClient() {

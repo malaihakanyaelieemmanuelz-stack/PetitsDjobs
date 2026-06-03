@@ -11,6 +11,7 @@
     <title>Suivi de votre prestataire - PetitsDjobs</title>
 </head>
 <body class="tracking-body">
+    <div class="loader-gps" id="main-loader"></div>
     <div id="map"></div>
 
     <div class="floating-top-info" style="background: white; border: 1px solid #eee;">
@@ -50,6 +51,7 @@
         let map, markerMe, markerProvider, missionId, prestataireId, routingControl;
         let lastDist = null;
         let noteSelectionnee = 0;
+        let hasCentered = false;
 
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(255,82,82,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
         const iconPro = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,123,255,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
@@ -72,6 +74,10 @@
                     }
                 });
             }
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(init, 500);
         });
 
         function init() {
@@ -112,19 +118,31 @@
         let isProcessingArrivee = false;
 
         function startGPS() {
+            const gpsOptions = {
+                enableHighAccuracy: false,
+                maximumAge: 5000,
+                timeout: 10000
+            };
+
             navigator.geolocation.watchPosition(pos => {
+                document.getElementById('main-loader').style.display = 'none';
+                
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
                 logDebug(`GPS Client OK (±${Math.round(accuracy)}m)`);
 
                 markerMe.setLatLng([lat, lon]);
-                if (map.getZoom() < 10) map.setView([lat, lon], 18);
+                
+                if (!hasCentered) {
+                    map.setView([lat, lon], 18);
+                    hasCentered = true;
+                }
                 
                 fetch('/sauvegarder-position', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lat, lon })
                 });
-            }, null, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+            }, (err) => logDebug("Erreur GPS: " + err.message), gpsOptions);
         }
 
         function pollProvider() {
