@@ -238,8 +238,23 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
 
         let eligibles = (prestataires || [])
             .filter(p => String(p.user_id) !== String(excludeUserId))
-            .filter(p => serviceMatch(p, service))
-            .filter(p => userMap[p.user_id]) // Sécurité
+            .filter(p => {
+                const user = userMap[p.user_id];
+                if (!user) return false;
+
+                // 1. Recherche par service (logique existante)
+                const matchSvc = serviceMatch(p, service);
+                if (matchSvc) return true;
+
+                // 2. Recherche par nom/prénom si une recherche textuelle est présente
+                if (service) {
+                    const q = service.trim().toLowerCase();
+                    const nomComplet = `${user.prenom || ''} ${user.nom || ''}`.toLowerCase();
+                    return nomComplet.includes(q);
+                }
+                
+                return true;
+            })
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
                 const user = userMap[p.user_id];
@@ -287,9 +302,9 @@ async function chercherParRayonCroissant(lat, lon, service, offset, limit, exclu
             }
         });
 
-        // Règle : si plus de 20 inscrits au total, on applique la limite des 50km
+        // Règle : si plus de 50 inscrits au total, on applique la limite des 50km
         let results = eligibles;
-        if (nbTotalInscrits >= 20) {
+        if (nbTotalInscrits >= 50) {
             results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
