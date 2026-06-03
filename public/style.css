@@ -276,10 +276,54 @@ body {
     z-index: 0;
 }
 
+/* --- Nouveau Modèle de Carte Strict (Basé sur votre structure) --- */
+.android-card {
+    background: #ffffff;
+    width: 92%;
+    max-width: 350px;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(139, 69, 19, 0.2);
+    font-family: sans-serif;
+    text-align: center;
+    border: 2px solid #8B4513;
+    margin: 20px auto;
+}
+
+.profile-circle {
+    width: 100px;
+    height: 100px;
+    background-color: #f0f0f0;
+    border: 2px dashed #8B4513;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+.profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+.field-placeholder {
+    width: 100%;
+    min-height: 40px;
+    margin: 10px 0;
+    border: 1px solid #8B4513;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 5px 10px;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.btn-placeholder {
+    width: 100%; height: 45px; background: #8B4513; border-radius: 8px;
+    margin-top: 20px; display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: bold; text-decoration: none; border: none; cursor: pointer;
+}
+
 /* --- Indicateur de chargement discret --- */
 .loader-gps {
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #5d4037; /* Marron PetitsDjobs */
+    border-top: 4px solid #8B4513; /* Marron Modèle */
     border-radius: 50%;
     width: 45px; height: 45px;
     animation: spin-gps 1s linear infinite;
@@ -297,10 +341,29 @@ body {
     top: 12px;
     left: 12px;
     right: 12px;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     z-index: 1001;
+}
+
+.nav-actions-top {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-nav {
+    padding: 5px 12px !important;
+    min-height: 38px !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+    width: auto !important;
+    flex: 1;
+    max-width: 150px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .nav-hint-google {
@@ -318,7 +381,7 @@ body {
     left: 0;
     right: 0;
     background: white;
-    padding: 20px 20px 35px; /* Padding extra pour la barre de navigation Android */
+    padding: 12px 15px 25px; /* Plus fin */
     border-radius: 25px 25px 0 0;
     box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
     z-index: 1001;
@@ -371,7 +434,7 @@ body {
 .provider-card-top { position: relative; padding: 20px 20px 12px; text-align: center; }
 .provider-card-top img {
     width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
-    border: 3px solid #5D4037; background: #eee;
+    border: 3px solid #8B4513; background: #eee;
 }
 .badge-dispo {
     position: absolute; top: 12px; right: 12px;
@@ -385,20 +448,9 @@ body {
 }
 .provider-card-body { padding: 0 20px 20px; text-align: center; }
 .provider-card-body h3 { margin: 8px 0 4px; color: #333; font-size: 1.1rem; }
-.provider-card-body .prof { color: #5D4037; font-weight: 600; margin: 0 0 8px; font-size: 0.9rem; }
+.provider-card-body .prof { color: #8B4513; font-weight: 600; margin: 0 0 8px; font-size: 0.9rem; }
 .provider-card-body .bio { color: #666; font-size: 0.85rem; line-height: 1.4; min-height: 2.5em; margin-bottom: 12px; }
 .provider-card-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.btn-outline {
-    padding: 16px 20px; background: white; color: #5D4037;
-    border: 2px solid #5D4037; border-radius: 8px; cursor: pointer;
-    font-weight: bold; font-size: 1.1rem; text-decoration: none;
-    display: flex; align-items: center; justify-content: center; min-height: 56px;
-}
-.btn-primary-sm {
-    padding: 16px 20px; background: #5D4037; color: white;
-    border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem;
-    font-size: 1.1rem; display: flex; align-items: center; justify-content: center; min-height: 56px;
-}
 .trust-card {
     max-width: 550px; /* Augmentation de la largeur maximale */
     margin: 40px auto; 

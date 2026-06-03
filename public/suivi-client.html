@@ -17,15 +17,17 @@
     <div class="floating-top-info" style="background: white; border: 1px solid #eee;">
         <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #5D4037;">SUIVI DE VOTRE PRESTATAIRE</h2>
         <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
+        
+        <div class="nav-actions-top">
+            <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm btn-nav" style="display:none; background:#2e7d32;">IL EST ARRIVÉ</button>
+            <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm btn-nav" style="display:none;">TÂCHE FINIE</button>
+            <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm btn-nav" style="display:none; background:#333;">VALIDER DÉPART</button>
+            <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger btn-nav" style="display:none;">🆘 SOS</button>
+        </div>
     </div>
 
     <div class="floating-bottom-actions">
         <div id="gps-info" style="font-weight: 800; margin-bottom: 15px; color: #ff5252; font-size: 1.1rem;">Recherche du prestataire...</div>
-        
-        <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%;">L'INTERVENANT EST ARRIVÉ</button>
-        <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm" style="display:none; width:100%;">LA TÂCHE EST FINIE</button>
-        <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; width:100%; margin-top:10px;">🆘 SIGNALER UN DANGER</button>
-        <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm" style="display:none; background:#333; width:100%;">DÉPART DU PRESTATAIRE</button>
     </div>
 
     <!-- Modal de notation -->
@@ -101,6 +103,15 @@
                 router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1/foot' })
             }).addTo(map);
 
+            routingControl.on('routesfound', function(e) {
+                const routes = e.routes;
+                const summary = routes[0].summary;
+                const distM = summary.totalDistance; // Distance réelle à pied
+                const label = distM < 1000 ? Math.round(distM) + " m" : (distM/1000).toFixed(1) + " km";
+                document.getElementById('gps-info').innerHTML = `🛵 Prestataire en approche : <strong>${label}</strong>`;
+                verifierProximite(distM);
+            }).addTo(map);
+
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
                 if (!cmd.missionId) {
                     logDebug("Mission ID introuvable.");
@@ -155,20 +166,20 @@
                     const myPos = markerMe.getLatLng();
                     if (myPos.lat !== 0) {
                         routingControl.setWaypoints([pPos, myPos]);
-                        const dist = Math.round(myPos.distanceTo(pPos));
-                        document.getElementById('gps-info').innerHTML = `🛵 Prestataire en approche : <strong>${dist} m</strong>`;
-                        
-                        // ACTIVATION AUTOMATIQUE si distance < 50m
-                        if (dist < 50 && !isProcessingArrivee) {
-                            const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
-                            const dataStat = await resStat.json();
-                            if (dataStat.statut === 'en_route') clientMarquerArrivee();
-                        }
-                        lastDist = dist;
                         if (!map.getBounds().contains(pPos)) map.panTo(pPos);
                     }
                 }
             });
+        }
+
+        async function verifierProximite(dist) {
+            // ACTIVATION AUTOMATIQUE si distance < 50m (à pied)
+            if (dist < 50 && !isProcessingArrivee) {
+                const resStat = await fetch('/api/statut-mission?missionId=' + missionId);
+                const dataStat = await resStat.json();
+                if (dataStat.statut === 'en_route') clientMarquerArrivee();
+            }
+            lastDist = dist;
         }
 
         async function checkStatus() {
