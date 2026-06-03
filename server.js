@@ -378,11 +378,26 @@ app.get('/commande', requireAuth, (req, res) => res.sendFile(path.join(publicDir
 app.get('/discuter', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'discuter.html')));
 app.get('/voir-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'voir-prestataire.html')));
 
-app.get('/suivi', requireAuth, (req, res) => {
-    if (req.session.user.isPrestataire) {
-        res.sendFile(path.join(publicDir, 'suivi-prestataire.html'));
-    } else {
-        res.sendFile(path.join(publicDir, 'suivi-client.html'));
+app.get('/suivi', requireAuth, async (req, res) => {
+    try {
+        // On récupère l'ID de la mission depuis l'URL ou la session
+        const missionId = req.query.missionId || req.session.commande?.missionId;
+        
+        if (missionId) {
+            const { data: mission } = await supabase.from('missions').select('prestataire_id, client_id').eq('id', missionId).maybeSingle();
+            if (mission) {
+                // Si l'utilisateur connecté est le prestataire de CETTE mission
+                if (String(req.session.user.id) === String(mission.prestataire_id)) {
+                    return res.sendFile(path.join(publicDir, 'suivi-prestataire.html'));
+                } 
+                // Sinon, s'il est le client de CETTE mission
+                return res.sendFile(path.join(publicDir, 'suivi-client.html'));
+            }
+        }
+        // Fallback par défaut si aucune mission n'est spécifiée
+        res.sendFile(req.session.user.isPrestataire ? path.join(publicDir, 'suivi-prestataire.html') : path.join(publicDir, 'suivi-client.html'));
+    } catch (e) {
+        res.redirect('/index.html');
     }
 });
 
