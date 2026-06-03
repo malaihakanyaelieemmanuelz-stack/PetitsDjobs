@@ -1163,6 +1163,7 @@ async function uploadToSupabase(file, bucketName) {
     console.log(`[STORAGE OK] Fichier envoyé: ${fileName}`);
     // On récupère l'URL publique pour l'afficher plus tard sur le site
     const { data: publicData } = supabase.storage.from(bucketName).getPublicUrl(fileName);
+    console.log(`[STORAGE URL] URL publique générée : ${publicData.publicUrl}`);
     return publicData.publicUrl;
 }
 
