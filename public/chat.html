@@ -88,6 +88,8 @@
             const url = hasMission ? `/api/get-messages/${missionId}` : `/api/get-messages-ami/${amiId}`;
             const res = await fetch(url);
             const messages = await res.json();
+            if (!res.ok) { console.error("Erreur chargement messages"); return; }
+            
             const box = document.getElementById('chat-box');
             
             if (Array.isArray(messages) && messages.length !== lastCount) {

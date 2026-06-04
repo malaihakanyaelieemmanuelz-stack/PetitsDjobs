@@ -115,9 +115,7 @@ app.use(express.json());
 // Middleware de journalisation des requêtes (Visible dans les logs Render)
 app.use((req, res, next) => {
     // On ne log que les routes API pour éviter de polluer les logs avec le CSS/Images
-    if (req.url.startsWith('/api') || req.url.includes('jobs')) {
-        console.log(`🌐 [API] ${req.method} ${req.url}`);
-    }
+    console.log(`🌐 [API] ${req.method} ${req.url} (User: ${req.session.user?.id || 'Invité'})`);
     next();
 });
 
@@ -220,6 +218,8 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
         }
 
+        console.log(`[DEBUG SEARCH] ${prestataires.length} prestataires trouvés dans la DB.`);
+
         // 2. On récupère les infos utilisateurs séparément pour éviter l'erreur de relationship
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase
@@ -266,6 +266,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             });
 
         const nbTotalInscrits = eligibles.length;
+        console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires éligibles après filtrage.`);
 
         // 3. Logique de tri ultra-précise
         eligibles.sort((a, b) => {
@@ -295,13 +296,13 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             }
         });
 
-        // Règle : si plus de 50 inscrits au total, on applique la limite des 50km (Service uniquement)
+        // Règle : si plus de 20 inscrits au total, on applique la limite des 50km
         let results = eligibles;
-        if (type === 'service' && nbTotalInscrits >= 50) {
+        if (nbTotalInscrits >= 20) {
             results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
-        console.log(`[DEBUG SEARCH ${timestamp}] Résultats : ${eligibles.length} éligibles, dont ${eligibles.filter(e => e.enLigne).length} en ligne.`);
+        console.log(`[DEBUG SEARCH] Final : ${results.length} résultats après tri et rayon.`);
 
         const limitFixe = limit || 20;
         const page = results.slice(offset, offset + limitFixe);
@@ -313,7 +314,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
                 prenom: p.prenom,
                 profession: p.profession,
                 bio: p.bio,
-                photo: p.photo_profil_url,
+                photo: p.photo, // UTILISATION DU FALLBACK CALCULÉ
                 ville: p.ville,
                 services: p.services,
                 etoiles: p.etoiles,

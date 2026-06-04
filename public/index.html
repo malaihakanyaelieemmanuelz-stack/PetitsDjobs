@@ -338,6 +338,7 @@
             .then(s => {
             connecte = s.loggedIn;
             mettreAJourHeader(connecte);
+            console.log("État connexion:", connecte);
             if (connecte) return fetch('/get-user-data').then(r => r.json());
         }).then(userData => {
             if (!userData) return;
