@@ -71,6 +71,8 @@
                 document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
                 partnerIsPrestataire = p.isPrestataire;
+                console.log(`[DEBUG] Infos partenaire chargées. Est Prestataire : ${partnerIsPrestataire}`);
+                lastCount = 0; loadMessages(); // Force le rendu des couleurs
             }
         }
 
@@ -97,17 +99,20 @@
             const box = document.getElementById('chat-box');
             
             if (Array.isArray(messages) && messages.length !== lastCount) {
+                console.log(`[DEBUG CHAT] Rendu de ${messages.length} messages. Moi_Pro: ${userIsPrestataire}, Partenaire_Pro: ${partnerIsPrestataire}`);
                 box.innerHTML = messages.map(m => {
                     const isMe = parseInt(m.sender_id) === parseInt(userId);
                     const isPresta = isMe ? userIsPrestataire : partnerIsPrestataire;
                     const styleClass = isPresta ? 'presta-style' : 'client-style';
+                    
                     const dateObj = new Date(m.created_at);
                     const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const date = dateObj.toLocaleDateString([], {day: '2-digit', month: '2-digit'});
+
                     return `
-                        <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}">
+                        <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}" style="margin-bottom: 10px;">
                             ${m.text}
-                            <span class="message-time">${date} à ${time}</span>
+                            <span class="message-time">${date} • ${time}</span>
                         </div>
                     `;
                 }).join('');

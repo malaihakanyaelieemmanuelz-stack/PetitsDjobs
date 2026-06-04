@@ -1018,31 +1018,36 @@ body {
 
 .message-bubble.me {
     align-self: flex-end;
-    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
 }
 
 .message-bubble.other {
     align-self: flex-start;
-    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
 }
 
 .message-bubble.presta-style {
-    background-color: #FF6600; /* Orange Prestataire */
-    color: white;
+    background-color: #ffffff;
+    border: 2px solid #FF6600; /* Contour Orange */
+    color: #FF6600; /* Écriture Orange */
 }
 
 .message-bubble.client-style {
-    background-color: #2e7d32; /* Vert Client */
-    color: white;
+    background-color: #ffffff;
+    border: 2px solid #2e7d32; /* Contour Vert */
+    color: #2e7d32; /* Écriture Verte */
 }
 
 .message-time {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.65rem;
+    color: inherit; /* Prend la couleur du texte de la bulle */
+    opacity: 0.7;
     text-align: right;
     margin-top: 4px;
     display: block;
     font-style: italic;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding-top: 2px;
 }
 
 /* --- Page Amis --- */
@@ -1062,3 +1067,52 @@ body {
 }
 }
 .btn-danger:hover { background-color: #b71c1c; }
+
+/* --- Style Chat (Sorti du Media Query pour fonctionner partout) --- */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 15px;
+    background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png");
+    background-attachment: fixed;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.message-bubble {
+    max-width: 80%;
+    padding: 10px 14px;
+    font-size: 1rem;
+    position: relative;
+    border-radius: 18px;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.message-bubble.me { align-self: flex-end; border-bottom-right-radius: 2px; }
+.message-bubble.other { align-self: flex-start; border-bottom-left-radius: 2px; }
+
+.message-bubble.presta-style {
+    background-color: #ffffff;
+    border: 2px solid #FF6600; /* Contour Orange */
+    color: #FF6600; /* Texte Orange */
+}
+
+.message-bubble.client-style {
+    background-color: #ffffff;
+    border: 2px solid #2e7d32; /* Contour Vert */
+    color: #2e7d32; /* Texte Vert */
+}
+
+.message-time {
+    font-size: 0.65rem;
+    color: inherit;
+    opacity: 0.8;
+    text-align: right;
+    margin-top: 5px;
+    display: block;
+    font-style: italic;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding-top: 2px;
+}
