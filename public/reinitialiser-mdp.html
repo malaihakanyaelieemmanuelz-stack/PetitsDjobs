@@ -37,8 +37,8 @@
             <p id="msg-status" style="display:none; color:#2e7d32; font-weight:bold; margin-bottom:10px;"></p>
             <form id="resetForm">
                 <input type="text" id="code" name="recup_code" placeholder="CODE À 6 CHIFFRES" required maxlength="6" autocomplete="off" style="text-align: center; letter-spacing: 5px; font-weight: bold;">
-                <div style="position: relative; display: flex; align-items: center; margin: 10px 0; width: 100%">
-                    <input type="password" id="new-password" name="new_pass_val" placeholder="NOUVEAU MOT DE PASSE" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="new-password">
+                <div class="password-group">
+                    <input type="password" id="new-password" name="new_pass_val" placeholder="NOUVEAU MOT DE PASSE" required minlength="8" autocomplete="new-password">
                     <button type="button" class="toggle-password" data-target="new-password"></button>
                 </div>
                 <button type="submit">VALIDER LE CHANGEMENT</button>

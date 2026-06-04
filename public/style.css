@@ -48,17 +48,20 @@ body {
 .password-group {
     position: relative;
     width: 100%;
-    margin: 10px 0;
+    margin: 15px 0;
+    display: block;
+    text-align: left; /* Empêche le centrage du texte hérité de .login-card */
 }
 
 .password-group input {
+    width: 100% !important;
     margin: 0 !important;
-    padding-right: 45px !important; /* Espace pour l'œil */
+    padding-right: 50px !important; /* Garantit que le texte ne chevauche pas l'icône */
 }
 
 .toggle-password {
     position: absolute;
-    right: 15px;
+    right: 12px; /* Positionné à l'extrême droite */
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -430,6 +433,23 @@ body {
     margin-bottom: 10px;
 }
 
+/* --- Version Plein Écran (Espace Prestataire) --- */
+.profile-card.full-screen {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    min-height: 70vh;
+}
+
+.profile-card.full-screen .card-header-banner { height: 140px; }
+.profile-card.full-screen .card-avatar-wrapper { width: 140px; height: 140px; margin: -70px auto 20px; }
+.profile-card.full-screen h3 { font-size: 1.8rem; }
+.profile-card.full-screen .profession { font-size: 1.1rem; }
+.profile-card.full-screen .stats-pill { font-size: 1rem; padding: 10px 20px; }
+
 .profile-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 35px rgba(139, 69, 19, 0.15);
@@ -794,9 +814,9 @@ body {
     .auth-page {
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important; /* Remonte le formulaire vers le haut */
-        min-height: auto !important; /* Supprime la hauteur forcée qui crée des vides */
-        height: auto !important;
+        justify-content: center !important; /* Centre la carte verticalement */
+        align-items: center !important;     /* Centre la carte horizontalement */
+        min-height: 100dvh !important;      /* Utilise toute la hauteur du viewport */
         width: 100% !important;
         background-color: transparent !important;
     }

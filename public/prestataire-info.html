@@ -89,49 +89,37 @@
                 '<span style="color:#757575; font-weight:bold;">○ Hors ligne</span>';
 
             document.getElementById('ma-carte-container').innerHTML = `
-                <div class="premium-header" style="height: 160px; border-radius: 0 0 40px 40px; margin-bottom: 60px;">
-                    <div style="position:relative; display:inline-block;">
-                        <img src="${data.photo || 'default-profile.png'}" class="premium-avatar" style="width:130px; height:130px; top: 60px; border: 5px solid white; box-shadow: 0 8px 25px rgba(0,0,0,0.2);" alt="Photo">
-                        <div style="position:absolute; bottom: -55px; right: calc(50% - 60px); background:${enLigne ? '#4caf50' : '#ccc'}; width:24px; height:24px; border-radius:50%; border:3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                <article class="profile-card full-screen">
+                    <div class="card-header-banner"></div>
+                    <div class="card-avatar-wrapper">
+                        <img src="${data.photo || 'default-profile.png'}" alt="Photo">
+                        <div class="card-status-dot ${enLigne ? 'online' : 'offline'}"></div>
+                    </div>
+                    <div class="card-body-content">
+                        <p style="font-size:0.9rem; color:#888; margin-bottom:10px;">${statusLabel}</p>
+                        <h2 style="margin: 10px 0; font-weight: 800; color: #333; font-size: 2rem;">${nomComplet}</h2>
+                        <p class="profession" style="font-size: 1.2rem;">${data.profession || '-'}</p>
+                        
+                        <div class="stats-pill">
+                            <span>⭐ ${data.etoiles ?? 0}</span>
+                            <span>📍 ${data.ville || '-'}</span>
+                        </div>
+
+                        <div style="text-align: left; background: #fdfaf9; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #f2ece9;">
+                            <p style="margin: 5px 0;"><strong>📞 Contact :</strong> ${data.telephone || 'Non renseigné'}</p>
+                            <p style="margin: 5px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
+                        </div>
+
+                        <p class="services-txt" style="height:auto; font-size: 1rem; line-height: 1.5; color: #444; font-style: italic;">
+                            "${data.bio || 'Aucune présentation renseignée.'}"
+                        </p>
+
+                        <div style="margin-top: 30px; text-align: left;">
+                            <h3 style="font-size:1rem; color:#5D4037; margin-bottom:15px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
+                            <ul style="padding:0; list-style:none; font-size:0.95rem; color:#666;">${avis}</ul>
                         </div>
                     </div>
-                </div>
-
-                <div class="premium-body" style="margin-top: 0;">
-                    <h2 style="margin: 0 0 5px; font-size: 1.8rem; color: #333; font-weight: 800;">${nomComplet}</h2>
-                    <div style="margin-bottom: 20px; font-size: 0.9rem;">${statusLabel}</div>
-
-                    <div style="background: #fdfaf9; display: inline-flex; align-items: center; gap: 15px; padding: 12px 25px; border-radius: 20px; border: 1px solid #f2ece9; margin-bottom: 30px;">
-                        <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:5px;">
-                            <span style="font-weight:900; font-size:1.1rem; color: #5D4037;">⭐ ${data.etoiles ?? 0}</span>
-                            <small style="color: #888;">(${data.commentaires?.length || 0} avis)</small>
-                        </div>
-                    </div>
-
-                    <div class="info-tile-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px;">
-                        <div class="info-tile"><span class="tile-label">Âge</span><span class="tile-value">${data.age || '-'} ans</span></div>
-                        <div class="info-tile"><span class="tile-label">Ville</span><span class="tile-value">${data.ville || '-'}</span></div>
-                        <div class="info-tile" style="grid-column: span 2; background:#fbfbfb;"><span class="tile-label">Domaine d'expertise</span><span class="tile-value" style="color:#5D4037;">${data.profession || '-'}</span></div>
-                        <div class="info-tile" style="grid-column: span 2;">
-                            <span class="tile-label">Services configurés</span>
-                            <span class="tile-value" style="font-size:0.9rem; color:#666;">${data.services || '-'}</span>
-                        </div>
-                    </div>
-
-                    <div class="info-tile" style="margin-bottom:20px; text-align:left; padding:20px;">
-                        <span class="tile-label">Contact enregistré</span>
-                        <span class="tile-value">📞 ${data.telephone || 'Non renseigné'}</span>
-                    </div>
-                    <div class="premium-bio-box">
-                        <span class="tile-label" style="margin-bottom:10px; color:#5D4037; font-size:0.8rem;">À propos de moi</span>
-                        <p style="margin:0; font-style:italic; color:#444; line-height:1.6; font-size:1rem;">"${data.bio || 'Aucune présentation renseignée.'}"</p>
-                    </div>
-                    <h3 style="font-size:1rem; color:#5D4037; margin-bottom:15px; text-align: left; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
-                    <ul style="padding:0; list-style:none; text-align:left; font-size:0.95rem; color:#666;">${avis}</ul>
-                    <p style="font-size:0.75rem; color:#999; margin-top:30px; text-align:center;">
-                        Votre réputation PetitsDjobs est votre meilleur atout.
-                    </p>
-                </div>`;
+                </article>`;
             
             verifierMissions();
             // Vérifier les nouvelles missions toutes les 2 secondes

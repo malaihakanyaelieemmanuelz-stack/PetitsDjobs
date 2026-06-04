@@ -86,7 +86,8 @@
                 createMarker: () => null,
                 addWaypoints: false,
                 show: false,
-                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1/foot' })
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1/foot' }),
+                routeWhileDragging: true // Permet de recalculer la route si les marqueurs sont déplacés (utile pour le debug)
             }).addTo(map);
 
             routingControl.on('routesfound', function(e) {
@@ -96,7 +97,7 @@
                 const label = distM < 1000 ? Math.round(distM) + " mètres" : (distM/1000).toFixed(2) + " km";
                 document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${label}</strong>`;
                 verifierProximite(distM);
-            }).addTo(map);
+            });
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
                 if (!cmd.missionId) {
@@ -106,9 +107,9 @@
                 }
                 missionId = cmd.missionId;
                 logDebug("Mission " + missionId + " chargée. Recherche GPS...");
-                startGPS();
                 setInterval(pollClient, 3000);
                 setInterval(checkStatus, 2000);
+                startGPS(); // Lancer le GPS après avoir initialisé missionId
             }).catch(e => logDebug("Erreur chargement session: " + e.message));
         }
 
@@ -153,20 +154,23 @@
                     logDebug("Position client reçue.");
                     clientPos = pos;
                     markerDest.setLatLng([pos.lat, pos.lon]);
-                    // On force la mise à jour de l'itinéraire dès qu'on a les deux positions
-                    const myPos = markerMe.getLatLng();
-                    if (myPos.lat !== 0) updateNav(myPos.lat, myPos.lng);
+                    updateNav(); // Appeler updateNav sans arguments
                 } else {
                     logDebug("En attente de la position du client...");
                 }
             });
         }
 
-        async function updateNav(lat, lon) {
-            if (!clientPos) return;
-            const p1 = L.latLng(lat, lon);
-            const p2 = L.latLng(clientPos.lat, clientPos.lon);
-            routingControl.setWaypoints([p1, p2]);
+        async function updateNav() {
+            const myPos = markerMe.getLatLng(); // Position actuelle du prestataire
+            if (!clientPos || (myPos.lat === 0 && myPos.lng === 0) || (clientPos.lat === 0 && clientPos.lon === 0)) {
+                logDebug("En attente des deux positions pour l'itinéraire...");
+                return;
+            }
+            routingControl.setWaypoints([
+                L.latLng(myPos.lat, myPos.lng), // Prestataire
+                L.latLng(clientPos.lat, clientPos.lon) // Client
+            ]);
         }
 
         async function verifierProximite(dist) {

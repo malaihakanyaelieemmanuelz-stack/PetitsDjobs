@@ -425,7 +425,23 @@ app.post('/deconnexion', async (req, res) => {
 
 // --- API ---
 app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
-app.get('/get-session-commande', (req, res) => res.json(req.session.commande || {}));
+
+app.get('/get-session-commande', async (req, res) => {
+    const cmd = req.session.commande;
+    if (cmd && cmd.prestataireId) {
+        // Rafraîchir dynamiquement le statut de disponibilité du prestataire choisi
+        const { data: user } = await supabase.from('utilisateurs')
+            .select('dernier_acces')
+            .eq('id', cmd.prestataireId)
+            .maybeSingle();
+        if (user) {
+            const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+            const enLigne = (Date.now() - new Date(user.dernier_acces).getTime()) < SEUIL_EN_LIGNE_MS;
+            req.session.commande.disponible = enLigne;
+        }
+    }
+    res.json(req.session.commande || {});
+});
 
 // Route pour obtenir le nombre total de prestataires inscrits
 app.get('/api/total-prestataires', async (req, res) => {
@@ -531,7 +547,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
         statut: 'en_attente_prestataire',
         lat_client: parseFloat(lat),
-        lon_client: parseFloat(lon)
+        lon_client: parseFloat(lon),
+        date_prevue: datePrevue
     };
 
     console.log("[DEBUG SIMU PAY] Payload envoyé à Supabase:", JSON.stringify(payload));
@@ -551,7 +568,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         // NOTIFICATION DU PRESTATAIRE PAR EMAIL
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
         if (pUser && pUser.email && resend) {
-            const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le ${datePrevue}`;
+            const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le **${datePrevue}**`;
             safeSendEmail({
                 from: 'PetitsDjobs <onboarding@resend.dev>',
                 to: pUser.email,
@@ -560,7 +577,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                         <h2 style="color: #5D4037;">Bonjour ${pUser.prenom},</h2>
                         <p>Vous avez reçu une demande pour : <strong>${cmd.service}</strong> (${msgDate}).</p>
-                        <p>Le client a été invité à vous appeler pour confirmer. Merci de vous connecter pour valider.</p>
+                        <p>${datePrevue === 'today' ? "Le client a été invité à vous appeler pour confirmer." : "Merci de vous connecter pour valider cette réservation à l'avance."}</p>
                         <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 10px 20px; background: #5D4037; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Voir ma carte de visite</a>
                     </div>
                 `

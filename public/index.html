@@ -53,7 +53,7 @@
                 <option value="nom">Rechercher par NOM (sans GPS)</option>
             </select>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="search-service" placeholder="EX: MENA ou CUISINE" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
+                <input type="text" id="search-service" placeholder="Ménage ou Cuisine" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #5D4037; font-size: 1.2rem; background: white; outline: none;">
                 <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
             </div>
         </div>
@@ -143,7 +143,7 @@
         document.getElementById('search-type').addEventListener('change', function() {
             const input = document.getElementById('search-service');
             if (this.value === 'service') {
-                input.placeholder = "EX: MENA ou CUISINE";
+                input.placeholder = "Ménage ou Cuisine";
             } else {
                 input.placeholder = "EX: JUPON";
             }
@@ -220,17 +220,14 @@
 
         function miniCard(p) {
             const nomComplet = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom || 'Prestataire';
-            const nomEscapedJS = nomComplet.replace(/'/g, "\\'"); // Protection contre les apostrophes
             
             let servicesAffiche = 'Services divers';
             if (p.services && typeof p.services === 'string') {
                 const liste = p.services.split(',');
                 servicesAffiche = liste.slice(0, 2).join(', ') + (liste.length > 2 ? '...' : '');
             }
-
-            const cardAction = p.disponible 
-                ? `location.href='/voir-prestataire?id=${p.id}'` 
-                : `afficherContactHorsLigne('${p.id}', '${nomEscapedJS}', '${servicesAffiche.replace(/'/g, "\\'")}')`;
+            
+            const cardAction = `selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')`;
             
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             

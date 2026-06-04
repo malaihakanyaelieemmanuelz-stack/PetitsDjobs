@@ -38,9 +38,9 @@
             <form id="loginForm" action="/connexion" method="POST">
                 <div id="champs-compte">
                     <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="username">
-                    <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                        <input type="password" name="password" id="password" placeholder="MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%;" autocomplete="current-password">
-                        <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 0; width: 24px; height: 24px;"></button>
+                    <div class="password-group">
+                        <input type="password" name="password" id="password" placeholder="MOT DE PASSE" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" data-target="password"></button>
                     </div>
                 </div>
                 <input type="hidden" name="lat" id="lat">

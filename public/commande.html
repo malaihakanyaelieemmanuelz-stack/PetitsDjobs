@@ -42,7 +42,10 @@
                     <option value="today">Aujourd'hui (Maintenant)</option>
                     <option value="scheduled">Programmer à une autre date</option>
                 </select>
-                <input type="date" id="input-date-custom" style="display:none; width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                <div id="scheduled-fields" style="display:none; gap: 10px; margin-top: 10px;">
+                    <input type="date" id="input-date-custom" style="flex:1; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                    <input type="time" id="input-time-custom" style="flex:1; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                </div>
             </div>
 
             <h3 style="font-size: 1rem; color: #5D4037;">Prestataire Principal</h3>
@@ -91,7 +94,7 @@
 
         function toggleDatePicker() {
             const mode = document.getElementById('select-date-mode').value;
-            document.getElementById('input-date-custom').style.display = (mode === 'scheduled') ? 'block' : 'none';
+            document.getElementById('scheduled-fields').style.display = (mode === 'scheduled') ? 'flex' : 'none';
             if (currentCmdData) verifierNecessiteAppel(currentCmdData);
         }
 
@@ -105,7 +108,9 @@
             const isOnline = cmd.disponible;
             const hasPhone = !!cmd.telephone;
 
-            if ((!isToday || !isOnline) && hasPhone) {
+            // On exige l'appel UNIQUEMENT pour un service "Maintenant" (Today) si le prestataire est hors ligne.
+            // Pour les réservations planifiées, on laisse passer sans forcer l'appel immédiat.
+            if (isToday && !isOnline && hasPhone) {
                 banner.style.display = 'block';
                 phoneDisplay.innerHTML = `<button onclick="location.href='/appele.html'" class="btn-primary-sm" style="background:#e65100; margin-top:10px; width:100%;">APPELER LE PRESTATAIRE</button>`;
             } else {
@@ -207,6 +212,16 @@
 
         document.getElementById('btn-payer').onclick = async () => {
             const btn = document.getElementById('btn-payer');
+            const dateMode = document.getElementById('select-date-mode').value;
+
+            // Intercepte le paiement si le prestataire est toujours hors ligne dans le système
+            // Mais SEULEMENT si c'est pour un service "Maintenant" (Today)
+            if (dateMode === 'today' && currentCmdData && currentCmdData.disponible === false) {
+                alert("Ce prestataire est actuellement hors ligne. Pour un service immédiat, vous devez obligatoirement l'appeler pour confirmer sa présence avant de payer.");
+                window.location.href = '/appele.html';
+                return;
+            }
+
             btn.innerText = "VÉRIFICATION GPS...";
             btn.disabled = true;
             
@@ -234,7 +249,19 @@
             btn.innerText = "CONNEXION À WAVE...";
             
             const dateMode = document.getElementById('select-date-mode').value;
-            const datePrevue = dateMode === 'scheduled' ? document.getElementById('input-date-custom').value : 'today';
+            let datePrevue = 'today';
+            if (dateMode === 'scheduled') {
+                const d = document.getElementById('input-date-custom').value;
+                const t = document.getElementById('input-time-custom').value;
+                if (!d || !t) {
+                    alert("Veuillez choisir une date et une heure précises pour la prestation.");
+                    btn.innerText = "Payer avec Wave";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    return;
+                }
+                datePrevue = `${d} à ${t}`;
+            }
 
             setTimeout(async () => {
                 const res = await fetch('/api/simuler-paiement', { 

@@ -44,13 +44,13 @@
             <select name="age" id="age-select" required style="width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; height: 48px; background: white;">
                 <option value="" disabled selected>VOTRE ÂGE (DÈS 14 ANS)</option>
             </select>
-            <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" style="padding-right: 40px; margin: 0; width: 100%" autocomplete="new-password">
-                <button type="button" class="toggle-password" data-target="pass1" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 0; width: 24px; height: 24px;"></button>
+            <div class="password-group">
+                <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" autocomplete="new-password">
+                <button type="button" class="toggle-password" data-target="pass1"></button>
             </div>
-            <div style="position: relative; display: flex; align-items: center; margin: 10px 0;">
-                <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required style="padding-right: 40px; margin: 0; width: 100%" autocomplete="new-password">
-                <button type="button" class="toggle-password" data-target="pass2" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; padding: 0; width: 24px; height: 24px;"></button>
+            <div class="password-group">
+                <input type="password" id="pass2" name="password_confirm" placeholder="CONFIRMER LE MOT DE PASSE" required autocomplete="new-password">
+                <button type="button" class="toggle-password" data-target="pass2"></button>
             </div>
 
             <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
