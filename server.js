@@ -233,11 +233,11 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
 
         const { data: users, error: uError } = await supabase
             .from('utilisateurs')
-            .select('*') // On prend tout pour éviter l'erreur "column does not exist"
+            .select('*') 
             .in('id', userIds);
 
         if (uError) {
-            console.error("❌ [DEBUG SEARCH] Erreur Supabase Utilisateurs:", uError.message);
+            console.error("❌ [DEBUG SEARCH] Erreur récupération utilisateurs:", uError.message);
         }
         console.log(`[DEBUG SEARCH] ${users?.length || 0} comptes utilisateurs trouvés correspondant aux prestataires.`);
 
@@ -286,7 +286,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
                 const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
                 const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
-                // Unification de la photo
+                // LOGIQUE DEMANDÉE : Photo Carte de Visite (prestataire) > Photo Inscription (utilisateur) > Défaut
                 const photoFinale = p.photo_profil_url || user?.photo_url || user?.photo || 'default-profile.png';
 
                 return { 
@@ -1009,6 +1009,8 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
         text: text,
         mission_id: mId,
         ami_id: aId
+        mission_id: mId
+        // Note: ami_id est retiré car la colonne n'existe pas dans ta table 'messages'
     };
 
     const { data, error } = await supabase.from('messages').insert(payload).select().single();
@@ -1022,22 +1024,33 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
 // Nouvelle route pour obtenir les infos de n'importe quel partenaire (Client ou Pro)
 app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
     const pId = req.params.id;
-    console.log(`🌐 [API] /api/partner-info/${pId}`);
-    const { data: user, error } = await supabase.from('utilisateurs').select('nom, prenom, photo_url, dernier_acces').eq('id', pId).maybeSingle();
+    if (!pId || pId === 'undefined' || pId === 'null') return res.status(404).json({});
+
+    console.log(`🌐 [API] partner-info pour ID: ${pId}`);
+
+    // 1. On récupère l'utilisateur (on utilise '*' car photo_url semble absente dans ta DB)
+    const { data: user, error } = await supabase.from('utilisateurs').select('*').eq('id', pId).maybeSingle();
     
     if (error || !user) {
-        console.error(`❌ [API ERR] partner-info ${pId}:`, error?.message || 'Utilisateur introuvable');
+        console.error(`❌ [API ERR] partner-info ${pId}:`, error?.message || 'Introuvable');
         return res.status(404).json({});
     }
+
+    // 2. On cherche si c'est un prestataire pour avoir sa photo de "Carte de visite"
+    const { data: pInfo } = await supabase.from('infos_prestataires').select('photo_profil_url').eq('user_id', pId).maybeSingle();
+
+    // LOGIQUE PHOTO : Photo Carte de Visite (prestataire) > Photo Inscription (si elle existe) > Défaut
+    const finalPhoto = pInfo?.photo_profil_url || user.photo_url || user.photo || 'default-profile.png';
 
     const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
     const enLigne = user.dernier_acces ? (Date.now() - new Date(user.dernier_acces).getTime() < SEUIL_EN_LIGNE_MS) : false;
 
     console.log(`✅ [API] partner-info ${pId} - Photo: ${user.photo_url}`);
+    console.log(`✅ [API] partner-info ${pId} - Photo OK`);
     res.json({
         nom: user.nom,
         prenom: user.prenom,
-        photo: user.photo_url || user.photo || 'default-profile.png',
+        photo: finalPhoto,
         enLigne: enLigne
     });
 });
