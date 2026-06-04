@@ -218,19 +218,28 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
         }
 
-        const nbInscritsTotalBase = prestataires.length;
-        console.log(`[DEBUG SEARCH] ${nbInscritsTotalBase} prestataires trouvés au total dans la base.`);
+        const nbInscritsTotalBase = prestataires?.length || 0;
+        console.log(`[DEBUG SEARCH] --- DÉBUT FILTRAGE --- Total en base: ${nbInscritsTotalBase}`);
 
         // 2. On récupère les infos utilisateurs
-        // On récupère TOUS les IDs sans exception pour vérifier la correspondance
-        const userIds = prestataires.map(p => p.user_id);
+        // Sécurité : Conversion en Number pour la requête .in() si IDs numériques
+        const userIds = (prestataires || []).map(p => Number(p.user_id)).filter(id => !isNaN(id));
+        console.log(`[DEBUG SEARCH] IDs à chercher dans 'utilisateurs': ${JSON.stringify(userIds)}`);
         
-        if (userIds.length === 0) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+        if (userIds.length === 0) {
+            console.log("[DEBUG SEARCH] Aucun ID valide trouvé dans infos_prestataires.");
+            return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+        }
 
-        const { data: users } = await supabase
+        const { data: users, error: uError } = await supabase
             .from('utilisateurs')
             .select('id, nom, prenom, dernier_acces, photo_url')
             .in('id', userIds);
+
+        if (uError) {
+            console.error("[DEBUG SEARCH] Erreur lors de la récupération des utilisateurs:", uError.message);
+        }
+        console.log(`[DEBUG SEARCH] ${users?.length || 0} comptes utilisateurs trouvés correspondant aux prestataires.`);
 
         // On crée une map avec conversion forcée en String pour la clé
         const userMap = Object.fromEntries((users || []).map(u => [String(u.id), u]));
@@ -239,17 +248,26 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
 
         let eligibles = (prestataires || [])
             .filter(p => {
-                // Filtrer l'utilisateur lui-même s'il est connecté
-                if (excludeUserId && String(p.user_id) === String(excludeUserId)) return false;
+                const pIdStr = String(p.user_id);
+                const exIdStr = excludeUserId ? String(excludeUserId) : null;
 
-                const user = userMap[String(p.user_id)];
+                // Filtrer l'utilisateur lui-même s'il est connecté
+                if (exIdStr && pIdStr === exIdStr) {
+                    console.log(`   -> [REJETÉ] Prestataire ${pIdStr} est l'utilisateur connecté.`);
+                    return false;
+                }
+
+                const user = userMap[pIdStr];
                 if (!user) {
-                    console.log(`⚠️ [DEBUG SEARCH] Prestataire ID ${p.user_id} n'a pas de compte dans la table utilisateurs !`);
+                    console.log(`   -> ⚠️ [REJETÉ] Prestataire ID ${pIdStr} n'a pas de compte correspondant dans la table 'utilisateurs' !`);
                     return false;
                 }
 
                 // REGLE PRIORITAIRE : Si moins de 20 inscrits total, on ne filtre PAS par service sur l'accueil
-                if (nbInscritsTotalBase <= 20 && !query_text) return true;
+                if (nbInscritsTotalBase <= 20 && !query_text) {
+                    console.log(`   -> [VALIDÉ] Prestataire ${pIdStr} (${user.prenom}) gardé via la règle des < 20.`);
+                    return true;
+                }
 
                 if (type === 'nom' && query_text) {
                     const q = query_text.trim().toLowerCase();
