@@ -50,18 +50,21 @@ body {
     width: 100%;
     margin: 15px 0;
     display: block;
-    text-align: left; /* Empêche le centrage du texte hérité de .login-card */
+    text-align: left !important; /* Empêche le centrage du texte hérité de .login-card */
+    box-sizing: border-box;
 }
 
 .password-group input {
     width: 100% !important;
     margin: 0 !important;
     padding-right: 50px !important; /* Garantit que le texte ne chevauche pas l'icône */
+    text-align: left !important; /* Force l'écriture à gauche */
 }
 
 .toggle-password {
     position: absolute;
-    right: 12px; /* Positionné à l'extrême droite */
+    right: 12px !important; /* Positionné à l'extrême droite du conteneur */
+    left: auto !important; /* Annule tout centrage éventuel */
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
@@ -441,14 +444,26 @@ body {
     border-radius: 0;
     box-shadow: none;
     border: none;
-    min-height: 70vh;
+    min-height: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centre le contenu de la carte verticalement */
 }
 
-.profile-card.full-screen .card-header-banner { height: 140px; }
-.profile-card.full-screen .card-avatar-wrapper { width: 140px; height: 140px; margin: -70px auto 20px; }
-.profile-card.full-screen h3 { font-size: 1.8rem; }
-.profile-card.full-screen .profession { font-size: 1.1rem; }
-.profile-card.full-screen .stats-pill { font-size: 1rem; padding: 10px 20px; }
+.profile-card.full-screen .card-header-banner { height: 180px; }
+.profile-card.full-screen .card-avatar-wrapper { width: 160px; height: 160px; margin: -80px auto 20px; }
+
+.profile-card.full-screen .card-body-content h2 { 
+    font-size: 2.2rem; 
+    margin: 15px 0; 
+    font-weight: 900; 
+}
+
+.profile-card.full-screen .profession { font-size: 1.2rem; }
+.profile-card.full-screen .stats-pill { font-size: 1.1rem; padding: 10px 20px; }
+
+.profile-card.full-screen:hover { transform: none; box-shadow: none; }
 
 .profile-card:hover {
     transform: translateY(-5px);
@@ -467,16 +482,19 @@ body {
     margin: -45px auto 10px;
     position: relative;
     z-index: 2;
+    border-radius: 50%;
+    overflow: visible; /* Permet à la pastille de statut de rester visible */
 }
 
 .card-avatar-wrapper img {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
+    border-radius: 50% !important; /* Force la forme circulaire */
     border: 4px solid white;
     object-fit: cover;
     background: #f0f0f0;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: block;
 }
 
 .card-status-dot {
