@@ -901,53 +901,58 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
     if (!missions || missions.length === 0) return res.json([]);
 
-    // --- ROUTES DE MESSAGERIE (CHAT) ---
-
-    app.get('/api/get-messages/:missionId', requireAuth, async (req, res) => {
-        const { missionId } = req.params;
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('mission_id', missionId)
-            .order('created_at', { ascending: true });
-        
-        if (error) return res.status(500).json([]);
-        res.json(data);
-    });
-
-    app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
-        const { amiId } = req.params;
-        const myId = req.session.user.id;
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .or(`and(sender_id.eq.${myId},ami_id.eq.${amiId}),and(sender_id.eq.${amiId},ami_id.eq.${myId})`)
-            .order('created_at', { ascending: true });
-
-        if (error) return res.status(500).json([]);
-        res.json(data);
-    });
-
-    app.post('/api/send-message', requireAuth, async (req, res) => {
-        const { missionId, amiId, text } = req.body;
-        const payload = {
-            sender_id: req.session.user.id,
-            text: text,
-            mission_id: missionId || null,
-            ami_id: amiId || null
-        };
-        const { data, error } = await supabase.from('messages').insert(payload).select().single();
-        if (error) return res.status(500).json({ error: error.message });
-        res.json(data);
-    });
+    // On récupère les infos des clients manuellement
+    const clientIds = missions.map(m => m.client_id);
+    const { data: clients } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', clientIds);
+    const clientMap = Object.fromEntries((clients || []).map(c => [c.id, { nom: c.nom, prenom: c.prenom, photo: c.photo_url }]));
 
     const result = missions.map(m => ({
         ...m,
-        client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu' }
+        client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
     }));
 
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
     res.json(result);
+});
+
+// --- ROUTES DE MESSAGERIE (CHAT) ---
+
+app.get('/api/get-messages/:missionId', requireAuth, async (req, res) => {
+    const { missionId } = req.params;
+    const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('mission_id', missionId)
+        .order('created_at', { ascending: true });
+    
+    if (error) return res.status(500).json([]);
+    res.json(data);
+});
+
+app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
+    const { amiId } = req.params;
+    const myId = req.session.user.id;
+    const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${myId},ami_id.eq.${amiId}),and(sender_id.eq.${amiId},ami_id.eq.${myId})`)
+        .order('created_at', { ascending: true });
+
+    if (error) return res.status(500).json([]);
+    res.json(data);
+});
+
+app.post('/api/send-message', requireAuth, async (req, res) => {
+    const { missionId, amiId, text } = req.body;
+    const payload = {
+        sender_id: req.session.user.id,
+        text: text,
+        mission_id: missionId || null,
+        ami_id: amiId || null
+    };
+    const { data, error } = await supabase.from('messages').insert(payload).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
 });
 
 app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
@@ -1230,11 +1235,6 @@ app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
     if (req.body.password !== req.body.password_confirm) {
         return res.redirect('/inscription?erreur=mdp');
     }
-    const nom = (req.body.nom || '').trim();
-    if (!nom) {
-        return res.redirect('/inscription?erreur=nom_requis');
-    }
-
     const nom = (req.body.nom || '').trim();
     if (!nom) {
         return res.redirect('/inscription?erreur=nom_requis');

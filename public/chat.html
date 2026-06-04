@@ -53,7 +53,8 @@
                 document.getElementById('header-name').innerText = p.prenom + ' ' + p.nom;
                 if (p.photo) document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
-                document.getElementById('btn-add-friend').style.display = 'block';
+                const btnAddFriend = document.getElementById('btn-add-friend');
+                if (btnAddFriend) btnAddFriend.style.display = 'block';
             }
         }
 
