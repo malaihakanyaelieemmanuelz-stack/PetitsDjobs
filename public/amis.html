@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Mes Amis - PetitsDjobs</title>
+</head>
+<body style="background:#f4f4f4;">
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/profil" style="text-decoration:none; color:#5D4037; font-weight:bold;">← PROFIL</a>
+            <h1 style="color:#5D4037;">MES AMIS</h1>
+        </div>
+    </header>
+
+    <div class="app-wrap">
+        <div id="liste-amis" style="background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+            <p style="padding:30px; text-align:center; color:#888;">Chargement de vos contacts...</p>
+        </div>
+    </div>
+
+    <script>
+        async function chargerAmis() {
+            const res = await fetch('/api/liste-amis');
+            const amis = await res.json();
+            const container = document.getElementById('liste-amis');
+
+            if (amis.length === 0) {
+                container.innerHTML = '<p style="padding:40px; text-align:center;">Vous n\'avez pas encore d\'amis. Commandez un service pour faire des connaissances !</p>';
+                return;
+            }
+
+            container.innerHTML = amis.map(a => `
+                <div class="friend-item" onclick="location.href='/chat.html?amiId=${a.id}'">
+                    <img src="${a.photo || 'default-profile.png'}">
+                    <div style="flex:1;">
+                        <div style="font-weight:800; font-size:1.1rem; color:#333;">${a.prenom} ${a.nom}</div>
+                        <div style="font-size:0.85rem; color:#888;">${a.profession || 'Ami PetitsDjobs'}</div>
+                    </div>
+                    <div style="color:#5D4037;">➔</div>
+                </div>
+            `).join('');
+        }
+        chargerAmis();
+    </script>
+</body>
+</html>

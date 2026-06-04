@@ -921,8 +921,39 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     const { missionId, action } = req.body;
     const statut = action === 'accepter' ? 'en_route' : 'refuse';
+    
+    // Récupération des infos de la mission avant mise à jour
+    const { data: mission } = await supabase.from('missions').select('*').eq('id', missionId).single();
+    
     const { error } = await supabase.from('missions').update({ statut }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
+
+    // Si un prestataire accepte, on prévient les autres qu'ils ne sont plus nécessaires
+    if (action === 'accepter' && mission) {
+        const tousLesAutresIds = [mission.prestataire_id, ...(mission.backup_ids || [])].filter(id => String(id) !== String(req.session.user.id));
+        
+        if (tousLesAutresIds.length > 0 && resend) {
+            const { data: autresUsers } = await supabase.from('utilisateurs').select('email, prenom').in('id', tousLesAutresIds);
+            
+            if (autresUsers) {
+                for (const u of autresUsers) {
+                    safeSendEmail({
+                        from: 'PetitsDjobs <info@resend.dev>',
+                        to: u.email,
+                        subject: '✅ Mission pourvue',
+                        html: `
+                            <div style="font-family: sans-serif; padding: 20px;">
+                                <h3>Bonjour ${u.prenom},</h3>
+                                <p>La mission de <strong>${mission.service}</strong> pour laquelle vous étiez sollicité a été acceptée par un autre prestataire.</p>
+                                <p>Merci de votre disponibilité !</p>
+                            </div>
+                        `
+                    });
+                }
+            }
+        }
+    }
+
     res.json({ ok: true });
 });
 

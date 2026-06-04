@@ -85,8 +85,8 @@
             
             // Formatage de la date comme sur l'accueil
             const statusLabel = enLigne ? 
-                '<span style="color:#4caf50; font-weight:bold; font-size:1.2rem;">● Disponible actuellement</span>' : 
-                '<span style="color:#757575; font-weight:bold; font-size:1.2rem;">○ Hors ligne</span>';
+                '<span style="color:#4caf50; font-weight:bold; font-size:1.6rem;">● Disponible actuellement</span>' : 
+                '<span style="color:#757575; font-weight:bold; font-size:1.6rem;">○ Hors ligne</span>';
 
             document.getElementById('ma-carte-container').innerHTML = `
                 <article class="profile-card full-screen">
@@ -96,27 +96,27 @@
                         <div class="card-status-dot ${enLigne ? 'online' : 'offline'}"></div>
                     </div>
                     <div class="card-body-content">
-                        <p style="margin-bottom:10px;">${statusLabel}</p>
+                        <p style="margin-bottom:15px;">${statusLabel}</p>
                         <h2 style="margin: 10px 0; font-weight: 800; color: #333;">${nomComplet}</h2>
-                        <p class="profession" style="font-size: 1.6rem;">${data.profession || '-'}</p>
+                        <p class="profession">${data.profession || '-'}</p>
                         
                         <div class="stats-pill">
                             <span>⭐ ${data.etoiles ?? 0}</span>
                             <span>📍 ${data.ville || '-'}</span>
                         </div>
 
-                        <div style="text-align: left; background: #fdfaf9; padding: 30px; border-radius: 15px; margin: 25px 0; border: 1px solid #f2ece9; font-size: 1.4rem;">
-                            <p style="margin: 10px 0;"><strong>📞 Contact :</strong> ${data.telephone || 'Non renseigné'}</p>
-                            <p style="margin: 10px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
+                        <div style="text-align: left; background: #fdfaf9; padding: 45px; border-radius: 20px; margin: 35px 0; border: 1px solid #f2ece9; font-size: 2rem;">
+                            <p style="margin: 15px 0;"><strong>📞 Contact :</strong> ${data.telephone || 'Non renseigné'}</p>
+                            <p style="margin: 15px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
                         </div>
 
-                        <p class="services-txt" style="height:auto; font-size: 1.3rem; line-height: 1.6; color: #444; font-style: italic;">
+                        <p class="services-txt" style="height:auto; font-size: 1.8rem; line-height: 1.7; color: #444; font-style: italic;">
                             "${data.bio || 'Aucune présentation renseignée.'}"
                         </p>
 
-                        <div style="margin-top: 40px; text-align: left;">
-                            <h3 style="font-size:1.5rem; color:#5D4037; margin-bottom:20px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
-                            <ul style="padding:0; list-style:none; font-size:1.2rem; color:#666;">${avis}</ul>
+                        <div style="margin-top: 50px; text-align: left;">
+                            <h3 style="font-size:2.2rem; color:#5D4037; margin-bottom:25px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
+                            <ul style="padding:0; list-style:none; font-size:1.6rem; color:#666; line-height:1.6;">${avis}</ul>
                         </div>
                     </div>
                 </article>`;
