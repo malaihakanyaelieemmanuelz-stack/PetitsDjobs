@@ -36,6 +36,7 @@
 
         let userId = null;
         let lastCount = 0;
+        let partnerId = null;
 
         fetch('/get-user-data').then(r => r.json()).then(u => {
             userId = u.id;
@@ -45,23 +46,33 @@
         });
 
         async function loadHeaderInfo() {
-            const targetId = amiId || await fetch('/api/get-mission-partner/'+missionId).then(r => r.json()).then(d => d.partnerId);
-            const res = await fetch('/prestataire-public/' + targetId);
+            partnerId = amiId || await fetch('/api/get-mission-partner/'+missionId).then(r => r.json()).then(d => d.partnerId);
+            const res = await fetch('/prestataire-public/' + partnerId);
             const p = await res.json();
             if (p.nom) {
                 document.getElementById('header-name').innerText = p.prenom + ' ' + p.nom;
                 if (p.photo) document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
+                document.getElementById('btn-add-friend').style.display = 'block';
             }
         }
 
+        async function inviterAmi() {
+            const res = await fetch('/api/inviter-ami', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ targetId: partnerId })
+            });
+            if (res.ok) alert("Invitation envoyée !");
+        }
+
         async function loadMessages() {
-            const url = missionId ? `/api/get-messages/${missionId}` : `/api/get-messages-ami/${amiId}`;
+            const url = (missionId && missionId !== 'undefined') ? `/api/get-messages/${missionId}` : `/api/get-messages-ami/${amiId}`;
             const res = await fetch(url);
             const messages = await res.json();
             const box = document.getElementById('chat-box');
             
-            if (messages.length !== lastCount) {
+            if (Array.isArray(messages) && messages.length !== lastCount) {
                 box.innerHTML = messages.map(m => {
                     const isMe = parseInt(m.sender_id) === parseInt(userId);
                     const time = new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});

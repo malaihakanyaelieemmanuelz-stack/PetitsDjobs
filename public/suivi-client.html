@@ -113,9 +113,18 @@
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
                 const summary = routes[0].summary;
+                const instructions = routes[0].instructions;
+
                 const distM = summary.totalDistance; // Distance réelle à pied
                 const label = distM < 1000 ? Math.round(distM) + " m" : (distM/1000).toFixed(1) + " km";
                 document.getElementById('gps-info').innerHTML = `🛵 Prestataire en approche : <strong>${label}</strong>`;
+                
+                // Affiche les instructions de direction (les "flèches") en texte
+                if (instructions && instructions.length > 0) {
+                    const nextStep = instructions[1] || instructions[0];
+                    document.getElementById('mission-info').innerHTML = `<b>Prochaine étape :</b> ${nextStep.text}`;
+                }
+
                 verifierProximite(distM);
             });
 
@@ -172,7 +181,7 @@
                     
                     const myPos = markerMe.getLatLng();
                     if (myPos.lat !== 0 && myPos.lng !== 0 && pPos.lat !== 0 && pPos.lng !== 0) {
-                        routingControl.setWaypoints([L.latLng(pPos.lat, pPos.lon), L.latLng(myPos.lat, myPos.lon)]);
+                        routingControl.setWaypoints([pPos, myPos]);
                         if (!map.getBounds().contains(pPos)) map.panTo(pPos);
                     } else {
                         logDebug("En attente de votre position pour l'itinéraire...");

@@ -14,13 +14,39 @@
         </div>
     </header>
 
-    <div class="app-wrap">
+    <div class="app-wrap" style="padding-top:10px;">
+        <div id="invitations-container" style="margin-bottom:20px;"></div>
+
         <div id="liste-amis" style="background:white; border-radius:15px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
             <p style="padding:30px; text-align:center; color:#888;">Chargement de vos contacts...</p>
         </div>
     </div>
 
     <script>
+        async function chargerInvitations() {
+            const res = await fetch('/api/mes-demandes-amis'); // Oups, correction du nom dans server.js ci-dessus
+            const invits = await res.json();
+            const container = document.getElementById('invitations-container');
+            if (invits.length > 0) {
+                container.innerHTML = `<h3 style="padding:10px; font-size:0.9rem;">DEMANDES REÇUES</h3>` + invits.map(i => `
+                    <div class="friend-item" style="background:#fff9f0;">
+                        <div style="flex:1;"><b>${i.user.prenom}</b> veut être votre ami.</div>
+                        <button onclick="repondreInvit(${i.id}, 'accepte')" style="background:#2e7d32; color:white; border:none; padding:8px; border-radius:5px;">OUI</button>
+                        <button onclick="repondreInvit(${i.id}, 'refuse')" style="background:#666; color:white; border:none; padding:8px; border-radius:5px; margin-left:5px;">NON</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function repondreInvit(id, action) {
+            await fetch('/api/repondre-invitation', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ invitationId: id, action })
+            });
+            location.reload();
+        }
+
         async function chargerAmis() {
             const res = await fetch('/api/liste-amis');
             const amis = await res.json();

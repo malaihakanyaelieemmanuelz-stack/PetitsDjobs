@@ -46,20 +46,20 @@
 
         <div id="ma-carte-container" style="flex: 1; display: flex; flex-direction: column;">
             <!-- Le contenu sera injecté ici par JS -->
-             <p style="padding:40px; text-align:center;">Chargement de votre profil...</p>
+             <p style="padding:40px; text-align:center; font-size: 1.5rem;">Chargement de votre profil...</p>
         </div>
 
         <div style="padding: 25px 20px; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); margin-top: auto;">
-            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; margin-bottom:12px; border-radius:15px; min-height:50px;">
+            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; margin-bottom:12px; border-radius:15px; min-height:75px; font-size: 1.5rem; font-weight: bold;">
                 ⚙️ MODIFIER MA FICHE
             </button>
-            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; border-radius:15px; min-height:55px;">
+            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; border-radius:15px; min-height:75px; font-size: 1.5rem; font-weight: bold;">
                 RETOUR PROFIL
             </button>
 
             <div style="margin-top: 40px; text-align: center; opacity: 0.6;">
-                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:0.8rem; cursor:pointer; text-decoration:underline;">Supprimer ma carte de visite</button><br><br>
-                <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:0.8rem; cursor:pointer; text-decoration:underline;">Supprimer définitivement mon compte</button>
+                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:1rem; cursor:pointer; text-decoration:underline;">Supprimer ma carte de visite</button><br><br>
+                <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:1rem; cursor:pointer; text-decoration:underline;">Supprimer définitivement mon compte</button>
             </div>
         </div>
     </div>
@@ -85,8 +85,8 @@
             
             // Formatage de la date comme sur l'accueil
             const statusLabel = enLigne ? 
-                '<span style="color:#4caf50; font-weight:bold; font-size:1.6rem;">● Disponible actuellement</span>' : 
-                '<span style="color:#757575; font-weight:bold; font-size:1.6rem;">○ Hors ligne</span>';
+                '<span style="color:#4caf50; font-weight:bold; font-size:1.8rem;">● Disponible actuellement</span>' : 
+                '<span style="color:#757575; font-weight:bold; font-size:1.8rem;">○ Hors ligne</span>';
 
             document.getElementById('ma-carte-container').innerHTML = `
                 <article class="profile-card full-screen">
@@ -105,18 +105,17 @@
                             <span>📍 ${data.ville || '-'}</span>
                         </div>
 
-                        <div style="text-align: left; background: #fdfaf9; padding: 45px; border-radius: 20px; margin: 35px 0; border: 1px solid #f2ece9; font-size: 2rem;">
-                            <p style="margin: 15px 0;"><strong>📞 Contact :</strong> ${data.telephone || 'Non renseigné'}</p>
+                        <div style="text-align: left; background: #fdfaf9; padding: 45px; border-radius: 20px; margin: 35px 0; border: 1px solid #f2ece9; font-size: 2.4rem;">
                             <p style="margin: 15px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
                         </div>
 
-                        <p class="services-txt" style="height:auto; font-size: 1.8rem; line-height: 1.7; color: #444; font-style: italic;">
+                        <p class="services-txt" style="height:auto; font-size: 2.2rem; line-height: 1.7; color: #444; font-style: italic;">
                             "${data.bio || 'Aucune présentation renseignée.'}"
                         </p>
 
                         <div style="margin-top: 50px; text-align: left;">
-                            <h3 style="font-size:2.2rem; color:#5D4037; margin-bottom:25px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
-                            <ul style="padding:0; list-style:none; font-size:1.6rem; color:#666; line-height:1.6;">${avis}</ul>
+                            <h3 style="font-size:2.6rem; color:#5D4037; margin-bottom:25px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
+                            <ul style="padding:0; list-style:none; font-size:2rem; color:#666; line-height:1.6;">${avis}</ul>
                         </div>
                     </div>
                 </article>`;

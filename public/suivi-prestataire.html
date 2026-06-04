@@ -93,9 +93,19 @@
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
                 const summary = routes[0].summary;
+                const instructions = routes[0].instructions;
+
                 const distM = summary.totalDistance; // Distance réelle à pied
                 const label = distM < 1000 ? Math.round(distM) + " mètres" : (distM/1000).toFixed(2) + " km";
                 document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${label}</strong>`;
+                
+                // Affiche le guidage dynamique dans le bandeau marron
+                if (instructions && instructions.length > 0) {
+                    const nextStep = instructions[1] || instructions[0];
+                    document.getElementById('navigation-hint').innerHTML = `⬆️ ${nextStep.text}`;
+                    document.getElementById('navigation-hint').style.display = 'block';
+                }
+
                 verifierProximite(distM);
             });
 
