@@ -40,6 +40,7 @@
         let lastCount = 0;
         let partnerId = null;
         let partnerIsPrestataire = false;
+        let missionProId = null; // Variable globale pour identifier le pro
 
         fetch('/get-user-data').then(r => r.json()).then(u => {
             userId = u.id;
@@ -151,7 +152,11 @@
                             await fetch('/api/send-message', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({ missionId, voiceUrl: uploadData.url })
+                            body: JSON.stringify({ 
+                                missionId: missionId, 
+                                amiId: amiId, 
+                                voiceUrl: uploadData.url 
+                            })
                             });
                             loadMessages();
                         }

@@ -56,8 +56,10 @@
             document.getElementById('mission-info').innerText = msg;
         }
 
-        const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#007bff; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-        const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#ff5252; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+        // Prestataire (Moi) en VERT
+        const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#2e7d32; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+        // Client en ORANGE
+        const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#FF6600; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
         // Initialisation avec délai pour Android
         window.addEventListener('load', () => {
