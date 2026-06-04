@@ -233,11 +233,11 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
 
         const { data: users, error: uError } = await supabase
             .from('utilisateurs')
-            .select('id, nom, prenom, dernier_acces, photo_url')
+            .select('*') // On prend tout pour éviter l'erreur "column does not exist"
             .in('id', userIds);
 
         if (uError) {
-            console.error("[DEBUG SEARCH] Erreur lors de la récupération des utilisateurs:", uError.message);
+            console.error("❌ [DEBUG SEARCH] Erreur Supabase Utilisateurs:", uError.message);
         }
         console.log(`[DEBUG SEARCH] ${users?.length || 0} comptes utilisateurs trouvés correspondant aux prestataires.`);
 
@@ -249,6 +249,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
         let eligibles = (prestataires || [])
             .filter(p => {
                 const pIdStr = String(p.user_id);
+                if (!pIdStr || pIdStr === 'undefined') return false;
                 const exIdStr = excludeUserId ? String(excludeUserId) : null;
 
                 // Filtrer l'utilisateur lui-même s'il est connecté
@@ -286,7 +287,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
                 const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
                 // Unification de la photo
-                const photoFinale = p.photo_profil_url || user?.photo_url || 'default-profile.png';
+                const photoFinale = p.photo_profil_url || user?.photo_url || user?.photo || 'default-profile.png';
 
                 return { 
                     ...p, 
@@ -959,27 +960,39 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 // --- ROUTES DE MESSAGERIE (CHAT) ---
 
 app.get('/api/get-messages/:missionId', requireAuth, async (req, res) => {
-    const { missionId } = req.params;
+    const mId = req.params.missionId;
+    if (!mId || mId === 'undefined' || mId === 'null') return res.json([]);
+
+    console.log(`🌐 [CHAT] Chargement messages pour mission: ${mId}`);
+
     const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('mission_id', missionId)
+        .eq('mission_id', parseInt(mId))
         .order('created_at', { ascending: true });
     
-    if (error) return res.status(500).json([]);
+    if (error) {
+        console.error("❌ [CHAT ERR] Récupération messages:", error.message);
+        return res.status(500).json([]);
+    }
     res.json(data);
 });
 
 app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
     const { amiId } = req.params;
     const myId = req.session.user.id;
+    if (!amiId || amiId === 'undefined') return res.json([]);
+
     const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`and(sender_id.eq.${myId},ami_id.eq.${amiId}),and(sender_id.eq.${amiId},ami_id.eq.${myId})`)
+        .or(`and(sender_id.eq.${myId},ami_id.eq.${parseInt(amiId)}),and(sender_id.eq.${parseInt(amiId)},ami_id.eq.${myId})`)
         .order('created_at', { ascending: true });
 
-    if (error) return res.status(500).json([]);
+    if (error) {
+        console.error("❌ [CHAT ERR] Messages Ami:", error.message);
+        return res.status(500).json([]);
+    }
     res.json(data);
 });
 
@@ -1024,7 +1037,7 @@ app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
     res.json({
         nom: user.nom,
         prenom: user.prenom,
-        photo: user.photo_url || 'default-profile.png',
+        photo: user.photo_url || user.photo || 'default-profile.png',
         enLigne: enLigne
     });
 });
