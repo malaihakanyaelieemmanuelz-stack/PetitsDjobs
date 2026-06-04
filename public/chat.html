@@ -46,10 +46,14 @@
         });
 
         async function loadHeaderInfo() {
+            const hasAmi = amiId && amiId !== 'undefined' && amiId !== 'null';
+            const hasMission = missionId && missionId !== 'undefined' && missionId !== 'null';
+
             if (!partnerId) {
-                if (amiId && amiId !== 'undefined' && amiId !== 'null') {
+                if (hasAmi) {
                     partnerId = amiId;
-                } else if (missionId && missionId !== 'undefined' && missionId !== 'null') {
+                } else if (hasMission) {
+                    console.log("Loading partner for mission:", missionId);
                     const d = await fetch('/api/get-mission-partner/' + missionId).then(r => r.json());
                     partnerId = d.partnerId;
                 }
@@ -76,7 +80,12 @@
         }
 
         async function loadMessages() {
-            const url = (missionId && missionId !== 'undefined') ? `/api/get-messages/${missionId}` : `/api/get-messages-ami/${amiId}`;
+            const hasMission = missionId && missionId !== 'undefined' && missionId !== 'null';
+            const hasAmi = amiId && amiId !== 'undefined' && amiId !== 'null';
+            
+            if (!hasMission && !hasAmi) return;
+
+            const url = hasMission ? `/api/get-messages/${missionId}` : `/api/get-messages-ami/${amiId}`;
             const res = await fetch(url);
             const messages = await res.json();
             const box = document.getElementById('chat-box');

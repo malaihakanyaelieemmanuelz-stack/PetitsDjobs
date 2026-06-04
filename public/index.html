@@ -342,6 +342,7 @@
         }).then(userData => {
             if (!userData) return;
             
+            console.log("Session Client Photo:", userData.photo);
             currentUserId = userData.id;
 
             // Si c'est un prestataire, on surveille les missions entrantes

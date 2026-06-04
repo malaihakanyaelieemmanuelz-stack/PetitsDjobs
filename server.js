@@ -224,7 +224,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
         const userIds = prestataires.map(p => p.user_id);
         const { data: users } = await supabase
             .from('utilisateurs')
-            .select('id, nom, prenom, dernier_acces')
+            .select('id, nom, prenom, dernier_acces, photo_url')
             .in('id', userIds);
 
         const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
@@ -261,6 +261,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
                     enLigne: enLigne,
                     dernier_acces: user?.dernier_acces,
                     distanceM: dist,
+                    photo: p.photo_profil_url || user?.photo_url || 'default-profile.png'
                 };
             });
 
@@ -424,10 +425,14 @@ app.post('/deconnexion', async (req, res) => {
 });
 
 // --- API ---
-app.get('/get-user-data', (req, res) => res.json(req.session.user || {}));
+app.get('/get-user-data', (req, res) => {
+    console.log(`🌐 [API] /get-user-data - User: ${req.session.user?.id || 'Invité'}, Photo: ${req.session.user?.photo ? 'OK' : 'Manquante'}`);
+    res.json(req.session.user || {});
+});
 
 app.get('/get-session-commande', async (req, res) => {
     const cmd = req.session.commande;
+    console.log(`🌐 [API] /get-session-commande - MissionId: ${cmd?.missionId || 'Aucun'}`);
     if (cmd && cmd.prestataireId) {
         // Rafraîchir dynamiquement le statut de disponibilité du prestataire choisi
         const { data: user } = await supabase.from('utilisateurs')
@@ -944,6 +949,7 @@ app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
 
 app.post('/api/send-message', requireAuth, async (req, res) => {
     let { missionId, amiId, text } = req.body;
+    console.log(`🌐 [API] /api/send-message - De:${req.session.user.id} Mission:${missionId} Texte:${text?.substring(0,15)}...`);
     
     // Nettoyage pour éviter les erreurs de type dans Supabase
     const mId = (missionId && missionId !== 'undefined' && missionId !== 'null') ? parseInt(missionId) : null;
@@ -957,18 +963,28 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
     };
 
     const { data, error } = await supabase.from('messages').insert(payload).select().single();
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+        console.error(`❌ [CHAT ERR] Envoi message:`, error.message);
+        return res.status(500).json({ error: error.message });
+    }
     res.json(data);
 });
 
 // Nouvelle route pour obtenir les infos de n'importe quel partenaire (Client ou Pro)
 app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
-    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom, photo_url, dernier_acces').eq('id', req.params.id).maybeSingle();
-    if (!user) return res.status(404).json({});
+    const pId = req.params.id;
+    console.log(`🌐 [API] /api/partner-info/${pId}`);
+    const { data: user, error } = await supabase.from('utilisateurs').select('nom, prenom, photo_url, dernier_acces').eq('id', pId).maybeSingle();
+    
+    if (error || !user) {
+        console.error(`❌ [API ERR] partner-info ${pId}:`, error?.message || 'Utilisateur introuvable');
+        return res.status(404).json({});
+    }
 
     const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
     const enLigne = user.dernier_acces ? (Date.now() - new Date(user.dernier_acces).getTime() < SEUIL_EN_LIGNE_MS) : false;
 
+    console.log(`✅ [API] partner-info ${pId} - Photo: ${user.photo_url}`);
     res.json({
         nom: user.nom,
         prenom: user.prenom,
@@ -1209,14 +1225,17 @@ app.post('/connexion', async (req, res) => {
             console.log("[DIAGNOSTIC] Mot de passe OK, création de session...");
             // On vérifie séparément s'il est prestataire
             const { data: profil } = await supabase.from('infos_prestataires').select('*').eq('user_id', compte.id).maybeSingle();
-            req.session.user = { ...compte };
+            
+            // UNIFICATION PHOTO SESSION
+            req.session.user = { ...compte, photo: compte.photo_url };
+
             if (profil) {
                 req.session.user.isPrestataire = true;
                 req.session.user.profession = profil.profession;
                 req.session.user.bio = profil.bio;
                 req.session.user.ville = profil.ville;
                 req.session.user.services = profil.services;
-                req.session.user.photo = profil.photo_profil_url;
+                req.session.user.photo = profil.photo_profil_url || compte.photo_url;
                 req.session.user.etoiles = profil.etoiles;
             } else {
                 req.session.user.isPrestataire = false;
@@ -1296,7 +1315,7 @@ app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
         }
 
         console.log("[DIAGNOSTIC] Inscription DB réussie, initialisation session...");
-        req.session.user = { ...newUser };
+        req.session.user = { ...newUser, photo: newUser.photo_url };
         req.session.user.isPrestataire = false;
         delete req.session.user.password;
         req.session.remember = !!req.body.remember;
