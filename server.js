@@ -1454,12 +1454,12 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
                     <p style="color: #888; font-size: 14px;">La confiance au service de votre quotidien</p>
                 </div>
                 <div style="border-top: 4px solid #FF6600; padding-top: 20px;">
-                    <h2 style="color: #333; font-size: 18px; text-align: center;">Récupération de compte</h2>
+                    <h2 style="color: #000000; font-size: 18px; text-align: center;">Récupération de compte</h2>
                     <p style="color: #555; line-height: 1.6;">Bonjour,</p>
                     <p style="color: #555; line-height: 1.6;">Vous avez demandé la réinitialisation de votre mot de passe. Voici votre code de sécurité unique :</p>
                     
                     <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 10px; margin: 25px 0; border: 1px dashed #FF6600;">
-                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">${code}</span>
+                        <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #FF6600;">${code}</span>
                     </div>
 
                     <p style="color: #e53935; font-size: 13px; text-align: center; font-weight: bold;">⚠️ Ce code expire dans 15 minutes.</p>

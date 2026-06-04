@@ -16,7 +16,7 @@
 
     <header class="home-header">
         <div class="header-content">
-            <a href="index.html" style="text-decoration:none; display:block; margin:0;">
+            <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
                 <h1 style="margin:0;">
                     <svg class="home-logo" viewBox="0 0 100 100">
                         <g transform="rotate(-30 50 50)">
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <h2 id="cat-title">Nos catégories</h2>
+    <h2 id="cat-title" style="color:#2e7d32;">Nos catégories</h2>
 
     <div class="service-grid" id="services-bloc">
         <div class="card" onclick="allerCommander('Cuisine', 1500)">
@@ -125,14 +125,14 @@
     </div>
 
     <section class="app-wrap" id="section-jobs" style="padding: 20px; display:none;">
-        <h2 style="font-size:1.2rem; color:#5D4037; border-left:4px solid #5D4037; padding-left:10px; text-align:left;">Travaux demandés à proximité</h2>
+        <h2 style="font-size:1.2rem; color:#2e7d32; border-left:4px solid #2e7d32; padding-left:10px; text-align:left;">Travaux demandés à proximité</h2>
         <div id="container-jobs" style="display:flex; gap:15px; overflow-x:auto; padding:10px 0;">
             <!-- Les jobs s'affichent ici -->
         </div>
     </section>
 
     <section class="app-wrap" style="padding: 40px 20px; text-align: center; background: #f9f9f9; margin-top: 20px;">
-        <h2>Les meilleurs prestataires proches</h2>
+        <h2 style="color:#2e7d32;">Les meilleurs prestataires proches</h2>
         <div class="scroll-container" id="container-prestataires"></div>
     </section>
 
@@ -240,7 +240,7 @@
                     </div>
                     <div class="card-body-content">
                         <p style="font-size:0.7rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
-                        <h3>${nomComplet}</h3>
+                        <h3 style="color:#2e7d32;">${nomComplet}</h3>
                         <p class="profession">${p.profession || '-'}</p>
                         <div class="stats-pill">
                             <span>⭐ ${p.etoiles || 0}</span>
@@ -292,7 +292,7 @@
                                 </div>
                                 <div style="margin-top:8px;">
                             <strong style="color:#FF6600; font-size:1.1rem; display:block; margin-bottom:4px;">${j.prix} FCFA</strong>
-                                    <p style="margin:5px 0; color:#333; font-weight:bold; height:2.4em; overflow:hidden; line-height:1.2;">Nature: ${j.description}</p>
+                                    <p style="margin:5px 0; color:#000000; font-weight:bold; height:2.4em; overflow:hidden; line-height:1.2;">Nature: ${j.description}</p>
                                     ${j.distanceM != null ? `<p style="color:#2e7d32; font-size:0.75rem; margin:4px 0;">📍 À ${distanceLabel(j.distanceM)} de vous</p>` : ''}
                                     ${j.clientId === currentUserId ? `
                                 <button onclick="location.href='/discuter.html?offreId=${j.id}'" style="width:100%; border:none; background:#FF6600; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">GÉRER MA TÂCHE</button>
