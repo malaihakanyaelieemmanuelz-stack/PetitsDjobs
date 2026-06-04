@@ -203,7 +203,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
         // Nettoyage pour les logs Render
         const dLat = (lat && lat !== 'undefined') ? lat : '?';
         const dLon = (lon && lon !== 'undefined') ? lon : '?';
-        console.log(`[DEBUG SEARCH ${timestamp}] Type=${type}, Query=${query_text || 'Tous'}, GPS=${dLat},${dLon}`);
+        console.log(`[DEBUG SEARCH ${timestamp}] Type=${type}, Query=${query_text || 'Tous (Accueil)'}, GPS=${dLat},${dLon}`);
 
         // 1. On récupère un pool plus large de prestataires pour garantir des résultats
         let query = supabase.from('infos_prestataires').select('*');
@@ -218,11 +218,12 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
         }
 
-        console.log(`[DEBUG SEARCH] ${prestataires.length} prestataires trouvés dans la DB.`);
+        const nbInscritsTotalBase = prestataires.length;
+        console.log(`[DEBUG SEARCH] ${nbInscritsTotalBase} prestataires trouvés au total dans la base.`);
 
         // 2. On récupère les infos utilisateurs
-        // On s'assure que les IDs sont bien des nombres (BIGINT)
-        const userIds = prestataires.map(p => parseInt(p.user_id, 10)).filter(id => !isNaN(id));
+        // On récupère TOUS les IDs sans exception pour vérifier la correspondance
+        const userIds = prestataires.map(p => p.user_id);
         
         if (userIds.length === 0) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
 
@@ -242,7 +243,13 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
                 if (excludeUserId && String(p.user_id) === String(excludeUserId)) return false;
 
                 const user = userMap[String(p.user_id)];
-                if (!user) return false;
+                if (!user) {
+                    console.log(`⚠️ [DEBUG SEARCH] Prestataire ID ${p.user_id} n'a pas de compte dans la table utilisateurs !`);
+                    return false;
+                }
+
+                // REGLE PRIORITAIRE : Si moins de 20 inscrits total, on ne filtre PAS par service sur l'accueil
+                if (nbInscritsTotalBase <= 20 && !query_text) return true;
 
                 if (type === 'nom' && query_text) {
                     const q = query_text.trim().toLowerCase();
@@ -276,7 +283,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             });
 
         const nbTotalInscrits = eligibles.length;
-        console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires éligibles trouvés.`);
+        console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires validés après vérification des comptes.`);
 
         // 3. Logique de tri ultra-précise
         eligibles.sort((a, b) => {
@@ -306,13 +313,13 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             }
         });
 
-        // Règle d'affichage : Si moins de 20 prestataires, on ignore la distance (On les affiche tous)
+        // Règle d'affichage : Si moins de 20 prestataires AU TOTAL, on ignore la distance et on affiche tout
         let results = eligibles;
-        if (nbTotalInscrits > 20 && type === 'service') {
+        if (nbInscritsTotalBase > 20 && type === 'service') {
             results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
-        console.log(`[DEBUG SEARCH] Envoi de ${results.length} prestataires au client.`);
+        console.log(`[DEBUG SEARCH] Résultat final : Envoi de ${results.length} prestataires.`);
 
         const limitFixe = limit || 20;
         const page = results.slice(offset, offset + limitFixe);
