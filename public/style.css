@@ -35,7 +35,12 @@ body {
     flex-direction: column;
     background-color: transparent !important; /* Laisse passer le logo du HTML */
 }
-.auth-page { display: flex; justify-content: center; align-items: center; }
+.auth-page { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    flex: 1; /* Permet à la page de prendre tout l'espace restant pour un centrage vertical parfait */
+}
 
 /* Styles spécifiques aux formulaires (CONNEXION/INSCRIPTION) */
 .login-card { 
@@ -455,13 +460,13 @@ body {
 .profile-card.full-screen .card-avatar-wrapper { width: 160px; height: 160px; margin: -80px auto 20px; }
 
 .profile-card.full-screen .card-body-content h2 { 
-    font-size: 2.2rem; 
+    font-size: 2.8rem; 
     margin: 15px 0; 
     font-weight: 900; 
 }
 
-.profile-card.full-screen .profession { font-size: 1.2rem; }
-.profile-card.full-screen .stats-pill { font-size: 1.1rem; padding: 10px 20px; }
+.profile-card.full-screen .profession { font-size: 1.6rem; }
+.profile-card.full-screen .stats-pill { font-size: 1.4rem; padding: 12px 25px; }
 
 .profile-card.full-screen:hover { transform: none; box-shadow: none; }
 
@@ -782,10 +787,11 @@ body {
 
     body {
         background-color: transparent !important;
-        display: block !important; /* On retire le flex sur mobile pour éviter l'étirement vertical */
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         overflow-x: hidden !important;
-        height: auto !important;
+        min-height: 100dvh !important;
     }
 
     /* Reset global des marges pour supprimer le vide */
@@ -834,7 +840,7 @@ body {
         flex-direction: column !important;
         justify-content: center !important; /* Centre la carte verticalement */
         align-items: center !important;     /* Centre la carte horizontalement */
-        min-height: 100dvh !important;      /* Utilise toute la hauteur du viewport */
+        flex: 1 !important;                 /* Remplace la hauteur fixe pour éviter de pousser le contenu trop bas */
         width: 100% !important;
         background-color: transparent !important;
     }

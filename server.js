@@ -587,6 +587,9 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
         console.error("❌ ERREUR CRITIQUE simuler-paiement:", err);
+        if (err.code === 'PGRST204') {
+            console.error("👉 ANALYSE : La colonne 'date_prevue' est manquante dans votre table 'missions'. Exécutez l'ALTER TABLE dans Supabase.");
+        }
         if (err.code === '22P02') {
             console.error("👉 ANALYSE : Erreur de type UUID. Allez sur votre tableau de bord Supabase, table 'missions', et changez le type des colonnes 'client_id' et 'prestataire_id' de 'UUID' vers 'BIGINT' ou 'INT8'.");
         }
