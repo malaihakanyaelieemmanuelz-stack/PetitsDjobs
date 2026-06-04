@@ -998,19 +998,16 @@ app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
 
 app.post('/api/send-message', requireAuth, async (req, res) => {
     let { missionId, amiId, text } = req.body;
-    console.log(`🌐 [API] /api/send-message - De:${req.session.user.id} Mission:${missionId} Texte:${text?.substring(0,15)}...`);
+    console.log(`🌐 [CHAT] Envoi message de ${req.session.user.id} (Mission: ${missionId})`);
     
     // Nettoyage pour éviter les erreurs de type dans Supabase
     const mId = (missionId && missionId !== 'undefined' && missionId !== 'null') ? parseInt(missionId) : null;
-    const aId = (amiId && amiId !== 'undefined' && amiId !== 'null') ? parseInt(amiId) : null;
 
     const payload = {
         sender_id: req.session.user.id,
         text: text,
-        mission_id: mId,
-        ami_id: aId
         mission_id: mId
-        // Note: ami_id est retiré car la colonne n'existe pas dans ta table 'messages'
+        // ami_id est retiré car la colonne n'existe pas dans ton schéma Supabase actuel
     };
 
     const { data, error } = await supabase.from('messages').insert(payload).select().single();
@@ -1045,8 +1042,7 @@ app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
     const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
     const enLigne = user.dernier_acces ? (Date.now() - new Date(user.dernier_acces).getTime() < SEUIL_EN_LIGNE_MS) : false;
 
-    console.log(`✅ [API] partner-info ${pId} - Photo: ${user.photo_url}`);
-    console.log(`✅ [API] partner-info ${pId} - Photo OK`);
+    console.log(`✅ [API] partner-info ${pId} chargé.`);
     res.json({
         nom: user.nom,
         prenom: user.prenom,
