@@ -1018,24 +1018,31 @@ body {
 
 .message-bubble.me {
     align-self: flex-end;
-    background-color: #e7ffdb; /* Vert WhatsApp clair */
-    color: #000000;
     border-top-right-radius: 2px;
 }
 
 .message-bubble.other {
     align-self: flex-start;
-    background-color: #ffffff;
-    color: #000000;
     border-top-left-radius: 2px;
 }
 
+.message-bubble.presta-style {
+    background-color: #FF6600; /* Orange Prestataire */
+    color: white;
+}
+
+.message-bubble.client-style {
+    background-color: #2e7d32; /* Vert Client */
+    color: white;
+}
+
 .message-time {
-    font-size: 0.7rem;
-    color: #888;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.8);
     text-align: right;
     margin-top: 4px;
     display: block;
+    font-style: italic;
 }
 
 /* --- Page Amis --- */

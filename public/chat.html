@@ -35,11 +35,14 @@
         const amiId = params.get('amiId');
 
         let userId = null;
+        let userIsPrestataire = false;
         let lastCount = 0;
         let partnerId = null;
+        let partnerIsPrestataire = false;
 
         fetch('/get-user-data').then(r => r.json()).then(u => {
             userId = u.id;
+            userIsPrestataire = u.isPrestataire;
             loadHeaderInfo();
             loadMessages();
             setInterval(loadMessages, 3000);
@@ -67,6 +70,7 @@
                 document.getElementById('header-name').innerText = p.prenom + ' ' + p.nom;
                 document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
+                partnerIsPrestataire = p.isPrestataire;
             }
         }
 
@@ -95,11 +99,15 @@
             if (Array.isArray(messages) && messages.length !== lastCount) {
                 box.innerHTML = messages.map(m => {
                     const isMe = parseInt(m.sender_id) === parseInt(userId);
-                    const time = new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const isPresta = isMe ? userIsPrestataire : partnerIsPrestataire;
+                    const styleClass = isPresta ? 'presta-style' : 'client-style';
+                    const dateObj = new Date(m.created_at);
+                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const date = dateObj.toLocaleDateString([], {day: '2-digit', month: '2-digit'});
                     return `
-                        <div class="message-bubble ${isMe ? 'me' : 'other'}">
+                        <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}">
                             ${m.text}
-                            <span class="message-time">${time}</span>
+                            <span class="message-time">${date} à ${time}</span>
                         </div>
                     `;
                 }).join('');

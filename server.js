@@ -1047,7 +1047,8 @@ app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
         nom: user.nom,
         prenom: user.prenom,
         photo: finalPhoto,
-        enLigne: enLigne
+        enLigne: enLigne,
+        isPrestataire: !!pInfo
     });
 });
 
