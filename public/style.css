@@ -1094,20 +1094,23 @@ body {
 .message-bubble.other { align-self: flex-start; border-bottom-left-radius: 2px; }
 
 .message-bubble.presta-style {
-    background-color: #ffffff;
-    border: 3px solid #FF6600 !important;
+    background-color: #ffffff !important;
+    border: 2.5px solid #FF6600 !important;
     color: #FF6600 !important;
+    border-bottom-left-radius: 2px;
 }
 
 .message-bubble.client-style {
-    background-color: #ffffff;
-    border: 3px solid #2e7d32 !important;
+    background-color: #ffffff !important;
+    border: 2.5px solid #2e7d32 !important;
     color: #2e7d32 !important;
+    border-bottom-right-radius: 2px;
 }
 
 .message-time {
-    font-size: 0.6rem;
-    color: #666;
+    font-size: 0.65rem;
+    color: inherit;
+    opacity: 0.7;
     text-align: right;
     margin-top: 8px;
     display: block;

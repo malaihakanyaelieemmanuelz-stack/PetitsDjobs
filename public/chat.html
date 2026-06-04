@@ -58,8 +58,12 @@
                 if (hasAmi) {
                     partnerId = amiId;
                 } else if (hasMission) {
-                    console.log("Loading partner for mission:", missionId);
+                    console.log("[DEBUG] Récupération des rôles de la mission:", missionId);
+                    // On récupère les détails de la mission pour savoir qui est le PRO
+                    const resM = await fetch('/api/statut-mission?missionId=' + missionId).then(r => r.json());
                     const d = await fetch('/api/get-mission-partner/' + missionId).then(r => r.json());
+                    
+                    missionProId = d.prestataireId || d.partnerId; // On identifie le pro
                     partnerId = d.partnerId;
                 }
             }
@@ -72,8 +76,7 @@
                 document.getElementById('header-name').innerText = p.prenom + ' ' + p.nom;
                 document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
-                partnerIsPrestataire = p.isPrestataire;
-                console.log("[DEBUG CHAT] Partenaire chargé:", { partnerId, partnerIsPrestataire });
+                console.log("[DEBUG CHAT] Partenaire chargé ID:", partnerId);
                 loadMessages(); 
             }
         }
@@ -119,6 +122,56 @@
                 lastCount = messages.length;
             }
         }
+
+        // --- GESTION VOCALE (CORRIGÉE) ---
+        let mediaRecorder;
+        let audioChunks = [];
+        const micBtn = document.getElementById('btn-mic');
+
+        micBtn.onclick = async () => {
+            console.log("[DEBUG VOICE] Clic micro détecté");
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = async () => {
+                        micBtn.innerText = '⌛';
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob);
+                        
+                        console.log("[DEBUG VOICE] Envoi du fichier au serveur...");
+                        const uploadRes = await fetch('/api/upload-vocal', { method: 'POST', body: formData });
+                        const uploadData = await uploadRes.json();
+                        
+                        if (uploadData.url) {
+                            await fetch('/api/send-message', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ missionId, voiceUrl: uploadData.url })
+                            });
+                            loadMessages();
+                        }
+                        micBtn.innerText = '🎤';
+                        micBtn.classList.remove('recording');
+                    };
+
+                    mediaRecorder.start();
+                    micBtn.classList.add('recording');
+                    micBtn.innerText = '🛑';
+                    console.log("[DEBUG VOICE] Enregistrement démarré");
+                } catch (err) {
+                    console.error("[DEBUG VOICE] Erreur micro:", err);
+                    alert("Impossible d'accéder au micro. Vérifiez les autorisations de votre navigateur.");
+                }
+            } else {
+                mediaRecorder.stop();
+                console.log("[DEBUG VOICE] Enregistrement stoppé");
+            }
+        };
 
         document.getElementById('btn-send').onclick = async () => {
             const input = document.getElementById('chat-input');
