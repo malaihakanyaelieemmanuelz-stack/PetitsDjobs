@@ -63,15 +63,14 @@ body {
 
 .toggle-password {
     position: absolute;
-    right: 12px !important; /* Positionné à l'extrême droite du conteneur */
+    right: 0 !important; /* Collé au bord droit du conteneur */
     left: auto !important; /* Annule tout centrage éventuel */
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0 !important;
+    height: 100% !important; /* Prend toute la hauteur pour rester centré verticalement */
+    width: 45px !important; /* Zone de clic confortable pour le doigt */
     cursor: pointer;
     user-select: none;
     z-index: 10;
-    width: 28px;
-    height: 28px;
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -399,21 +398,22 @@ body {
     gap: 20px; margin-top: 16px;
 }
 
-/* --- Conteneur pour défilement VERTICAL (Top Prestataires) --- */
+/* --- Conteneur pour défilement HORIZONTAL (Top Prestataires) --- */
 .scroll-container {
     display: flex;             /* Aligne tout en ligne */
-    flex-direction: column;    /* Passage en VERTICAL */
-    overflow-y: auto;          /* Active le défilement vertical */
-    overflow-x: hidden;        /* Empêche le défilement horizontal */
-    align-items: center;       /* Centre les cartes */
+    flex-direction: row;       /* Passage en HORIZONTAL */
+    overflow-x: auto;          /* Active le défilement horizontal */
+    overflow-y: hidden;        /* Empêche le défilement vertical */
+    align-items: stretch;      /* Étire les cartes pour qu'elles aient la même hauteur */
     gap: 15px;                 /* Espace */
     padding: 20px 10px;
     width: 100%;               /* Prend toute la largeur */
-    max-height: 600px;         /* Limite de hauteur pour créer un défilement interne */
+    max-height: none;          /* Supprime la limite de hauteur verticale */
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch; /* Fluidité Android */
     scroll-behavior: smooth;
     scrollbar-width: none;
+    scroll-snap-type: x mandatory; /* Force les cartes à s'aimanter lors du défilement */
 }
 .scroll-container::-webkit-scrollbar { display: none; }
 
