@@ -46,15 +46,23 @@
         });
 
         async function loadHeaderInfo() {
-            partnerId = amiId || await fetch('/api/get-mission-partner/'+missionId).then(r => r.json()).then(d => d.partnerId);
-            const res = await fetch('/prestataire-public/' + partnerId);
+            if (!partnerId) {
+                if (amiId && amiId !== 'undefined' && amiId !== 'null') {
+                    partnerId = amiId;
+                } else if (missionId && missionId !== 'undefined' && missionId !== 'null') {
+                    const d = await fetch('/api/get-mission-partner/' + missionId).then(r => r.json());
+                    partnerId = d.partnerId;
+                }
+            }
+            
+            if (!partnerId) return;
+
+            const res = await fetch('/api/partner-info/' + partnerId);
             const p = await res.json();
             if (p.nom) {
                 document.getElementById('header-name').innerText = p.prenom + ' ' + p.nom;
-                if (p.photo) document.getElementById('header-avatar').src = p.photo;
+                document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
-                const btnAddFriend = document.getElementById('btn-add-friend');
-                if (btnAddFriend) btnAddFriend.style.display = 'block';
             }
         }
 

@@ -943,16 +943,38 @@ app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
 });
 
 app.post('/api/send-message', requireAuth, async (req, res) => {
-    const { missionId, amiId, text } = req.body;
+    let { missionId, amiId, text } = req.body;
+    
+    // Nettoyage pour éviter les erreurs de type dans Supabase
+    const mId = (missionId && missionId !== 'undefined' && missionId !== 'null') ? parseInt(missionId) : null;
+    const aId = (amiId && amiId !== 'undefined' && amiId !== 'null') ? parseInt(amiId) : null;
+
     const payload = {
         sender_id: req.session.user.id,
         text: text,
-        mission_id: missionId || null,
-        ami_id: amiId || null
+        mission_id: mId,
+        ami_id: aId
     };
+
     const { data, error } = await supabase.from('messages').insert(payload).select().single();
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
+});
+
+// Nouvelle route pour obtenir les infos de n'importe quel partenaire (Client ou Pro)
+app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
+    const { data: user } = await supabase.from('utilisateurs').select('nom, prenom, photo_url, dernier_acces').eq('id', req.params.id).maybeSingle();
+    if (!user) return res.status(404).json({});
+
+    const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+    const enLigne = user.dernier_acces ? (Date.now() - new Date(user.dernier_acces).getTime() < SEUIL_EN_LIGNE_MS) : false;
+
+    res.json({
+        nom: user.nom,
+        prenom: user.prenom,
+        photo: user.photo_url || 'default-profile.png',
+        enLigne: enLigne
+    });
 });
 
 app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {

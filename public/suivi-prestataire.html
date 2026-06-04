@@ -86,7 +86,7 @@
                 createMarker: () => null,
                 addWaypoints: false,
                 show: false,
-                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1/foot' }),
+                router: L.Routing.osrmv1({ serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1' }),
                 routeWhileDragging: true // Permet de recalculer la route si les marqueurs sont déplacés (utile pour le debug)
             }).addTo(map);
 
