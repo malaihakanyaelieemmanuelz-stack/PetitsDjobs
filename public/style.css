@@ -1095,24 +1095,33 @@ body {
 
 .message-bubble.presta-style {
     background-color: #ffffff;
-    border: 2px solid #FF6600; /* Contour Orange */
-    color: #FF6600; /* Texte Orange */
+    border: 3px solid #FF6600 !important;
+    color: #FF6600 !important;
 }
 
 .message-bubble.client-style {
     background-color: #ffffff;
-    border: 2px solid #2e7d32; /* Contour Vert */
-    color: #2e7d32; /* Texte Vert */
+    border: 3px solid #2e7d32 !important;
+    color: #2e7d32 !important;
 }
 
 .message-time {
-    font-size: 0.65rem;
-    color: inherit;
-    opacity: 0.8;
+    font-size: 0.6rem;
+    color: #666;
     text-align: right;
-    margin-top: 5px;
+    margin-top: 8px;
     display: block;
     font-style: italic;
-    border-top: 1px solid rgba(0,0,0,0.05);
-    padding-top: 2px;
 }
+
+.btn-mic {
+    background: #FF6600;
+    color: white;
+    border: none;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+}
+.btn-mic.recording { background: #b71c1c; animation: pulse 1s infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }

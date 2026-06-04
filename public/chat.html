@@ -23,6 +23,7 @@
     </div>
 
     <div style="padding:10px; background:#f0f0f0; display:flex; gap:8px; align-items:center;">
+        <button id="btn-mic" class="btn-mic">🎤</button>
         <input type="text" id="chat-input" placeholder="Taper un message" style="flex:1; padding:12px 18px; border-radius:25px; border:none; outline:none; font-size:1rem;">
         <button id="btn-send" style="background:#FF6600; color:white; border:none; width:45px; height:45px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
@@ -43,6 +44,7 @@
         fetch('/get-user-data').then(r => r.json()).then(u => {
             userId = u.id;
             userIsPrestataire = u.isPrestataire;
+            console.log("[DEBUG CHAT] Moi:", { userId, userIsPrestataire });
             loadHeaderInfo();
             loadMessages();
             setInterval(loadMessages, 3000);
@@ -71,8 +73,8 @@
                 document.getElementById('header-avatar').src = p.photo;
                 document.getElementById('header-status').innerText = p.enLigne ? 'en ligne' : 'hors ligne';
                 partnerIsPrestataire = p.isPrestataire;
-                console.log(`[DEBUG] Infos partenaire chargées. Est Prestataire : ${partnerIsPrestataire}`);
-                lastCount = 0; loadMessages(); // Force le rendu des couleurs
+                console.log("[DEBUG CHAT] Partenaire chargé:", { partnerId, partnerIsPrestataire });
+                loadMessages(); 
             }
         }
 
@@ -99,20 +101,17 @@
             const box = document.getElementById('chat-box');
             
             if (Array.isArray(messages) && messages.length !== lastCount) {
-                console.log(`[DEBUG CHAT] Rendu de ${messages.length} messages. Moi_Pro: ${userIsPrestataire}, Partenaire_Pro: ${partnerIsPrestataire}`);
                 box.innerHTML = messages.map(m => {
                     const isMe = parseInt(m.sender_id) === parseInt(userId);
                     const isPresta = isMe ? userIsPrestataire : partnerIsPrestataire;
                     const styleClass = isPresta ? 'presta-style' : 'client-style';
-                    
                     const dateObj = new Date(m.created_at);
                     const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const date = dateObj.toLocaleDateString([], {day: '2-digit', month: '2-digit'});
-
                     return `
-                        <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}" style="margin-bottom: 10px;">
+                        <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}">
                             ${m.text}
-                            <span class="message-time">${date} • ${time}</span>
+                            <span class="message-time">${date} à ${time}</span>
                         </div>
                     `;
                 }).join('');
@@ -127,12 +126,19 @@
             if (!text) return;
             
             input.value = '';
-            await fetch('/api/send-message', {
+            console.log("[DEBUG CHAT] Envoi du message...");
+            
+            const res = await fetch('/api/send-message', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ missionId, amiId, text })
             });
-            loadMessages();
+            
+            if (res.ok) {
+                loadMessages();
+            } else {
+                console.error("[DEBUG CHAT] Échec de l'envoi");
+            }
         };
     </script>
 </body>
