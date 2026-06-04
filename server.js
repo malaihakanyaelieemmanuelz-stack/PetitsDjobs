@@ -565,23 +565,52 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         req.session.commande.paye = true;
         req.session.commande.statut = payload.statut;
 
-        // NOTIFICATION DU PRESTATAIRE PAR EMAIL
+        // --- NOTIFICATIONS DIFFÉRENCIÉES PAR EMAIL ---
+        const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le **${datePrevue}**`;
+        const consigneAcceptation = "<p style='color: #b71c1c; font-weight: bold;'>⚠️ IMPORTANT : N'appuyez sur 'ACCEPTER' que lorsque vous êtes réellement prêt à partir pour la mission. L'acceptation déclenche immédiatement le suivi GPS.</p>";
+
+        // 1. Notification du Prestataire Principal
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
         if (pUser && pUser.email && resend) {
-            const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le **${datePrevue}**`;
             safeSendEmail({
                 from: 'PetitsDjobs <onboarding@resend.dev>',
                 to: pUser.email,
-                subject: `🚨 Nouvelle mission ${msgDate} !`,
+                subject: `⭐ Vous êtes le prestataire principal - Mission ${msgDate}`,
                 html: `
                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #5D4037;">Bonjour ${pUser.prenom},</h2>
-                        <p>Vous avez reçu une demande pour : <strong>${cmd.service}</strong> (${msgDate}).</p>
-                        <p>${datePrevue === 'today' ? "Le client a été invité à vous appeler pour confirmer." : "Merci de vous connecter pour valider cette réservation à l'avance."}</p>
-                        <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 10px 20px; background: #5D4037; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Voir ma carte de visite</a>
+                        <h2 style="color: #FF6600;">Bonjour ${pUser.prenom}, vous êtes en 1ère position !</h2>
+                        <p>Un client vous a choisi comme <strong>prestataire principal</strong> pour : <strong>${cmd.service}</strong>.</p>
+                        <p>📅 Date : ${msgDate}</p>
+                        <p>Vous avez jusqu'à 1 heure avant l'heure prévue pour confirmer ou infirmer votre présence.</p>
+                        ${consigneAcceptation}
+                        <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Accéder à mon espace</a>
                     </div>
                 `
             });
+        }
+
+        // 2. Notification des Prestataires de Secours
+        if (cmd.backups && cmd.backups.length > 0 && resend) {
+            for (const backup of cmd.backups) {
+                const { data: bUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', backup.id).single();
+                if (bUser && bUser.email) {
+                    safeSendEmail({
+                        from: 'PetitsDjobs <onboarding@resend.dev>',
+                        to: bUser.email,
+                        subject: `🛡️ Mission de secours - Mission ${msgDate}`,
+                        html: `
+                            <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                                <h2 style="color: #2e7d32;">Bonjour ${bUser.prenom}, vous êtes en secours.</h2>
+                                <p>Vous avez été sélectionné comme <strong>prestataire de secours</strong> pour : <strong>${cmd.service}</strong>.</p>
+                                <p>📅 Date : ${msgDate}</p>
+                                <p>Si le prestataire principal se désiste ou ne répond pas, cette mission vous sera automatiquement attribuée.</p>
+                                ${consigneAcceptation}
+                                <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Voir les détails</a>
+                            </div>
+                        `
+                    });
+                }
+            }
         }
 
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
@@ -921,39 +950,8 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     const { missionId, action } = req.body;
     const statut = action === 'accepter' ? 'en_route' : 'refuse';
-    
-    // Récupération des infos de la mission avant mise à jour
-    const { data: mission } = await supabase.from('missions').select('*').eq('id', missionId).single();
-    
     const { error } = await supabase.from('missions').update({ statut }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
-
-    // Si un prestataire accepte, on prévient les autres qu'ils ne sont plus nécessaires
-    if (action === 'accepter' && mission) {
-        const tousLesAutresIds = [mission.prestataire_id, ...(mission.backup_ids || [])].filter(id => String(id) !== String(req.session.user.id));
-        
-        if (tousLesAutresIds.length > 0 && resend) {
-            const { data: autresUsers } = await supabase.from('utilisateurs').select('email, prenom').in('id', tousLesAutresIds);
-            
-            if (autresUsers) {
-                for (const u of autresUsers) {
-                    safeSendEmail({
-                        from: 'PetitsDjobs <info@resend.dev>',
-                        to: u.email,
-                        subject: '✅ Mission pourvue',
-                        html: `
-                            <div style="font-family: sans-serif; padding: 20px;">
-                                <h3>Bonjour ${u.prenom},</h3>
-                                <p>La mission de <strong>${mission.service}</strong> pour laquelle vous étiez sollicité a été acceptée par un autre prestataire.</p>
-                                <p>Merci de votre disponibilité !</p>
-                            </div>
-                        `
-                    });
-                }
-            }
-        }
-    }
-
     res.json({ ok: true });
 });
 
@@ -1452,15 +1450,15 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
         html: `
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 20px auto; padding: 30px; border-radius: 15px; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #eee;">
                 <div style="text-align: center; margin-bottom: 20px;">
-                    <h1 style="color: #5D4037; margin: 0; font-size: 24px; text-transform: uppercase;">PetitsDjobs</h1>
+                    <h1 style="color: #FF6600; margin: 0; font-size: 24px; text-transform: uppercase;">PetitsDjobs</h1>
                     <p style="color: #888; font-size: 14px;">La confiance au service de votre quotidien</p>
                 </div>
-                <div style="border-top: 4px solid #5D4037; padding-top: 20px;">
+                <div style="border-top: 4px solid #FF6600; padding-top: 20px;">
                     <h2 style="color: #333; font-size: 18px; text-align: center;">Récupération de compte</h2>
                     <p style="color: #555; line-height: 1.6;">Bonjour,</p>
                     <p style="color: #555; line-height: 1.6;">Vous avez demandé la réinitialisation de votre mot de passe. Voici votre code de sécurité unique :</p>
                     
-                    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 10px; margin: 25px 0; border: 1px dashed #5D4037;">
+                    <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 10px; margin: 25px 0; border: 1px dashed #FF6600;">
                         <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #333;">${code}</span>
                     </div>
 
@@ -1681,13 +1679,4 @@ const optionsCache = {
     }
 };
 
-app.use('/uploads', express.static(path.join(publicDir, 'uploads'), optionsCache));
-app.use(express.static(publicDir, { ...optionsCache, index: false }));
-
-// Middleware global de capture d'erreurs (Crucial pour le débogage sur Render)
-app.use((err, req, res, next) => {
-    console.error(`❌❌❌ [ERREUR CRITIQUE SERVEUR] ${req.method} ${req.url} ❌❌❌\nMessage: ${err.message}\n📋 COPIEZ CECI :\n${err.stack}\n❌❌❌ --- FIN --- ❌❌❌`);
-    res.status(500).json({ error: "Une erreur interne est survenue sur le serveur." });
-});
-
-app.listen(port, '0.0.0.0', () => console.log(`🚀 Serveur démarré sur le port ${port} (Binding 0.0.0.0)`));
+app.use('/uploads', express.static(path.join(p
