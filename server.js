@@ -81,7 +81,7 @@ async function safeSendEmail(payload) {
         return null;
     }
     try {
-        const result = await resend.emails.send(payload);
+        const result = await resend.emails.send(payload); // Envoi direct au destinataire réel
         if (result.error) console.error("❌ [RESEND ERROR] :", result.error);
         return result;
     } catch (e) {
@@ -573,7 +573,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
         if (pUser && pUser.email && resend) {
             safeSendEmail({
-                from: 'PetitsDjobs <onboarding@resend.dev>',
+                from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
                 to: pUser.email,
                 subject: `⭐ Vous êtes le prestataire principal - Mission ${msgDate}`,
                 html: `
@@ -595,7 +595,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                 const { data: bUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', backup.id).single();
                 if (bUser && bUser.email) {
                     safeSendEmail({
-                        from: 'PetitsDjobs <onboarding@resend.dev>',
+                        from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
                         to: bUser.email,
                         subject: `🛡️ Mission de secours - Mission ${msgDate}`,
                         html: `
@@ -678,7 +678,7 @@ setInterval(async () => {
 
                 if (anciens?.email) {
                     safeSendEmail({
-                        from: 'PetitsDjobs <alerte@resend.dev>',
+                        from: 'PetitsDjobs <alerte@mail.petitsdjobs.com>',
                         to: anciens.email,
                         subject: '⏰ Temps de réponse expiré',
                         html: `<p>Bonjour ${anciens.prenom}, vous n'avez pas répondu à temps pour la mission de <strong>${mission.service}</strong>. Elle a été attribuée à un autre prestataire.</p>`
@@ -687,7 +687,7 @@ setInterval(async () => {
 
                 if (nouveaux?.email) {
                     safeSendEmail({
-                        from: 'PetitsDjobs <alerte@resend.dev>',
+                        from: 'PetitsDjobs <alerte@mail.petitsdjobs.com>',
                         to: nouveaux.email,
                         subject: '🚨 Mission de secours disponible !',
                         html: `<p>Bonjour ${nouveaux.prenom}, le premier prestataire n'étant pas disponible, cette mission de <strong>${mission.service}</strong> vous est maintenant proposée ! Connectez-vous vite.</p>`
@@ -705,7 +705,7 @@ setInterval(async () => {
             const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
             if (client?.email) {
                 safeSendEmail({
-                    from: 'PetitsDjobs <support@resend.dev>',
+                    from: 'PetitsDjobs <support@mail.petitsdjobs.com>',
                     to: client.email,
                     subject: '😔 Désolé, aucun prestataire disponible',
                     html: `<p>Nous avons sollicité tous les prestataires choisis pour votre service de <strong>${mission.service}</strong>, mais aucun n'a pu répondre à temps. Vous allez être remboursé.</p>`
@@ -1444,7 +1444,7 @@ app.post('/api/mot-de-passe-oublie', async (req, res) => {
     
     // ENVOI RÉEL DU CODE PAR EMAIL
     const { data, error: mailError } = await resend.emails.send({
-        from: 'PetitsDjobs <onboarding@resend.dev>', 
+        from: 'PetitsDjobs <securite@mail.petitsdjobs.com>', 
         to: emailClean,
         subject: 'Votre code de récupération PetitsDjobs',
         html: `
@@ -1556,7 +1556,7 @@ Note : Cette alerte a été déclenchée manuellement par le prestataire depuis 
 
     // ENVOI D'UN EMAIL D'URGENCE À L'ADMINISTRATEUR
     safeSendEmail({
-        from: 'SECURITE <onboarding@resend.dev>',
+        from: 'SECURITE <urgence@mail.petitsdjobs.com>',
         to: process.env.ADMIN_EMAIL || 'votre-email-de-test@gmail.com',
         subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
         text: alerteTexte
@@ -1679,4 +1679,9 @@ const optionsCache = {
     }
 };
 
-app.use('/uploads', express.static(path.join(p
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), optionsCache));
+app.use(express.static(publicDir, optionsCache));
+
+app.listen(port, () => {
+    console.log(`🚀 [SYSTEM] Serveur démarré sur le port ${port}`);
+});
