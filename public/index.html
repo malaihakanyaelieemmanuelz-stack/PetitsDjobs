@@ -412,8 +412,8 @@
         let carrouselInitialise = false;
 
         function rafraichirCarrousel() {
-            // On appelle le serveur même si lat/lon sont vides
-            let url = `/get-top-prestataires?lat=${userLat || ''}&lon=${userLon || ''}`;
+            // On force l'envoi de 'undefined' si vide pour que le serveur sache qu'il n'y a pas de GPS
+            let url = `/get-top-prestataires?lat=${userLat || 'undefined'}&lon=${userLon || 'undefined'}`;
 
             fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
@@ -424,8 +424,8 @@
                         📍 Activez le GPS pour voir les distances exactes.
                     </div>` : '';
 
-                if (!data || !data.length) {
-                    container.innerHTML = gpsBanner + '<p style="width:100%; text-align:center; color:#666;">Recherche de prestataires...</p>';
+                if (!data || data.length === 0) {
+                    container.innerHTML = gpsBanner + '<p style="width:100%; text-align:center; color:#666; padding:20px;">Aucun prestataire inscrit à proximité pour le moment.</p>';
                     lastCarrouselHtml = "";
                     return;
                 }

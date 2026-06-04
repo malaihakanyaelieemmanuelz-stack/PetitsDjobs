@@ -220,21 +220,28 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
 
         console.log(`[DEBUG SEARCH] ${prestataires.length} prestataires trouvés dans la DB.`);
 
-        // 2. On récupère les infos utilisateurs séparément pour éviter l'erreur de relationship
-        const userIds = prestataires.map(p => p.user_id);
+        // 2. On récupère les infos utilisateurs
+        // On s'assure que les IDs sont bien des nombres (BIGINT)
+        const userIds = prestataires.map(p => parseInt(p.user_id, 10)).filter(id => !isNaN(id));
+        
+        if (userIds.length === 0) return { prestataires: [], rayonMetres: 0, hasMore: false, total: 0 };
+
         const { data: users } = await supabase
             .from('utilisateurs')
             .select('id, nom, prenom, dernier_acces, photo_url')
             .in('id', userIds);
 
-        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+        // On crée une map avec conversion forcée en String pour la clé
+        const userMap = Object.fromEntries((users || []).map(u => [String(u.id), u]));
 
         const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
 
         let eligibles = (prestataires || [])
-            .filter(p => String(p.user_id) !== String(excludeUserId))
             .filter(p => {
-                const user = userMap[p.user_id];
+                // Filtrer l'utilisateur lui-même s'il est connecté
+                if (excludeUserId && String(p.user_id) === String(excludeUserId)) return false;
+
+                const user = userMap[String(p.user_id)];
                 if (!user) return false;
 
                 if (type === 'nom' && query_text) {
@@ -249,24 +256,27 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             })
             .map(p => {
                 const dist = distanceMetres(p, lat, lon);
-                const user = userMap[p.user_id];
+                const user = userMap[String(p.user_id)];
                 const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
                 const enLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
+                // Unification de la photo
+                const photoFinale = p.photo_profil_url || user?.photo_url || 'default-profile.png';
+
                 return { 
                     ...p, 
-                    id_num: user.id,
-                    nom: user?.nom || 'Prestataire', 
+                    id: p.user_id,
+                    nom: user?.nom || 'Inconnu', 
                     prenom: user?.prenom || '', 
                     enLigne: enLigne,
                     dernier_acces: user?.dernier_acces,
                     distanceM: dist,
-                    photo: p.photo_profil_url || user?.photo_url || 'default-profile.png'
+                    photo: photoFinale
                 };
             });
 
         const nbTotalInscrits = eligibles.length;
-        console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires éligibles après filtrage.`);
+        console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires éligibles trouvés.`);
 
         // 3. Logique de tri ultra-précise
         eligibles.sort((a, b) => {
@@ -296,13 +306,13 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
             }
         });
 
-        // Règle : si plus de 20 inscrits au total, on applique la limite des 50km
+        // Règle d'affichage : Si moins de 20 prestataires, on ignore la distance (On les affiche tous)
         let results = eligibles;
-        if (nbTotalInscrits >= 20) {
+        if (nbTotalInscrits > 20 && type === 'service') {
             results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
 
-        console.log(`[DEBUG SEARCH] Final : ${results.length} résultats après tri et rayon.`);
+        console.log(`[DEBUG SEARCH] Envoi de ${results.length} prestataires au client.`);
 
         const limitFixe = limit || 20;
         const page = results.slice(offset, offset + limitFixe);
