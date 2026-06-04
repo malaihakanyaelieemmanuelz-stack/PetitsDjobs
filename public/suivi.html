@@ -16,11 +16,21 @@
 
     <!-- Overlay du haut : Statut et Navigation -->
     <div class="floating-top-info">
-        <div id="navigation-hint" class="nav-hint-google" style="display:none;">
-            ⬆️ Suivez l'itinéraire bleu
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <!-- Photo de l'utilisateur (cliquable pour modifier) -->
+            <img id="my-photo-suivi" src="default-profile.png" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);" onclick="document.getElementById('input-photo-suivi').click()" title="Modifier ma photo">
+            
+            <div style="flex: 1;">
+                <div id="navigation-hint" class="nav-hint-google" style="display:none;">
+                    ⬆️ Suivez l'itinéraire bleu
+                </div>
+                <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #333;">Vérification...</h2>
+                <p id="mission-info" style="color:#666; font-size: 0.85rem; margin: 3px 0 0;">Veuillez patienter</p>
+            </div>
+            <!-- Photo du partenaire (prestataire ou client) -->
+            <img id="partner-photo-suivi" src="default-profile.png" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #FF6600; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
         </div>
-        <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #333;">Vérification...</h2>
-        <p id="mission-info" style="color:#666; font-size: 0.85rem; margin: 3px 0 0;">Veuillez patienter</p>
+        <input type="file" id="input-photo-suivi" style="display:none;" accept="image/*" onchange="uploadPhotoSuivi(this)">
     </div>
 
     <!-- Overlay du bas : Actions et Distance -->
@@ -36,7 +46,7 @@
         <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger" style="display:none; background:#b71c1c; width:100%; height:50px;">
             🆘 SIGNALER UN DANGER
         </button>
-        <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#333; width:100%; height:50px;">
+        <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#FF6600; width:100%; height:50px;">
             VALIDER LE DÉPART
         </button>
 
@@ -128,6 +138,8 @@
                 console.log("[DEBUG SUIVI] Début identification...");
                 const rUser = await fetch('/get-user-data');
                 const user = await rUser.json();
+                if (user.photo) document.getElementById('my-photo-suivi').src = user.photo;
+
                 const rCmd = await fetch('/get-session-commande');
                 const cmd = await rCmd.json();
                 
@@ -140,6 +152,9 @@
                 }
 
                 missionId = cmd.missionId;
+
+                // Affichage de la photo du prestataire (si on est client)
+                if (!user.isPrestataire && cmd.prestatairePhoto) document.getElementById('partner-photo-suivi').src = cmd.prestatairePhoto;
 
                 if (user.id === cmd.prestataireId) {
                     console.log("[DEBUG SUIVI] Rôle détecté: PRESTATAIRE");
@@ -251,6 +266,22 @@
                     document.getElementById('modal-securite').style.display = 'flex';
                 }
             });
+        }
+
+        async function uploadPhotoSuivi(input) {
+            if (!input.files || !input.files[0]) return;
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+            
+            const res = await fetch('/api/update-profile-photo', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('my-photo-suivi').src = data.url;
+                alert("Photo mise à jour !");
+            }
         }
 
         // Charger les infos de la mission
@@ -372,6 +403,14 @@
                     const newPos = [pos.lat, pos.lon];
                     markerProvider.setLatLng(newPos).bindPopup("Prestataire en mouvement...").openPopup();
                     if (!isProvider && !map.getBounds().contains(newPos)) map.panTo(newPos);
+                    
+                    // Optionnel : on peut essayer de récupérer la photo si elle n'est pas en session
+                    if (!isProvider) {
+                        fetch('/prestataire-public/' + missionId).then(r => r.json()).then(p => {
+                            if (p.photo) document.getElementById('partner-photo-suivi').src = p.photo;
+                        }).catch(() => {});
+                    }
+
                     document.getElementById('gps-info').innerText = `🛵 Votre prestataire est en route.`;
                 } else {
                     console.warn("[POLLING] Aucune position reçue du serveur pour le prestataire.");
@@ -386,6 +425,15 @@
                 const pos = await res.json();
                 if (pos.lat && pos.lon) {
                     clientPos = pos;
+                    
+                    // Mise à jour de la photo du client pour le prestataire
+                    if (isProvider && !document.getElementById('partner-photo-suivi').src.includes('http')) {
+                        fetch('/api/mes-missions-prestataire').then(r => r.json()).then(missions => {
+                            const m = missions.find(x => x.id == missionId);
+                            if (m && m.client && m.client.photo) document.getElementById('partner-photo-suivi').src = m.client.photo;
+                        });
+                    }
+
                     markerClient.setLatLng([pos.lat, pos.lon]).bindPopup("Position du client").openPopup();
                     document.getElementById('gps-info').innerText = `📍 Itinéraire vers le client mis à jour.`;
 

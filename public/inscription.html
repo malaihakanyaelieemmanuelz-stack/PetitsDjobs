@@ -35,15 +35,21 @@
         <h1>INSCRIPTION</h1>
         <p style="font-size:0.9rem; color:#666;">Après inscription → <a href="index.html">accueil</a>. Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>.</p>
         <p id="erreur-msg" style="color:#c62828; font-size:0.9rem; display:none;"></p>
-        <form id="regForm" action="/inscription" method="POST">
+        <form id="regForm" action="/inscription" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="locAccepted" id="locAccepted" value="0">
             <input type="hidden" name="polAccepted" id="polAccepted" value="0">
-            <input type="text" name="nom" placeholder="NOM" required autocomplete="family-name">
+            <input type="text" name="nom" id="reg-nom" placeholder="NOM (OBLIGATOIRE)" required autocomplete="family-name">
             <input type="text" name="prenom" placeholder="PRÉNOM" required autocomplete="given-name">
             <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="email">
             <select name="age" id="age-select" required style="width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; height: 48px; background: white;">
                 <option value="" disabled selected>VOTRE ÂGE (DÈS 14 ANS)</option>
             </select>
+            
+            <div style="text-align: left; margin: 10px 0;">
+                <p style="font-size:0.8rem; color:#FF6600; font-weight:bold; margin-bottom:5px;">PHOTO DE PROFIL (OBLIGATOIRE)</p>
+                <input type="file" name="photo_profil" accept="image/*" required style="padding: 10px; border: 1px dashed #FF6600; width: 100%;">
+            </div>
+
             <div class="password-group">
                 <input type="password" id="pass1" name="password" placeholder="MOT DE PASSE (Min. 8 caractères)" required minlength="8" autocomplete="new-password">
                 <button type="button" class="toggle-password" data-target="pass1"></button>
@@ -71,6 +77,24 @@
     </div>
 
     <script>
+        // Force l'activation du GPS sur Android dès qu'on coche la case
+        document.getElementById('loc').addEventListener('change', function() {
+            if (this.checked) {
+                if (navigator.geolocation) {
+                    // On lance une requête factice de haute précision pour réveiller le GPS
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            console.log("GPS Activé avec succès");
+                        },
+                        (err) => {
+                            console.warn("L'utilisateur a refusé ou le GPS est éteint", err);
+                        },
+                        { enableHighAccuracy: true, timeout: 5000 }
+                    );
+                }
+            }
+        });
+
         // Génération automatique des options d'âge (14 à 99 ans) pour éviter la saisie
         const ageSelect = document.getElementById('age-select');
         if (ageSelect) {

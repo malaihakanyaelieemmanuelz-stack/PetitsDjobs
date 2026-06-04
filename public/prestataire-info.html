@@ -13,7 +13,7 @@
     <header class="home-header">
         <div class="header-content">
             <a href="index.html" style="text-decoration:none;">
-                <h1>
+                <h1 style="font-size: 2rem;">
                     <svg class="home-logo" viewBox="0 0 100 100">
                         <g transform="rotate(-30 50 50)">
                             <rect x="20" y="20" width="20" height="60" fill="#FF6600"/>
@@ -27,34 +27,34 @@
                 </h1>
             </a>
             <nav class="nav-compact">
-                <a href="/profil">PROFIL</a>
-                <a href="index.html">ACCUEIL</a>
+                <a href="/profil" style="font-size: 1.1rem; padding: 12px 20px !important;">PROFIL</a>
+                <a href="index.html" style="font-size: 1.1rem; padding: 12px 20px !important;">ACCUEIL</a>
             </nav>
         </div>
     </header>
 
-    <div class="profile-full-screen">
+    <div class="profile-full-screen" style="background: #e0e0e0; padding: 20px 10px !important; display: flex; flex-direction: column; align-items: center;">
         <p id="msg-ok" style="display:none; text-align:center; color:#2e7d32; padding:12px; background:#e8f5e9; margin:0;">
             ✓ Votre carte de visite est en ligne.
         </p>
 
         <!-- Alertes Missions : Design plus impactant -->
-        <div id="zone-missions" style="display:none; padding: 15px 20px; background: #ffebee; border-bottom: 2px solid #ffcdd2;">
+        <div id="zone-missions" style="display:none; padding: 15px 20px; background: #ffebee; border-radius: 15px; border: 2px solid #ffcdd2; width: 100%; max-width: 450px; margin-bottom: 20px;">
             <h3 style="color:#b71c1c; margin: 0 0 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px;">🔔 MISSION EN ATTENTE</h3>
             <div id="liste-missions-attente"></div>
         </div>
 
-        <div id="ma-carte-container" style="flex: 1; display: flex; flex-direction: column;">
+        <div id="ma-carte-container" style="width: 100%; max-width: 450px; perspective: 1000px;">
             <!-- Le contenu sera injecté ici par JS -->
              <p style="padding:40px; text-align:center; font-size: 1.5rem;">Chargement de votre profil...</p>
         </div>
 
-        <div style="padding: 25px 20px; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.05); margin-top: auto;">
-            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; margin-bottom:12px; border-radius:15px; min-height:75px; font-size: 1.5rem; font-weight: bold;">
+        <div style="padding: 25px 20px; width: 100%; max-width: 450px; margin-top: 30px;">
+            <button onclick="location.href='/prestataire?modifier=1'" class="btn-outline" style="width:100%; margin-bottom:15px; border-radius:15px; min-height:85px; font-size: 1.8rem; font-weight: bold;">
                 ⚙️ MODIFIER MA FICHE
             </button>
-            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; border-radius:15px; min-height:75px; font-size: 1.5rem; font-weight: bold;">
-                RETOUR PROFIL
+            <button onclick="location.href='/profil'" class="btn-primary-sm" style="width:100%; border-radius:15px; min-height:85px; font-size: 1.8rem; font-weight: bold; background:#FF6600;">
+                RETOUR MON PROFIL
             </button>
 
             <div style="margin-top: 40px; text-align: center; opacity: 0.6;">
@@ -105,17 +105,17 @@
                             <span>📍 ${data.ville || '-'}</span>
                         </div>
 
-                        <div style="text-align: left; background: #fdfaf9; padding: 45px; border-radius: 20px; margin: 35px 0; border: 1px solid #f2ece9; font-size: 2.4rem;">
+                        <div style="text-align: left; background: #fdfaf9; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #f2ece9; font-size: 1.2rem;">
                             <p style="margin: 15px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
                         </div>
 
-                        <p class="services-txt" style="height:auto; font-size: 2.2rem; line-height: 1.7; color: #444; font-style: italic;">
+                        <p class="services-txt" style="height:auto; font-size: 1rem; line-height: 1.5; color: #444; font-style: italic;">
                             "${data.bio || 'Aucune présentation renseignée.'}"
                         </p>
 
-                        <div style="margin-top: 50px; text-align: left;">
-                            <h3 style="font-size:2.6rem; color:#5D4037; margin-bottom:25px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
-                            <ul style="padding:0; list-style:none; font-size:2rem; color:#666; line-height:1.6;">${avis}</ul>
+                        <div style="margin-top: 30px; text-align: left;">
+                            <h3 style="font-size:1.2rem; color:#5D4037; margin-bottom:15px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
+                            <ul style="padding:0; list-style:none; font-size:1rem; color:#666; line-height:1.4;">${avis}</ul>
                         </div>
                     </div>
                 </article>`;

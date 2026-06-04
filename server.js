@@ -901,10 +901,45 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
     if (!missions || missions.length === 0) return res.json([]);
 
-    // On récupère les infos des clients manuellement
-    const clientIds = missions.map(m => m.client_id);
-    const { data: clients } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', clientIds);
-    const clientMap = Object.fromEntries((clients || []).map(c => [c.id, c]));
+    // --- ROUTES DE MESSAGERIE (CHAT) ---
+
+    app.get('/api/get-messages/:missionId', requireAuth, async (req, res) => {
+        const { missionId } = req.params;
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('mission_id', missionId)
+            .order('created_at', { ascending: true });
+        
+        if (error) return res.status(500).json([]);
+        res.json(data);
+    });
+
+    app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
+        const { amiId } = req.params;
+        const myId = req.session.user.id;
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`and(sender_id.eq.${myId},ami_id.eq.${amiId}),and(sender_id.eq.${amiId},ami_id.eq.${myId})`)
+            .order('created_at', { ascending: true });
+
+        if (error) return res.status(500).json([]);
+        res.json(data);
+    });
+
+    app.post('/api/send-message', requireAuth, async (req, res) => {
+        const { missionId, amiId, text } = req.body;
+        const payload = {
+            sender_id: req.session.user.id,
+            text: text,
+            mission_id: missionId || null,
+            ami_id: amiId || null
+        };
+        const { data, error } = await supabase.from('messages').insert(payload).select().single();
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data);
+    });
 
     const result = missions.map(m => ({
         ...m,
@@ -1055,6 +1090,34 @@ app.get('/api/statut-mission', requireAuth, async (req, res) => {
     res.json(data || { statut: 'inconnu' });
 });
 
+app.get('/api/get-mission-partner/:missionId', requireAuth, async (req, res) => {
+    const { missionId } = req.params;
+    const { data: m } = await supabase.from('missions').select('client_id, prestataire_id').eq('id', missionId).maybeSingle();
+    if (!m) return res.status(404).json({ error: "Mission introuvable" });
+    const partnerId = (String(req.session.user.id) === String(m.client_id)) ? m.prestataire_id : m.client_id;
+    res.json({ partnerId });
+});
+
+app.post('/api/update-profile-photo', requireAuth, upload.single('photo'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier' });
+    try {
+        const url = await uploadToSupabase(req.file, BUCKET_NAME);
+        
+        // Mettre à jour la table utilisateurs
+        await supabase.from('utilisateurs').update({ photo_url: url }).eq('id', req.session.user.id);
+        
+        // Si c'est un prestataire, mettre aussi à jour sa fiche
+        if (req.session.user.isPrestataire) {
+            await supabase.from('infos_prestataires').update({ photo_profil_url: url }).eq('user_id', req.session.user.id);
+        }
+
+        req.session.user.photo = url;
+        res.json({ url });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/calculer-distance', async (req, res) => {
     const { latClient, lonClient, prestataireId } = req.body;
     
@@ -1157,7 +1220,7 @@ app.post('/connexion', async (req, res) => {
     });
 });
 
-app.post('/inscription', async (req, res) => {
+app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
     console.log(`[DIAGNOSTIC INSCRIPTION] Début pour: ${req.body.email}`);
     if (estConnecte(req)) return res.redirect('/index.html');
 
@@ -1167,6 +1230,16 @@ app.post('/inscription', async (req, res) => {
     if (req.body.password !== req.body.password_confirm) {
         return res.redirect('/inscription?erreur=mdp');
     }
+    const nom = (req.body.nom || '').trim();
+    if (!nom) {
+        return res.redirect('/inscription?erreur=nom_requis');
+    }
+
+    const nom = (req.body.nom || '').trim();
+    if (!nom) {
+        return res.redirect('/inscription?erreur=nom_requis');
+    }
+
     const email = (req.body.email || '').toLowerCase().trim();
     console.log(`[AUTH] Tentative d'inscription pour: ${email}`);
     const { data: existant, error: searchError } = await supabase.from('utilisateurs').select('id').eq('email', email).maybeSingle();
@@ -1177,6 +1250,10 @@ app.post('/inscription', async (req, res) => {
     }
 
     try {
+        if (!req.file) return res.redirect('/inscription?erreur=photo_requise');
+        
+        let photoUrl = await uploadToSupabase(req.file, BUCKET_NAME);
+
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
         const userData = {
@@ -1186,6 +1263,7 @@ app.post('/inscription', async (req, res) => {
             prenom: (req.body.prenom || '').trim(),
             age: parseInt(req.body.age, 10),
             telephone: (req.body.telephone || '').trim(),
+            photo_url: photoUrl,
             autorise_contact_client: req.body.autorise_contact_client === 'on' || req.body.autorise_contact_client === '1'
         };
         

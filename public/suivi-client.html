@@ -14,15 +14,23 @@
     <div class="loader-gps" id="main-loader"></div>
     <div id="map"></div>
 
-    <div class="floating-top-info" style="background: white; border: 1px solid #eee;">
-        <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: #5D4037;">ÉCRAN DE SUIVI CLIENT</h2>
-        <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
+    <div class="floating-top-info" style="background: white; border: 1px solid #eee; display: flex; align-items: center; gap: 12px;">
+        <div style="position: relative; width: 55px; height: 55px; flex-shrink: 0;" onclick="document.getElementById('upload-avatar').click()">
+            <img id="client-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" 
+                 style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #FF6600; background: #f9f9f9; cursor: pointer;">
+            <div style="position: absolute; bottom: 0; right: 0; background: #FF6600; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; font-weight: bold;">+</div>
+            <input type="file" id="upload-avatar" style="display: none;" accept="image/*" onchange="changerMaPhoto(this)">
+        </div>
+        <div style="flex: 1;">
+            <h2 id="status-mission" style="font-size: 1rem; margin: 0; color: #FF6600;">ÉCRAN DE SUIVI CLIENT</h2>
+            <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
+        </div>
         
         <div class="nav-actions-top">
-            <button onclick="location.href='/chat.html?missionId='+missionId" class="btn-primary-sm btn-nav" style="background:#8B4513;">💬 CHAT</button>
+            <button onclick="location.href='/chat.html?missionId='+missionId" class="btn-primary-sm btn-nav" style="background:#FF6600;">💬 CHAT</button>
             <button id="btn-client-arrive" onclick="clientMarquerArrivee()" class="btn-primary-sm btn-nav" style="display:none; background:#2e7d32;">IL EST ARRIVÉ</button>
             <button id="btn-client-fin" onclick="clientDemandeFin()" class="btn-primary-sm btn-nav" style="display:none;">TÂCHE FINIE</button>
-            <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm btn-nav" style="display:none; background:#333;">VALIDER DÉPART</button>
+            <button id="btn-client-depart" onclick="document.getElementById('modal-notation').style.display='flex'" class="btn-primary-sm btn-nav" style="display:none; background:#FF6600;">VALIDER DÉPART</button>
             <button id="btn-client-sos" onclick="declencherSOS()" class="btn-danger btn-nav" style="display:none;">🆘 SOS</button>
         </div>
     </div>
@@ -34,7 +42,7 @@
     <!-- Modal de notation -->
     <div id="modal-notation" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
         <div class="login-card" style="max-width:400px; text-align:center;">
-            <h2 style="color:#5D4037; margin-top:0;">MISSION TERMINÉE !</h2>
+            <h2 style="color:#FF6600; margin-top:0;">MISSION TERMINÉE !</h2>
             <p style="font-size:0.9rem; color:#666;">Notez la prestation (10 petites étoiles = 1 grande étoile)</p>
             
             <div id="star-rating" style="display:flex; justify-content:center; gap:4px; margin:20px 0; font-size:1.8rem; cursor:pointer; color:#ccc;">
@@ -71,13 +79,35 @@
                 const stars = document.querySelectorAll('#star-rating span');
                 stars.forEach((s, idx) => {
                     if (idx < noteSelectionnee) {
-                        s.style.color = "#5D4037"; // Marron PetitsDjobs
+                        s.style.color = "#FF6600"; // Orange PetitsDjobs
                     } else {
                         s.style.color = "#ccc";
                     }
                 });
             }
         });
+
+        async function changerMaPhoto(input) {
+            if (!input.files || !input.files[0]) return;
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+
+            document.getElementById('client-avatar').style.opacity = "0.5";
+            
+            const res = await fetch('/api/update-profile-photo', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('client-avatar').src = data.url;
+                alert("Photo mise à jour ! Elle sera visible dans le chat.");
+            } else {
+                alert("Erreur lors de l'envoi.");
+            }
+            document.getElementById('client-avatar').style.opacity = "1";
+        }
 
         window.addEventListener('load', () => {
             setTimeout(init, 500);
@@ -126,6 +156,12 @@
                 }
 
                 verifierProximite(distM);
+            });
+
+            fetch('/get-user-data').then(r => r.json()).then(user => {
+                if (user.photo) {
+                    document.getElementById('client-avatar').src = user.photo;
+                }
             });
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {

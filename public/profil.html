@@ -35,16 +35,17 @@
             margin-bottom: 15px;
         }
         .info-label {
-            color: #888;
+            color: #2e7d32;
             font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: bold;
             letter-spacing: 1px;
+            opacity: 0.8;
         }
         .info-value {
             font-size: 1.2rem;
             font-weight: 600;
-            color: #333;
+            color: #2e7d32;
         }
         .section-title {
             color: #2e7d32;
@@ -90,6 +91,13 @@
     <div class="profile-container">
         <h2 style="margin: 10px 0 30px; color:#000000; font-weight:900; text-align: center;">MON COMPTE</h2>
 
+        <!-- Photo de Profil Interactive -->
+        <div style="text-align: center; margin-bottom: 25px;">
+            <img id="user-photo-profil" src="default-profile.png" style="width: 110px; height: 110px; border-radius: 50%; border: 4px solid #FF6600; object-fit: cover; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="document.getElementById('input-photo-profil').click()">
+            <input type="file" id="input-photo-profil" style="display: none;" accept="image/*" onchange="changerPhotoProfil(this)">
+            <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">Appuyez pour changer de photo</p>
+        </div>
+
         <!-- Infos Utilisateur -->
         <div class="info-card">
             <div class="info-label">Identité</div>
@@ -100,7 +108,7 @@
 
         <!-- Bouton de validation de fin de mission (Apparaît si mission finie mais départ non validé) -->
         <div id="zone-depart-urgent" style="display:none; margin-bottom:20px;">
-            <button onclick="location.href='/suivi'" class="btn-primary-sm" style="background:#333; width:100%; border:3px solid #ff9800;">
+            <button onclick="location.href='/suivi'" class="btn-primary-sm" style="background:#FF6600; width:100%; border:3px solid #ff9800;">
                 📢 VALIDER LE DÉPART DU PRESTATAIRE
             </button>
         </div>
@@ -116,11 +124,11 @@
         <!-- Section Prestataire -->
         <div class="action-block">
             <div class="section-title">VOTRE TRAVAIL</div>
-            <button id="btn-devenir" onclick="location.href='/prestataire'" class="btn-outline" style="width:100%; min-height:65px; font-size:1.2rem;">
+            <button id="btn-devenir" onclick="location.href='/prestataire'" class="btn-outline" style="width:100%; min-height:80px; font-size:1.6rem; font-weight:bold;">
                 DEVENIR PRESTATAIRE
             </button>
-            <button id="btn-espace" onclick="location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; min-height:65px; font-size:1.2rem; background:#333;">
-                MA CARTE DE VISITE
+            <button id="btn-espace" onclick="location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; min-height:85px; font-size:1.8rem; background:#FF6600; color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 12px rgba(255,102,0,0.3);">
+                📇 MA CARTE DE VISITE
             </button>
         </div>
 
@@ -143,6 +151,7 @@
                 document.getElementById('nom').innerText = data.nom || '-';
                 document.getElementById('prenom').innerText = data.prenom || '-';
                 document.getElementById('email').innerText = data.email || '-';
+                if (data.photo) document.getElementById('user-photo-profil').src = data.photo;
                 if (data.isPrestataire) {
                     document.getElementById('btn-devenir').style.display = 'none';
                     document.getElementById('btn-espace').style.display = 'block';
@@ -157,6 +166,22 @@
                     }
                 });
             });
+
+        async function changerPhotoProfil(input) {
+            if (!input.files || !input.files[0]) return;
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+            
+            const res = await fetch('/api/update-profile-photo', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('user-photo-profil').src = data.url;
+                alert("Photo mise à jour !");
+            }
+        }
 
         async function supprimerMaCarte() {
             if (confirm("Voulez-vous supprimer votre carte de visite ? Vous ne serez plus visible comme prestataire mais vous garderez votre compte client.")) {
