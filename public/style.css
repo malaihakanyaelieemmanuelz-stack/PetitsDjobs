@@ -1074,6 +1074,11 @@ body {
     box-shadow: 0 5px 15px rgba(0,0,0,0.15);
     cursor: pointer;
 }
+
+#container-showcase > * {
+    direction: ltr !important; /* Remet le contenu des cartes de pub à l'endroit */
+}
+
 .showcase-badge {
     position: absolute; bottom: 10px; left: 8px; right: 8px;
     background: rgba(255, 102, 0, 0.9); /* Orange */

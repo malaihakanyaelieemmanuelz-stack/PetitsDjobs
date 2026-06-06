@@ -40,6 +40,14 @@
         </div>
     </header>
 
+    <!-- Espace Pub : Positionné en haut entre Profil et Catégories, défilement Droite -> Gauche -->
+    <div class="app-wrap" id="showcase-section" style="display:none; margin-top: 10px; margin-bottom: 10px;">
+        <h2 style="font-size: 0.8rem; color: #FF6600; margin-bottom: 8px; border-left: 4px solid #FF6600; padding-left: 10px; text-transform: uppercase; font-weight: 900;">Vidéos & Réalisations</h2>
+        <div id="container-showcase" class="scroll-container" style="padding: 5px 0; gap: 15px; direction: rtl; display: flex; flex-direction: row;">
+            <!-- Rempli par JS -->
+        </div>
+    </div>
+
     <!-- Bandeau Publicitaire -->
     <div class="app-wrap" id="ad-banner">
         <div style="border: 1px dashed #bbb; border-radius: 4px; padding: 6px; text-align: center; background: rgba(255,255,255,0.6);">
@@ -58,14 +66,6 @@
                 <input type="text" id="search-service" placeholder="Ménage ou Cuisine" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #FF6600; font-size: 1.2rem; background: white; outline: none;">
                 <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Espace Pub : Vitrine des Talents -->
-    <div class="app-wrap" id="showcase-section" style="display:none; margin-bottom: 25px;">
-        <h2 style="font-size: 1rem; color: #FF6600; margin-bottom: 10px; border-left: 4px solid #FF6600; padding-left: 10px; text-transform: uppercase; font-weight: 900;">Vidéos & Réalisations</h2>
-        <div id="container-showcase" class="scroll-container" style="padding: 5px 0; gap: 12px;">
-            <!-- Rempli par JS -->
         </div>
     </div>
 
@@ -243,7 +243,9 @@
             
             return `
                 <article class="profile-card" onclick="${cardAction}">
-                    <div class="card-header-banner"></div>
+                    <div class="card-header-banner" style="position:relative;">
+                        <button onclick="event.stopPropagation(); inviterAmi('${p.id}')" style="position:absolute; top:8px; right:8px; background:rgba(255,255,255,0.9); color:#FF6600; border:none; padding:4px 10px; border-radius:15px; font-size:0.6rem; font-weight:900; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.15);">INVITATION</button>
+                    </div>
                     <div class="card-avatar-wrapper">
                         <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
                         <div class="card-status-dot ${p.disponible ? 'online' : 'offline'}"></div>
@@ -397,6 +399,16 @@
             } else {
                 window.location.href = '/choisir-prestataire?service=' + encodeURIComponent(service);
             }
+        }
+
+        async function inviterAmi(pid) {
+            const res = await fetch('/api/inviter-ami', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetId: pid })
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
         }
 
         document.querySelectorAll('.btn-commander').forEach(btn => {

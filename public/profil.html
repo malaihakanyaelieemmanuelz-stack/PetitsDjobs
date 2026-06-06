@@ -123,9 +123,10 @@
 
         <!-- Section Sociale -->
         <div class="action-block">
-            <div class="section-title">MES CONTACTS</div>
-            <button onclick="location.href='/amis.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem; background:#2e7d32;">
-                👥 VOIR MES AMIS ET MESSAGES
+            <div class="section-title">COMMUNAUTÉ</div>
+            <button onclick="location.href='/amis.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem; background:#2e7d32; position: relative;">
+                👥 MES AMIS & CHAT
+                <span id="amis-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#FF6600; color:white; border-radius:50%; width:24px; height:24px; font-size:0.8rem; border:2px solid white; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
             </button>
         </div>
 
@@ -171,6 +172,15 @@
                     const active = missions.find(m => m.statut === 'attente_securite');
                     if (active) {
                         document.getElementById('zone-depart-urgent').style.display = 'block';
+                    }
+                });
+
+                // Vérifier les invitations d'amis pour le badge
+                fetch('/api/mes-demandes-amis').then(r => r.json()).then(invits => {
+                    if (invits && invits.length > 0) {
+                        const badge = document.getElementById('amis-badge');
+                        badge.innerText = invits.length;
+                        badge.style.display = 'flex';
                     }
                 });
             });

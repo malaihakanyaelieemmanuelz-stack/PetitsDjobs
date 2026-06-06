@@ -1013,8 +1013,8 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
     const payload = {
         sender_id: req.session.user.id,
         text: text,
-        mission_id: mId
-        // ami_id est retiré car la colonne n'existe pas dans ton schéma Supabase actuel
+        mission_id: mId,
+        ami_id: (amiId && amiId !== 'undefined' && amiId !== 'null') ? parseInt(amiId) : null
     };
 
     const { data, error } = await supabase.from('messages').insert(payload).select().single();
@@ -1412,16 +1412,27 @@ app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
 async function uploadToSupabase(file, bucketName) {
     console.log(`[STORAGE] Début upload: ${file.originalname} (${file.size} octets)`);
     
-    // Compression automatique avec Sharp
-    const compressedBuffer = await sharp(file.path)
-        .resize({ width: 400, height: 300, fit: 'cover', withoutEnlargement: true }) // Taille réduite pour mobile
-        .webp({ quality: 20, effort: 6 }) // Compression énorme (qualité 20%)
-        .toBuffer();
+    let buffer;
+    let fileName = `${Date.now()}-${path.parse(file.originalname).name}`;
+    let contentType = file.mimetype;
 
-    const fileName = `${Date.now()}-${path.parse(file.originalname).name}.webp`;
+    if (file.mimetype.startsWith('image/')) {
+        // Traitement Sharp uniquement pour les images
+        buffer = await sharp(file.path)
+            .resize({ width: 400, height: 300, fit: 'cover', withoutEnlargement: true })
+            .webp({ quality: 20, effort: 6 })
+            .toBuffer();
+        fileName += '.webp';
+        contentType = 'image/webp';
+    } else {
+        // Pour les vidéos (MP4, etc.), on lit le fichier brut sans Sharp
+        buffer = fs.readFileSync(file.path);
+        fileName += path.extname(file.originalname);
+    }
+
     const { data, error } = await supabase.storage
         .from(bucketName)
-        .upload(fileName, compressedBuffer, { contentType: 'image/webp' });
+        .upload(fileName, buffer, { contentType: contentType });
     
     if (error) {
         console.error(`[STORAGE ERR] Echec pour ${file.originalname}:`, error.message);
@@ -1897,7 +1908,8 @@ app.get('/api/get-showcase', async (req, res) => {
 app.post('/api/upload-showcase', requireAuth, upload.single('media'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
     try {
-        const url = await uploadToSupabase(req.file, 'showcase');
+        // On utilise le bucket 'prestataires' déjà existant sur ton Supabase
+        const url = await uploadToSupabase(req.file, BUCKET_NAME);
         const { error } = await supabase.from('showcase').insert({
             user_id: req.session.user.id,
             url: url,
