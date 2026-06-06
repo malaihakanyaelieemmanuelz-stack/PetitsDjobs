@@ -108,23 +108,31 @@
                 return;
             }
 
-            // Réveil forcé du hardware GPS sur Android avec Haute Précision
-            navigator.geolocation.getCurrentPosition(
-                pos => {
-                    console.log("📍 GPS Initialisé:", pos.coords.latitude, pos.coords.longitude);
-                    document.getElementById('lat').value = pos.coords.latitude;
-                    document.getElementById('lon').value = pos.coords.longitude;
-                },
-                () => console.warn("Signal GPS en recherche..."),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
+            const successGPS = (pos) => {
+                const { latitude, longitude } = pos.coords;
+                document.getElementById('lat').value = latitude;
+                document.getElementById('lon').value = longitude;
+                console.log("📍 GPS Capté:", latitude, longitude);
+            };
 
-            // Suivi continu tant que la case est cochée pour garantir la précision lors du clic
+            const errorGPS = (err) => {
+                console.warn("Signal GPS Error:", err.message);
+                if (err.code === 1) { // PERMISSION_DENIED
+                    alert("Le message d'autorisation n'apparaît pas car la localisation est bloquée dans vos paramètres de navigateur. Veuillez l'autoriser manuellement pour ce site.");
+                    loc.checked = false;
+                }
+            };
+
+            // 1. Appel immédiat pour forcer le message système du portable
+            navigator.geolocation.getCurrentPosition(successGPS, errorGPS, { 
+                enableHighAccuracy: true, timeout: 10000, maximumAge: 0 
+            });
+
+            // 2. Lancement du suivi en arrière-plan pour la précision
             if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
-            gpsWatchId = navigator.geolocation.watchPosition(pos => {
-                document.getElementById('lat').value = pos.coords.latitude;
-                document.getElementById('lon').value = pos.coords.longitude;
-            }, null, { enableHighAccuracy: true });
+            gpsWatchId = navigator.geolocation.watchPosition(successGPS, errorGPS, { 
+                enableHighAccuracy: true, maximumAge: 0 
+            });
         });
 
         const params = new URLSearchParams(window.location.search);
