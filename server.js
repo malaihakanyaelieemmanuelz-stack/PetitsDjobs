@@ -602,6 +602,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             throw error;
         }
 
+        console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
@@ -613,6 +614,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
         // 1. Notification du Prestataire Principal
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
+        console.log("❌ [NOTIF-DEBUG] Tentative envoi email au principal:", pUser?.email);
         if (pUser && pUser.email && resend) {
             safeSendEmail({
                 from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
@@ -625,7 +627,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                         <p>📅 Date : ${msgDate}</p>
                         <p>Vous avez jusqu'à 1 heure avant l'heure prévue pour confirmer ou infirmer votre présence.</p>
                         ${consigneAcceptation}
-                        <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Accéder à mon espace</a>
+                        <a href="https://petitsdjobs.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Accéder à mon espace</a>
                     </div>
                 `
             });
@@ -647,7 +649,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                                 <p>📅 Date : ${msgDate}</p>
                                 <p>Si le prestataire principal se désiste ou ne répond pas, cette mission vous sera automatiquement attribuée.</p>
                                 ${consigneAcceptation}
-                                <a href="https://petitsdjobs.render.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Voir les détails</a>
+                                <a href="https://petitsdjobs.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Voir les détails</a>
                             </div>
                         `
                     });
@@ -928,6 +930,7 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 // Nouvelles routes pour la gestion des missions par le prestataire
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const pId = req.session.user.id;
+    console.log("❌ [NOTIF-DEBUG] Prestataire " + pId + " interroge le serveur pour ses missions.");
     
     // On récupère les missions seules d'abord pour éviter l'erreur de relation
     const { data: missions, error: mError } = await supabase.from('missions')
@@ -941,7 +944,10 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         return res.status(500).json({ error: mError.message });
     }
 
-    if (!missions || missions.length === 0) return res.json([]);
+    if (!missions || missions.length === 0) {
+        console.log("❌ [NOTIF-DEBUG] Aucune mission trouvée pour le presta " + pId);
+        return res.json([]);
+    }
 
     // On récupère les infos des clients manuellement
     const clientIds = missions.map(m => m.client_id);
@@ -953,6 +959,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
     }));
 
+    console.log("❌ [NOTIF-DEBUG] ENVOI DE " + result.length + " MISSIONS au navigateur du prestataire.");
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
     res.json(result);
 });
@@ -1321,7 +1328,7 @@ app.post('/connexion', async (req, res) => {
 
     console.log("[DIAGNOSTIC] Sauvegarde session et redirection...");
     req.session.save(() => {
-        res.redirect('/index.html?connecte=1');
+        res.redirect('/index.html');
     });
 });
 
@@ -1845,6 +1852,7 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 // Configuration de la mise en cache pour les fichiers statiques
 const optionsCache = {
     maxAge: '30d', // Indique au navigateur de garder les fichiers 30 jours
+    maxAge: '0', // DESACTIVE LE CACHE : les changements seront visibles immédiatement
     setHeaders: (res, path) => {
         // On cible spécifiquement les images pour une mise en cache agressive
         if (path.match(/\.(webp|jpg|jpeg|png|gif|ico|svg)$/)) {

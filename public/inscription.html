@@ -38,6 +38,8 @@
         <form id="regForm" action="/inscription" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="locAccepted" id="locAccepted" value="0">
             <input type="hidden" name="polAccepted" id="polAccepted" value="0">
+            <input type="hidden" name="lat" id="lat">
+            <input type="hidden" name="lon" id="lon">
             <input type="text" name="nom" id="reg-nom" placeholder="NOM (OBLIGATOIRE)" required autocomplete="family-name">
             <input type="text" name="prenom" placeholder="PRÉNOM" required autocomplete="given-name">
             <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="email">
@@ -85,7 +87,13 @@
             console.log("❌ [DEBUG-REG] Clic case localisation. Etat:", this.checked);
             if (this.checked) {
                 if (navigator.geolocation) {
-                    const success = (pos) => console.log(`❌ [DEBUG-REG] SUCCÈS : Lat=${pos.coords.latitude}, Lon=${pos.coords.longitude}`);
+                    const success = (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        document.getElementById('lat').value = latitude;
+                        document.getElementById('lon').value = longitude;
+                        console.log(`❌ [DEBUG-REG] SUCCÈS : Lat=${latitude}, Lon=${longitude}`);
+                    };
+
                     const error = (err) => {
                         console.log(`❌ [DEBUG-REG] ERREUR : Code=${err.code}, Msg=${err.message}`);
                         if (err.code === 1) {
@@ -104,6 +112,8 @@
                     if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
                     gpsWatchId = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true });
                 } else {
+                    document.getElementById('lat').value = "";
+                    document.getElementById('lon').value = "";
                     console.log("❌ [DEBUG-REG] Geolocation NON SUPPORTÉE");
                 }
             } else {
@@ -168,6 +178,7 @@
                 e.preventDefault();
                 return;
             }
+            
             document.getElementById('locAccepted').value = '1';
             document.getElementById('polAccepted').value = '1';
         };

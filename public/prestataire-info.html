@@ -13,8 +13,8 @@
     <header class="home-header">
         <div class="header-content">
             <a href="index.html" style="text-decoration:none;">
-                <h1 style="font-size: 2rem;">
-                    <svg class="home-logo" viewBox="0 0 100 100">
+                <h1 style="font-size: 14rem !important; display: flex; align-items: center; gap: 70px; font-weight: 950 !important;">
+                    <svg class="home-logo" viewBox="0 0 100 100" style="width: 500px !important; height: 500px !important; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));">
                         <g transform="rotate(-30 50 50)">
                             <rect x="20" y="20" width="20" height="60" fill="#FF6600"/>
                             <rect x="50" y="30" width="30" height="40" fill="#FF6600"/>
@@ -27,8 +27,8 @@
                 </h1>
             </a>
             <nav class="nav-compact">
-                <a href="/profil" style="font-size: 1.1rem; padding: 12px 20px !important;">PROFIL</a>
-                <a href="index.html" style="font-size: 1.1rem; padding: 12px 20px !important;">ACCUEIL</a>
+                <a href="/profil" style="font-size: 8rem !important; padding: 90px 150px !important; border-width: 18px !important;">PROFIL</a>
+                <a href="index.html" style="font-size: 8rem !important; padding: 90px 150px !important; border-width: 18px !important;">ACCUEIL</a>
             </nav>
         </div>
     </header>
@@ -57,9 +57,9 @@
                 RETOUR MON PROFIL
             </button>
 
-            <div style="margin-top: 40px; text-align: center; opacity: 0.6;">
-                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:1rem; cursor:pointer; text-decoration:underline;">Supprimer ma carte de visite</button><br><br>
-                <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:1rem; cursor:pointer; text-decoration:underline;">Supprimer définitivement mon compte</button>
+            <div style="margin-top: 40px; text-align: center; opacity: 1;">
+                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:6.5rem !important; cursor:pointer; text-decoration:underline; font-weight: 950 !important;">Supprimer ma carte de visite</button><br><br>
+                <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:6.5rem !important; cursor:pointer; text-decoration:underline; font-weight: 950 !important;">Supprimer définitivement mon compte</button>
             </div>
         </div>
     </div>
@@ -127,16 +127,21 @@
 
         let lastCount = 0;
         async function verifierMissions() {
+            console.log("❌ [FRONT-DEBUG] Vérification des missions sur le serveur...");
             const res = await fetch('/api/mes-missions-prestataire');
             const missions = await res.json();
-            console.log("[DEBUG CLIENT] Missions reçues:", missions); // Pour voir dans F12 si des données arrivent
             
+            console.log("❌ [FRONT-DEBUG] Missions reçues par le navigateur :", missions.length);
+
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
             
             if (missions.length > 0) {
                 if (missions.length > lastCount) {
-                    document.getElementById('notif-sound').play().catch(e => {});
+                    console.log("❌ [FRONT-DEBUG] Nouvelle mission ! Tentative de son.");
+                    document.getElementById('notif-sound').play().catch(e => {
+                        console.error("❌ [FRONT-DEBUG] Échec Son:", e.message);
+                    });
                 }
                 zone.style.display = 'block';
                 liste.innerHTML = missions.map(m => `

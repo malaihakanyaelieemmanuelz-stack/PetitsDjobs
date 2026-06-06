@@ -7,6 +7,9 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
     "@supabase/supabase-js": "^2.45.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
@@ -17,5 +20,20 @@
     "multer": "^1.4.5-lts.1",
     "resend": "^6.12.4",
     "sharp": "^0.33.5"
-  }
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/malaihakanyaelieemmanuelz-stack/PetitsDjobs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/malaihakanyaelieemmanuelz-stack/PetitsDjobs/issues"
+  },
+  "homepage": "https://github.com/malaihakanyaelieemmanuelz-stack/PetitsDjobs#readme"
 }

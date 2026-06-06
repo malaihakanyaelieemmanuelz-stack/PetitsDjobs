@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%23FF6600'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%23FF6600'/%3E%3Cpath d='M15 50 L95 50' stroke='%232e7d32' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%232e7d32' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E">
     <title>Connexion</title>
 </head>
 <body>
     <header class="home-header">
         <div class="header-content">
-            <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+            <a href="index.html?v=2" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
                 <h1 style="margin:0; display:flex; align-items:center; gap:10px;">
                     <svg class="home-logo" viewBox="0 0 100 100">
                         <g transform="rotate(-30 50 50)">
@@ -34,7 +34,6 @@
     <div class="auth-page">
         <div class="login-card">
             <h1>CONNEXION</h1>
-            <p id="msg-remember" style="display:none; color:#5D4037; font-size:0.9rem; margin-bottom: 20px;">Session active — validez les cases ci-dessous pour continuer.</p>
             <form id="loginForm" action="/connexion" method="POST">
                 <div id="champs-compte">
                     <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="username">
@@ -45,19 +44,12 @@
                 </div>
                 <input type="hidden" name="lat" id="lat">
                 <input type="hidden" name="lon" id="lon">
-                <input type="hidden" name="locAccepted" id="locAccepted" value="0">
-                <input type="hidden" name="polAccepted" id="polAccepted" value="0">
+                <input type="hidden" name="locAccepted" id="locAccepted" value="1">
+                <input type="hidden" name="polAccepted" id="polAccepted" value="1">
 
                 <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
                     <label>
                         <input type="checkbox" name="remember" id="remember"> Rester connecté
-                    </label>
-                    <label>
-                        <input type="checkbox" id="loc"> Autoriser la localisation
-                    </label>
-                    <label style="display: flex; align-items: center;">
-                        <input type="checkbox" id="pol">
-                        J'accepte la <a href="/politique">politique de confidentialité</a>
                     </label>
                 </div>
 
@@ -71,17 +63,13 @@
             <p style="margin-top: 15px; font-size: 0.9rem;">
                 Pas de compte ? <a href="inscription.html">Inscrivez-vous</a>
             </p>
-            <a href="index.html" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
+            <a href="index.html?v=2" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
         </div>
     </div>
 
     <script>
         const form = document.getElementById('loginForm');
-        const loc = document.getElementById('loc');
-        const pol = document.getElementById('pol');
         const champs = document.getElementById('champs-compte');
-
-        let gpsWatchId = null;
 
         // Afficher/Masquer le mot de passe
         document.querySelectorAll('.toggle-password').forEach(btn => {
@@ -90,48 +78,6 @@
                 const isPass = target.type === 'password';
                 target.type = isPass ? 'text' : 'password';
                 this.classList.toggle('visible');
-            });
-        });
-
-        loc.addEventListener('change', () => {
-            if (!loc.checked) {
-                if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
-                gpsWatchId = null;
-                document.getElementById('lat').value = "";
-                document.getElementById('lon').value = "";
-                return;
-            }
-
-            if (!navigator.geolocation) {
-                alert('Géolocalisation non supportée.');
-                loc.checked = false;
-                return;
-            }
-
-            const successGPS = (pos) => {
-                const { latitude, longitude } = pos.coords;
-                document.getElementById('lat').value = latitude;
-                document.getElementById('lon').value = longitude;
-                console.log("📍 GPS Capté:", latitude, longitude);
-            };
-
-            const errorGPS = (err) => {
-                console.warn("Signal GPS Error:", err.message);
-                if (err.code === 1) { // PERMISSION_DENIED
-                    alert("Le message d'autorisation n'apparaît pas car la localisation est bloquée dans vos paramètres de navigateur. Veuillez l'autoriser manuellement pour ce site.");
-                    loc.checked = false;
-                }
-            };
-
-            // 1. Appel immédiat pour forcer le message système du portable
-            navigator.geolocation.getCurrentPosition(successGPS, errorGPS, { 
-                enableHighAccuracy: true, timeout: 10000, maximumAge: 0 
-            });
-
-            // 2. Lancement du suivi en arrière-plan pour la précision
-            if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
-            gpsWatchId = navigator.geolocation.watchPosition(successGPS, errorGPS, { 
-                enableHighAccuracy: true, maximumAge: 0 
             });
         });
 
@@ -145,29 +91,10 @@
         if (err) msg.style.display = 'block';
 
         fetch('/session-status').then(r => r.json()).then(s => {
-            if (s.loggedIn) window.location.href = 'index.html';
-            if (s.remember && s.loggedIn) {
-                champs.style.display = 'none';
-                document.getElementById('msg-remember').style.display = 'block';
-            }
+            if (s.loggedIn) window.location.href = 'index.html?v=2';
         }).catch(() => {});
 
         form.onsubmit = function(e) {
-            if (!loc.checked || !pol.checked) {
-                alert('Vous devez autoriser la localisation et accepter la politique.');
-                e.preventDefault();
-                return;
-            }
-
-            // Sécurité Android : On bloque la soumission si le GPS est activé mais n'a pas encore de fix
-            if (loc.checked && (!document.getElementById('lat').value || document.getElementById('lat').value === "")) {
-                alert("Veuillez patienter 2 ou 3 secondes que votre GPS capte votre position exacte avant de valider.");
-                e.preventDefault();
-                return;
-            }
-
-            document.getElementById('locAccepted').value = '1';
-            document.getElementById('polAccepted').value = '1';
             if (champs.style.display !== 'none') {
                 if (!document.getElementById('email').value || !document.getElementById('password').value) {
                     alert('Email et mot de passe requis.');

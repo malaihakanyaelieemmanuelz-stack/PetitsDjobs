@@ -12,7 +12,14 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
-    <div id="bandeau-connecte" style="display:none; background:#c8e6c9; color:#2e7d32; padding:10px; text-align:center; font-weight:bold;">Connexion réussie !</div>
+    <!-- Console de débug visuelle Ultra-Visible -->
+    <div id="android-debug-console" style="position:fixed; top:10px; right:10px; width:150px; background:rgba(0,0,0,0.7); color:#00ff00; font-size:9px; z-index:10001; padding:5px; border-radius:5px; pointer-events:none; font-family:monospace;">
+        DEBUG LOGO:<br>
+        <span id="debug-status">✅ STABLE</span>
+    </div>
+
+    <!-- Élément fixe pour le logo de fond -->
+    <div id="bg-logo-fixed"></div>
 
     <header class="home-header">
         <div class="header-content">
@@ -138,6 +145,29 @@
 
     <script>
         let connecte = false;
+
+        // ❌ [DEBUG-LOGO] Surveillance en temps réel
+        let initialTop = null;
+        window.addEventListener('scroll', () => {
+            const logo = document.getElementById('bg-logo-fixed');
+            const status = document.getElementById('debug-status');
+            const consoleBg = document.getElementById('android-debug-console');
+            
+            if (logo) {
+                const rect = logo.getBoundingClientRect();
+                const currentTop = Math.round(rect.top + rect.height/2);
+                const screenCenter = Math.round(window.innerHeight / 2);
+
+                // Si l'écart au centre est de plus de 5 pixels
+                if (Math.abs(currentTop - screenCenter) > 5) {
+                    status.innerHTML = "❌ MOUVEMENT !<br>Offset: " + (currentTop - screenCenter) + "px";
+                    consoleBg.style.background = "rgba(255, 0, 0, 0.9)"; // Devient ROUGE
+                } else {
+                    status.innerHTML = "✅ STABLE<br>Center: " + currentTop;
+                    consoleBg.style.background = "rgba(0, 0, 0, 0.7)";
+                }
+            }
+        });
 
         // Mise à jour dynamique du placeholder selon le type de recherche
         document.getElementById('search-type').addEventListener('change', function() {
@@ -286,7 +316,6 @@
                         document.getElementById('section-jobs').style.display = 'block';
                         container.innerHTML = jobs.map(j => `
                             <div style="flex:0 0 220px; background:white; border-radius:20px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.05); font-size:0.85rem; border:1px solid #f0f0f0; text-align:center;">
-                                <div style="width:85px; height:80px; margin: 0 auto 15px; border-radius:50%; overflow:hidden; border:3px solid #FF6600; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                         <div style="width:85px; height:80px; margin: 0 auto 15px; border-radius:50%; overflow:hidden; border:3px solid #FF6600; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                     <img src="${j.photo || 'default-profile.png'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='default-profile.png'">
                                 </div>
@@ -315,10 +344,6 @@
             alert(data.message || data.error);
         }
 
-        if (new URLSearchParams(location.search).get('connecte') === '1') {
-            document.getElementById('bandeau-connecte').style.display = 'block';
-        }
-
         const params = new URLSearchParams(location.search);
         if (params.get('erreur') === 'refus_appel') {
             const bandeau = document.getElementById('bandeau-connecte');
@@ -332,13 +357,10 @@
         rafraichirCarrousel();
         chargerJobsPublics();
 
-        // On attend un court instant avant de vérifier la session pour laisser le temps aux cookies
-        setTimeout(() => {
-            fetch('/session-status').then(r => r.json())
-            .then(s => {
+        // ❌ [FRONT-DEBUG] Vérification immédiate de la session (Délai supprimé)
+        fetch('/session-status').then(r => r.json()).then(s => {
             connecte = s.loggedIn;
             mettreAJourHeader(connecte);
-            console.log("État connexion:", connecte);
             if (connecte) return fetch('/get-user-data').then(r => r.json());
         }).then(userData => {
             if (!userData) return;
@@ -365,7 +387,6 @@
                 }, 2000);
             }
         }).catch(() => {});
-        }, 500);
         
         async function allerCommander(service, prix) {
             if (!connecte) {
@@ -414,9 +435,11 @@
         function rafraichirCarrousel() {
             // On force l'envoi de 'undefined' si vide pour que le serveur sache qu'il n'y a pas de GPS
             let url = `/get-top-prestataires?lat=${userLat || 'undefined'}&lon=${userLon || 'undefined'}`;
-
+            console.log("❌ [DEBUG-DATA] Appel API : " + url);
+            
             fetch(url).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
+                console.log(`❌ [DEBUG-DATA] Prestataires reçus : ${data ? data.length : 0}`);
                 
                 // bandeau discret si pas de GPS
                 const gpsBanner = (!userLat && !userLon) ? 
