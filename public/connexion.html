@@ -32,7 +32,7 @@
     </header>
 
     <div class="auth-page">
-        <div class="login-card">
+        <div class="login-card" style="margin-top: 80px;">
             <h1>CONNEXION</h1>
             <form id="loginForm" action="/connexion" method="POST">
                 <div id="champs-compte">
@@ -44,13 +44,21 @@
                 </div>
                 <input type="hidden" name="lat" id="lat">
                 <input type="hidden" name="lon" id="lon">
-                <input type="hidden" name="locAccepted" id="locAccepted" value="1">
-                <input type="hidden" name="polAccepted" id="polAccepted" value="1">
 
                 <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
                     <label>
                         <input type="checkbox" name="remember" id="remember"> Rester connecté
                     </label>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" name="locAccepted" id="locAccepted" required> Activer la localisation
+                        </label>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" name="polAccepted" id="polAccepted" required> J'accepte la <a href="/politique" style="color: #FF6600; text-decoration: none; font-weight: bold;">politique de confidentialité</a>
+                        </label>
+                    </div>
                 </div>
 
                 <button type="submit" id="btn-connect">SE CONNECTER</button>
@@ -94,10 +102,28 @@
             if (s.loggedIn) window.location.href = 'index.html?v=2';
         }).catch(() => {});
 
+        // Déclenchement du GPS lors du cochage de la case
+        document.getElementById('locAccepted').addEventListener('change', function() {
+            if (this.checked) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        document.getElementById('lat').value = pos.coords.latitude;
+                        document.getElementById('lon').value = pos.coords.longitude;
+                    }, err => {
+                        alert("La localisation est obligatoire pour utiliser PetitsDjobs.");
+                        this.checked = false;
+                    }, { enableHighAccuracy: true });
+                } else {
+                    alert("Votre appareil ne supporte pas la géolocalisation.");
+                    this.checked = false;
+                }
+            }
+        });
+
         form.onsubmit = function(e) {
             if (champs.style.display !== 'none') {
-                if (!document.getElementById('email').value || !document.getElementById('password').value) {
-                    alert('Email et mot de passe requis.');
+                if (!document.getElementById('email').value || !document.getElementById('password').value || !document.getElementById('locAccepted').checked || !document.getElementById('polAccepted').checked) {
+                    alert('Veuillez remplir vos identifiants et accepter les conditions de localisation et de confidentialité.');
                     e.preventDefault();
                 }
             }

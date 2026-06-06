@@ -12,14 +12,8 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body>
-    <!-- Console de débug visuelle Ultra-Visible -->
-    <div id="android-debug-console" style="position:fixed; top:10px; right:10px; width:150px; background:rgba(0,0,0,0.7); color:#00ff00; font-size:9px; z-index:10001; padding:5px; border-radius:5px; pointer-events:none; font-family:monospace;">
-        DEBUG LOGO:<br>
-        <span id="debug-status">✅ STABLE</span>
-    </div>
-
     <!-- Élément fixe pour le logo de fond -->
-    <div id="bg-logo-fixed"></div>
+    <div id="bg-logo-fixed" style="position: fixed !important;"></div>
 
     <header class="home-header">
         <div class="header-content">
@@ -145,29 +139,6 @@
 
     <script>
         let connecte = false;
-
-        // ❌ [DEBUG-LOGO] Surveillance en temps réel
-        let initialTop = null;
-        window.addEventListener('scroll', () => {
-            const logo = document.getElementById('bg-logo-fixed');
-            const status = document.getElementById('debug-status');
-            const consoleBg = document.getElementById('android-debug-console');
-            
-            if (logo) {
-                const rect = logo.getBoundingClientRect();
-                const currentTop = Math.round(rect.top + rect.height/2);
-                const screenCenter = Math.round(window.innerHeight / 2);
-
-                // Si l'écart au centre est de plus de 5 pixels
-                if (Math.abs(currentTop - screenCenter) > 5) {
-                    status.innerHTML = "❌ MOUVEMENT !<br>Offset: " + (currentTop - screenCenter) + "px";
-                    consoleBg.style.background = "rgba(255, 0, 0, 0.9)"; // Devient ROUGE
-                } else {
-                    status.innerHTML = "✅ STABLE<br>Center: " + currentTop;
-                    consoleBg.style.background = "rgba(0, 0, 0, 0.7)";
-                }
-            }
-        });
 
         // Mise à jour dynamique du placeholder selon le type de recherche
         document.getElementById('search-type').addEventListener('change', function() {
