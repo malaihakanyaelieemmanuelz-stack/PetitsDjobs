@@ -81,6 +81,8 @@
         const pol = document.getElementById('pol');
         const champs = document.getElementById('champs-compte');
 
+        let gpsWatchId = null;
+
         // Afficher/Masquer le mot de passe
         document.querySelectorAll('.toggle-password').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -92,19 +94,37 @@
         });
 
         loc.addEventListener('change', () => {
-            if (!loc.checked) return;
+            if (!loc.checked) {
+                if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+                document.getElementById('lat').value = "";
+                document.getElementById('lon').value = "";
+                return;
+            }
+
             if (!navigator.geolocation) {
                 alert('Géolocalisation non supportée.');
                 loc.checked = false;
                 return;
             }
+
+            // Réveil forcé du hardware GPS sur Android avec Haute Précision
             navigator.geolocation.getCurrentPosition(
                 pos => {
+                    console.log("📍 GPS Initialisé:", pos.coords.latitude, pos.coords.longitude);
                     document.getElementById('lat').value = pos.coords.latitude;
                     document.getElementById('lon').value = pos.coords.longitude;
                 },
-                () => alert('Autorisez la localisation.')
+                () => console.warn("Signal GPS en recherche..."),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
+
+            // Suivi continu tant que la case est cochée pour garantir la précision lors du clic
+            if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+            gpsWatchId = navigator.geolocation.watchPosition(pos => {
+                document.getElementById('lat').value = pos.coords.latitude;
+                document.getElementById('lon').value = pos.coords.longitude;
+            }, null, { enableHighAccuracy: true });
         });
 
         const params = new URLSearchParams(window.location.search);
@@ -130,6 +150,14 @@
                 e.preventDefault();
                 return;
             }
+
+            // Sécurité Android : On bloque la soumission si le GPS est activé mais n'a pas encore de fix
+            if (loc.checked && (!document.getElementById('lat').value || document.getElementById('lat').value === "")) {
+                alert("Veuillez patienter 2 ou 3 secondes que votre GPS capte votre position exacte avant de valider.");
+                e.preventDefault();
+                return;
+            }
+
             document.getElementById('locAccepted').value = '1';
             document.getElementById('polAccepted').value = '1';
             if (champs.style.display !== 'none') {
