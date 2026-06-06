@@ -57,9 +57,15 @@
                     <option value="today">Aujourd'hui (Maintenant)</option>
                     <option value="scheduled">Programmer à une autre date</option>
                 </select>
-                <div id="scheduled-fields" style="display:none; gap: 10px; margin-top: 10px;">
-                    <input type="date" id="input-date-custom" style="flex:1; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
-                    <input type="time" id="input-time-custom" style="flex:1; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                <div id="scheduled-fields" style="display:none; flex-direction: column; gap: 12px; margin-top: 12px;">
+                    <div style="text-align: left;">
+                        <label for="input-date-custom" style="font-size: 0.8rem; color: #666; font-weight: bold; display: block; margin-bottom: 5px; margin-left: 5px;">CHOISIR LA DATE :</label>
+                        <input type="date" id="input-date-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ccc; background: white; font-family: inherit;">
+                    </div>
+                    <div style="text-align: left;">
+                        <label for="input-time-custom" style="font-size: 0.8rem; color: #666; font-weight: bold; display: block; margin-bottom: 5px; margin-left: 5px;">CHOISIR L'HEURE :</label>
+                        <input type="time" id="input-time-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ccc; background: white; font-family: inherit;">
+                    </div>
                 </div>
             </div>
 

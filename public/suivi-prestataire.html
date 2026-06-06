@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polyline-decorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <title>Navigation Prestataire - PetitsDjobs</title>
 </head>
 <body class="tracking-body">
@@ -82,7 +83,7 @@
                 lineOptions: { 
                     styles: [
                         { color: 'white', opacity: 0.6, weight: 12 }, 
-                        { color: '#007bff', opacity: 1, weight: 7, dashArray: '10, 15' } // Ligne en pointillés bleus
+                        { color: '#2e7d32', opacity: 1, weight: 7, dashArray: '10, 15' } // Ligne en pointillés verts
                     ] 
                 },
                 createMarker: () => null,
@@ -95,6 +96,15 @@
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
                 const summary = routes[0].summary;
+
+                // Ajout de la flèche dirigée vers le client (fin de la ligne)
+                if (window.arrowDecorator) map.removeLayer(window.arrowDecorator);
+                window.arrowDecorator = L.polylineDecorator(routes[0].coordinates, {
+                    patterns: [
+                        {offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 15, polygon: false, pathOptions: {stroke: true, color: '#2e7d32', weight: 4}})}
+                    ]
+                }).addTo(map);
+
                 const instructions = routes[0].instructions;
 
                 const distM = summary.totalDistance; // Distance réelle à pied

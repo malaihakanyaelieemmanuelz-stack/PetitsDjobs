@@ -587,7 +587,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         backup_ids: (cmd.backups && cmd.backups.length > 0) ? cmd.backups.map(b => b.id) : null,
         service: cmd.service,
         prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
-        statut: 'en_attente_prestataire',
+        statut: isToday ? 'en_attente_prestataire' : 'programmation_en_cours',
         lat_client: parseFloat(lat),
         lon_client: parseFloat(lon),
         date_prevue: datePrevue
@@ -1023,6 +1023,19 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
     res.json(data);
+});
+
+// Route pour marquer les messages comme vus
+app.post('/api/mark-messages-read', requireAuth, async (req, res) => {
+    const { missionId } = req.body;
+    if (!missionId) return res.json({ ok: false });
+
+    const { error } = await supabase.from('messages')
+        .update({ lu: true })
+        .eq('mission_id', parseInt(missionId))
+        .neq('sender_id', req.session.user.id); // On marque comme lus les messages que JE n'ai pas envoyés
+    
+    res.json({ ok: !error });
 });
 
 // Nouvelle route pour obtenir les infos de n'importe quel partenaire (Client ou Pro)
@@ -1869,5 +1882,85 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), op
 app.use(express.static(publicDir, optionsCache));
 
 app.listen(port, () => {
+
+
+// --- ESPACE PUB / SHOWCASE ---
+app.get('/api/get-showcase', async (req, res) => {
+    const { data, error } = await supabase.from('showcase')
+        .select('*, infos_prestataires(profession)')
+        .order('created_at', { ascending: false })
+        .limit(10);
+    
+    res.json(data?.map(d => ({...d, profession: d.infos_prestataires?.profession})) || []);
+});
+
+app.post('/api/upload-showcase', requireAuth, upload.single('media'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
+    try {
+        const url = await uploadToSupabase(req.file, 'showcase');
+        const { error } = await supabase.from('showcase').insert({
+            user_id: req.session.user.id,
+            url: url,
+            media_type: req.file.mimetype
+        });
+        if (error) throw error;
+        res.json({ ok: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- SYSTÈME D'AMIS ---
+app.post('/api/inviter-ami', requireAuth, async (req, res) => {
+    const senderId = req.session.user.id;
+    const receiverId = req.body.targetId;
+    if (senderId == receiverId) return res.status(400).json({ error: "Action impossible" });
+    
+    const { error } = await supabase.from('invitations').upsert({
+        sender_id: senderId,
+        receiver_id: receiverId,
+        statut: 'en_attente'
+    });
+    res.json({ ok: !error, message: error ? "Déjà envoyé" : "Demande d'ami envoyée !" });
+});
+
+app.get('/api/mes-demandes-amis', requireAuth, async (req, res) => {
+    const { data } = await supabase.from('invitations')
+        .select('id, sender_id, utilisateurs!invitations_sender_id_fkey(prenom, nom)')
+        .eq('receiver_id', req.session.user.id)
+        .eq('statut', 'en_attente');
+    res.json(data.map(i => ({ id: i.id, user: i.utilisateurs })) || []);
+});
+
+app.post('/api/repondre-invitation', requireAuth, async (req, res) => {
+    const { invitationId, action } = req.body;
+    if (action === 'accepte') {
+        const { data: invit } = await supabase.from('invitations').select('*').eq('id', invitationId).single();
+        await supabase.from('amis').insert([
+            { user_id1: invit.sender_id, user_id2: invit.receiver_id },
+            { user_id1: invit.receiver_id, user_id2: invit.sender_id }
+        ]);
+        await supabase.from('invitations').delete().eq('id', invitationId);
+        res.json({ ok: true });
+    } else {
+        await supabase.from('invitations').delete().eq('id', invitationId);
+        res.json({ ok: true });
+    }
+});
+
+app.get('/api/liste-amis', requireAuth, async (req, res) => {
+    const { data } = await supabase.from('amis')
+        .select('user_id2, utilisateurs!amis_user_id2_fkey(*)')
+        .eq('user_id1', req.session.user.id);
+    
+    const { data: prestas } = await supabase.from('infos_prestataires').select('user_id, profession, photo_profil_url');
+    const prestaMap = Object.fromEntries(prestas.map(p => [p.user_id, p]));
+
+    res.json(data.map(d => ({
+        ...d.utilisateurs,
+        profession: prestaMap[d.user_id2]?.profession,
+        photo: prestaMap[d.user_id2]?.photo_profil_url || d.utilisateurs.photo_url
+    })));
+});
     console.log(`🚀 [SYSTEM] Serveur démarré sur le port ${port}`);
 });

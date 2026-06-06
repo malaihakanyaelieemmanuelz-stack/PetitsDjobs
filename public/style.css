@@ -16,11 +16,10 @@ html, body {
 /* Logo en filigrane : FIXATION DÉFINITIVE */
 #bg-logo-fixed {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 100vmax;
-    height: 100vmax;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index: -999;
     display: flex;
     align-items: center;
@@ -36,7 +35,7 @@ html, body {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    opacity: 0.4;
+    opacity: 0.1;
 }
 
 body { 
@@ -1062,6 +1061,27 @@ body {
     border-bottom: 1px solid #eee;
     cursor: pointer;
 }
+
+/* --- Espace Pub / Vitrine des Réalisations --- */
+.showcase-card {
+    flex: 0 0 160px;
+    height: 260px;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    border: 2px solid #2e7d32; /* Vert */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+.showcase-badge {
+    position: absolute; bottom: 10px; left: 8px; right: 8px;
+    background: rgba(255, 102, 0, 0.9); /* Orange */
+    color: white; padding: 4px;
+    border-radius: 6px; font-size: 0.65rem; font-weight: bold;
+    text-align: center; text-transform: uppercase;
+}
+
 .friend-item img {
     width: 55px; height: 55px;
     border-radius: 50%;

@@ -6,11 +6,36 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polyline-decorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>Suivi GPS & Sécurité</title>
 </head>
 <body class="tracking-body">
+    <!-- Système de Chat Intégré au Suivi -->
+    <div id="chat-panel" style="display:none; position:fixed; bottom:0; left:0; right:0; top:20%; background:white; z-index:2000; flex-direction:column; border-radius:25px 25px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease;">
+        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#fdfaf9; border-radius:25px 25px 0 0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:10px; height:10px; background:#2e7d32; border-radius:50%;"></div>
+                <strong style="color:#FF6600;">DISCUSSION DIRECTE</strong>
+            </div>
+            <button onclick="toggleChat(false)" style="background:#eee; border:none; width:35px; height:35px; border-radius:50%; font-weight:bold; cursor:pointer;">✕</button>
+        </div>
+        <div id="chat-messages-list" class="chat-container" style="flex:1; overflow-y:auto; padding:20px; background:#f9f9f9;">
+            <!-- Les messages s'affichent ici -->
+        </div>
+        <div style="padding:15px 15px 30px; display:flex; gap:10px; background:white; border-top:1px solid #eee;">
+            <input type="text" id="chat-input-text" placeholder="Écrivez ici..." style="flex:1; padding:15px; border-radius:30px; border:2px solid #f0f0f0; outline:none; font-size:1rem;">
+            <button onclick="envoyerMessageSuivi()" style="background:#FF6600; color:white; border:none; border-radius:50%; width:55px; height:55px; font-size:1.2rem; cursor:pointer; box-shadow:0 4px 10px rgba(255,102,0,0.3);">➔</button>
+        </div>
+    </div>
+
+    <!-- Bouton Flottant Chat -->
+    <button id="btn-chat-float" onclick="toggleChat(true)" style="position:fixed; bottom:120px; right:20px; width:65px; height:65px; border-radius:50%; background:#2e7d32; color:white; border:none; box-shadow: 0 6px 20px rgba(0,0,0,0.3); z-index:1002; display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; transition: transform 0.2s;">
+        💬
+        <span id="unread-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#FF6600; color:white; border-radius:50%; width:24px; height:24px; font-size:0.75rem; font-weight:bold; border:2px solid white; display:flex; align-items:center; justify-content:center;">0</span>
+    </button>
+
     <!-- Carte en arrière-plan complet -->
     <div id="map"></div>
 
@@ -105,7 +130,7 @@
             routingControl = L.Routing.control({
                 waypoints: [],
                 lineOptions: {
-                    styles: [{ color: '#007bff', opacity: 0.8, weight: 6 }]
+                    styles: [{ color: '#2e7d32', opacity: 0.8, weight: 6, dashArray: '10, 10' }]
                 },
                 createMarker: function() { return null; }, // On utilise nos propres curseurs
                 addWaypoints: false,
@@ -119,6 +144,15 @@
             // Capture des instructions de navigation pour guider le prestataire
             routingControl.on('routesfound', function(e) {
                 const routes = e.routes;
+
+                // Ajout de la flèche dirigée vers le client (fin de la ligne)
+                if (window.arrowDecorator) map.removeLayer(window.arrowDecorator);
+                window.arrowDecorator = L.polylineDecorator(routes[0].coordinates, {
+                    patterns: [
+                        {offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 15, polygon: false, pathOptions: {stroke: true, color: '#2e7d32', weight: 4}})}
+                    ]
+                }).addTo(map);
+
                 const summary = routes[0].summary;
                 const instructions = routes[0].instructions;
                 if (instructions && instructions.length > 0 && isProvider) {
@@ -183,6 +217,74 @@
         }
 
         identifierRole();
+
+        // --- LOGIQUE DE CHAT ET NOTIFICATIONS ---
+        async function rafraichirMessages() {
+            if (!missionId) return;
+            const res = await fetch(`/api/get-messages/${missionId}`);
+            const messages = await res.json();
+            
+            const container = document.getElementById('chat-messages-list');
+            const currentUserId = (await (await fetch('/get-user-data')).json()).id;
+
+            // Vérifier s'il y a de nouveaux messages pour la notification
+            if (messages.length > 0) {
+                const dernierMsg = messages[messages.length - 1];
+                if (dernierMsg.id > lastMessageId) {
+                    if (!isChatOpen && dernierMsg.sender_id !== currentUserId) {
+                        unreadCount++;
+                        document.getElementById('unread-badge').innerText = unreadCount;
+                        document.getElementById('unread-badge').style.display = 'flex';
+                        // Petite vibration ou son si dispo
+                        if (navigator.vibrate) navigator.vibrate(100);
+                    }
+                    lastMessageId = dernierMsg.id;
+                }
+            }
+
+            if (isChatOpen) {
+                container.innerHTML = messages.map(m => {
+                    const isMe = m.sender_id === currentUserId;
+                    const status = m.lu ? '<span style="color:#2e7d32; font-size:0.7rem; font-weight:bold;">👀 Vu</span>' : '<span style="color:#999; font-size:0.7rem;">✓ Reçu</span>';
+                    return `
+                        <div class="message-bubble ${isMe ? 'me ' + (isProvider ? 'presta-style' : 'client-style') : 'other ' + (isProvider ? 'client-style' : 'presta-style')}">
+                            ${m.text}
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; gap:10px;">
+                                <span class="message-time">${new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                ${isMe ? status : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                container.scrollTop = container.scrollHeight;
+                marquerMessagesLus();
+            }
+        }
+
+        async function envoyerMessageSuivi() {
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            await fetch('/api/send-message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ missionId, text })
+            });
+            input.value = '';
+            rafraichirMessages();
+        }
+
+        async function marquerMessagesLus() {
+            if (!isChatOpen) return;
+            await fetch('/api/mark-messages-read', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ missionId })
+            });
+        }
+
+        setInterval(rafraichirMessages, 3000);
 
         async function rafraichirStatut() {
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
