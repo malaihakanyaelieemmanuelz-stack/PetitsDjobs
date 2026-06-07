@@ -40,14 +40,6 @@
         </div>
     </header>
 
-    <!-- Pub prestataires : entre le menu et les catégories -->
-    <div id="showcase-section" class="showcase-header-band" style="display:none;">
-        <div class="app-wrap" style="padding: 8px 15px 0;">
-            <h2 class="showcase-title">En direct des prestataires</h2>
-        </div>
-        <div id="container-showcase" class="showcase-track"></div>
-    </div>
-
     <!-- Barre de recherche de services -->
     <div class="app-wrap" style="margin-bottom: 20px;">
         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -59,6 +51,16 @@
                 <input type="text" id="search-service" placeholder="Ménage ou Cuisine" style="flex: 1; padding: 20px; border-radius: 15px; border: 2px solid #FF6600; font-size: 1.2rem; background: white; outline: none;">
                 <button onclick="rechercherService()" class="btn-primary-sm" style="width: 70px; height: 65px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Pub prestataires : barre horizontale entre le menu et « Nos catégories » -->
+    <div id="showcase-section" class="showcase-header-band" style="display:none;">
+        <div class="app-wrap" style="padding: 8px 15px 0;">
+            <h2 class="showcase-title">En direct des prestataires</h2>
+        </div>
+        <div class="showcase-scroll-wrap">
+            <div id="container-showcase" class="showcase-track"></div>
         </div>
     </div>
 
@@ -221,6 +223,39 @@
             }
         }
 
+        function rendreMediaShowcase(url, type) {
+            if (!url) return '';
+            if (type && String(type).includes('video')) {
+                return `<video src="${url}" muted loop playsinline autoplay></video>`;
+            }
+            return `<img src="${url}" alt="Réalisation prestataire">`;
+        }
+
+        function afficherBandeauPub(source) {
+            const section = document.getElementById('showcase-section');
+            const container = document.getElementById('container-showcase');
+            const avecPub = (source || []).map(x => ({
+                id: x.id || x.user_id,
+                showcaseUrl: x.showcaseUrl || x.url,
+                showcaseType: x.showcaseType || x.media_type
+            })).filter(x => x.showcaseUrl && x.id);
+
+            if (!avecPub.length) {
+                section.style.display = 'none';
+                container.innerHTML = '';
+                return;
+            }
+
+            section.style.display = 'block';
+            const displayItems = [...avecPub, ...avecPub];
+            container.innerHTML = displayItems.map(p => `
+                <div class="showcase-card" onclick="location.href='/voir-prestataire?id=${p.id}'">
+                    ${rendreMediaShowcase(p.showcaseUrl, p.showcaseType)}
+                    <div class="showcase-badge">PRO</div>
+                </div>
+            `).join('');
+        }
+
         function miniCard(p) {
             const nomComplet = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom || 'Prestataire';
             
@@ -233,18 +268,26 @@
             const cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
+
+            const inviteBtn = `<button onclick="event.stopPropagation(); inviterAmi('${p.id}')" style="position:absolute; top:8px; right:8px; background:rgba(255,255,255,0.9); color:#FF6600; border:none; padding:4px 10px; border-radius:15px; font-size:0.6rem; font-weight:900; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.15);">INVITATION</button>`;
+            const banniere = p.showcaseUrl ? `
+                <div class="card-pub-preview" style="position:relative;">
+                    ${rendreMediaShowcase(p.showcaseUrl, p.showcaseType)}
+                    ${inviteBtn}
+                </div>` : `
+                <div class="card-header-banner" style="position:relative;">
+                    ${inviteBtn}
+                </div>`;
             
             return `
                 <article class="profile-card" onclick="${cardAction}">
-                    <div class="card-header-banner" style="position:relative;">
-                        <button onclick="event.stopPropagation(); inviterAmi('${p.id}')" style="position:absolute; top:8px; right:8px; background:rgba(255,255,255,0.9); color:#FF6600; border:none; padding:4px 10px; border-radius:15px; font-size:0.6rem; font-weight:900; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.15);">INVITATION</button>
-                    </div>
+                    ${banniere}
                     <div class="card-avatar-wrapper">
                         <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
                         <div class="card-status-dot ${p.disponible ? 'online' : 'offline'}"></div>
                     </div>
                     <div class="card-body-content">
-                        <p style="font-size:0.7rem; color:#888; margin-bottom:5px;">${statusTxt}</p>
+                        <p style="font-size:0.7rem; color:#2e7d32; margin-bottom:5px; opacity:0.85;">${statusTxt}</p>
                         <h3 style="color:#2e7d32;">${nomComplet}</h3>
                         <p class="profession">${p.profession || '-'}</p>
                         <div class="stats-pill">
@@ -325,8 +368,8 @@
         if (params.get('erreur') === 'refus_appel') {
             const bandeau = document.getElementById('bandeau-connecte');
             bandeau.innerText = "⚠️ Prestataire indisponible. Veuillez en choisir un autre.";
-            bandeau.style.background = "#ffcdd2";
-            bandeau.style.color = "#c62828";
+            bandeau.style.background = "#fff3e0";
+            bandeau.style.color = "#FF6600";
             bandeau.style.display = 'block';
         }
 
@@ -430,12 +473,14 @@
                 
                 // bandeau discret si pas de GPS
                 const gpsBanner = (!userLat && !userLon) ? 
-                    `<div style="width:100%; padding:10px; margin-bottom:10px; font-size:0.8rem; background:#fff3e0; color:#e65100; border-radius:10px; text-align:center;">
+                    `<div style="width:100%; padding:10px; margin-bottom:10px; font-size:0.8rem; background:#fff3e0; color:#FF6600; border-radius:10px; text-align:center;">
                         📍 Activez le GPS pour voir les distances exactes.
                     </div>` : '';
 
+                afficherBandeauPub(data);
+
                 if (!data || data.length === 0) {
-                    container.innerHTML = gpsBanner + '<p style="width:100%; text-align:center; color:#666; padding:20px;">Aucun prestataire inscrit à proximité pour le moment.</p>';
+                    container.innerHTML = gpsBanner + '<p style="width:100%; text-align:center; color:#2e7d32; padding:20px;">Aucun prestataire inscrit à proximité pour le moment.</p>';
                     lastCarrouselHtml = "";
                     return;
                 }
@@ -456,25 +501,11 @@
 
         async function chargerShowcase() {
             try {
+                const section = document.getElementById('showcase-section');
+                if (section.style.display === 'block') return;
                 const res = await fetch('/api/get-showcase');
                 const items = await res.json();
-                const section = document.getElementById('showcase-section');
-                const container = document.getElementById('container-showcase');
-                
-                if (items && items.length > 0) {
-                    section.style.display = 'block';
-                    // On double les items pour un défilement infini fluide
-                    const displayItems = [...items, ...items];
-                    container.innerHTML = displayItems.map(item => `
-                        <div class="showcase-card" onclick="location.href='/voir-prestataire?id=${item.user_id}'">
-                            ${item.media_type && item.media_type.includes('video') ? 
-                                `<video src="${item.url}" muted loop playsinline autoplay style="width:100%; height:100%; object-fit:cover;"></video>` :
-                                `<img src="${item.url}" alt="Réalisation prestataire" style="width:100%; height:100%; object-fit:cover;">`
-                            }
-                            <div class="showcase-badge">PRO</div>
-                        </div>
-                    `).join('');
-                }
+                if (items && items.length > 0) afficherBandeauPub(items);
             } catch (e) { console.warn("Showcase indisponible"); }
         }
         chargerShowcase();

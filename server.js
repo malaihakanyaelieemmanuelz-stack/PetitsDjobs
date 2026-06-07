@@ -119,6 +119,36 @@ function libelleDateOffre(datePrevue) {
     return datePrevue === 'today' ? 'Maintenant' : datePrevue;
 }
 
+/** Dernière pub (photo/vidéo) par prestataire pour l'accueil */
+async function enrichirAvecShowcase(prestataires) {
+    if (!prestataires?.length || !supabase) return prestataires || [];
+    const ids = prestataires.map(p => p.id).filter(id => id != null);
+    if (!ids.length) return prestataires;
+
+    const { data: rows, error } = await supabase
+        .from('showcase')
+        .select('user_id, url, media_type, created_at')
+        .in('user_id', ids)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.warn('[SHOWCASE] enrichissement ignoré:', error.message);
+        return prestataires;
+    }
+
+    const map = {};
+    (rows || []).forEach(r => {
+        const k = String(r.user_id);
+        if (!map[k]) map[k] = r;
+    });
+
+    return prestataires.map(p => ({
+        ...p,
+        showcaseUrl: map[String(p.id)]?.url || null,
+        showcaseType: map[String(p.id)]?.media_type || null
+    }));
+}
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -567,9 +597,9 @@ app.get('/get-top-prestataires', async (req, res) => {
         const result = await chercherParRayonCroissant(lat, lon, null, 0, BATCH_PRESTATAIRES, userId);
         
         // On garde tous les prestataires, même s'ils sont inactifs depuis longtemps
-        const filtered = result.prestataires;
+        const filtered = await enrichirAvecShowcase(result.prestataires);
 
-        console.log(`[DEBUG TOP] ${filtered.length} prestataires proches envoyés (filtrés sur 7 jours).`);
+        console.log(`[DEBUG TOP] ${filtered.length} prestataires proches envoyés.`);
         res.json(filtered);
     } catch (err) {
         console.error("DEBUG RENDER: Erreur /get-top-prestataires", err);
@@ -2061,11 +2091,19 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
 
 // --- ESPACE PUB / SHOWCASE ---
 app.get('/api/get-showcase', async (req, res) => {
-    const { data } = await supabase.from('showcase')
-        .select('*, infos_prestataires(profession)')
-        .order('created_at', { ascending: false })
-        .limit(10);
-    res.json(data?.map(d => ({ ...d, profession: d.infos_prestataires?.profession })) || []);
+    try {
+        const { data, error } = await supabase.from('showcase')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(30);
+        if (error) {
+            console.warn('[SHOWCASE API]', error.message);
+            return res.json([]);
+        }
+        res.json(data || []);
+    } catch (e) {
+        res.json([]);
+    }
 });
 
 app.get('/api/get-user-showcase/:userId', async (req, res) => {
