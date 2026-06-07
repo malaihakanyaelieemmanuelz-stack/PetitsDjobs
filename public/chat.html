@@ -116,9 +116,10 @@
                     const dateObj = new Date(m.created_at);
                     const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const date = dateObj.toLocaleDateString([], {day: '2-digit', month: '2-digit'});
+                    const body = (m.text && m.text.includes('<audio')) ? m.text : escapeHtml(m.text || '');
                     return `
                         <div class="message-bubble ${isMe ? 'me' : 'other'} ${styleClass}">
-                            ${m.text}
+                            ${body}
                             <span class="message-time">${date} à ${time}</span>
                         </div>
                     `;
@@ -128,57 +129,66 @@
             }
         }
 
-        // --- GESTION VOCALE (CORRIGÉE) ---
+        function escapeHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function mimeAudioSupporte() {
+            if (typeof MediaRecorder === 'undefined') return '';
+            const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+            return types.find(t => MediaRecorder.isTypeSupported(t)) || '';
+        }
+
         let mediaRecorder;
         let audioChunks = [];
+        let mediaStream = null;
         const micBtn = document.getElementById('btn-mic');
 
         micBtn.onclick = async () => {
-            console.log("[DEBUG VOICE] Clic micro détecté");
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Micro non supporté sur cet appareil.');
+                return;
+            }
             if (!mediaRecorder || mediaRecorder.state === 'inactive') {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const mime = mimeAudioSupporte();
                     audioChunks = [];
-                    
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder = mime ? new MediaRecorder(mediaStream, { mimeType: mime }) : new MediaRecorder(mediaStream);
+
+                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
                     mediaRecorder.onstop = async () => {
                         micBtn.innerText = '⌛';
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                        const audioBlob = new Blob(audioChunks, { type: mime || 'audio/webm' });
                         const formData = new FormData();
-                        formData.append('audio', audioBlob);
-                        
-                        console.log("[DEBUG VOICE] Envoi du fichier au serveur...");
+                        formData.append('audio', audioBlob, 'vocal.webm');
+
                         const uploadRes = await fetch('/api/upload-vocal', { method: 'POST', body: formData });
                         const uploadData = await uploadRes.json();
-                        
+
                         if (uploadData.url) {
                             await fetch('/api/send-message', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ 
-                                missionId: missionId, 
-                                amiId: amiId, 
-                                voiceUrl: uploadData.url 
-                            })
+                                body: JSON.stringify({ missionId, amiId, voiceUrl: uploadData.url })
                             });
                             loadMessages();
+                        } else {
+                            alert(uploadData.error || 'Échec envoi vocal');
                         }
                         micBtn.innerText = '🎤';
                         micBtn.classList.remove('recording');
                     };
 
-                    mediaRecorder.start();
+                    mediaRecorder.start(250);
                     micBtn.classList.add('recording');
                     micBtn.innerText = '🛑';
-                    console.log("[DEBUG VOICE] Enregistrement démarré");
                 } catch (err) {
-                    console.error("[DEBUG VOICE] Erreur micro:", err);
-                    alert("Impossible d'accéder au micro. Vérifiez les autorisations de votre navigateur.");
+                    alert("Autorisez le micro dans les paramètres du navigateur.");
                 }
             } else {
                 mediaRecorder.stop();
-                console.log("[DEBUG VOICE] Enregistrement stoppé");
             }
         };
 

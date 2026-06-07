@@ -143,7 +143,8 @@
                 const items = await res.json();
                 if (items && items.length > 0) {
                     galerie.innerHTML = items.map(item => `
-                        <div class="realisation-item">
+                        <div class="realisation-item showcase-item-wrap">
+                            <button type="button" class="btn-delete-showcase" onclick="event.stopPropagation(); supprimerPub(${item.id})" title="Supprimer">✕</button>
                             ${item.media_type && item.media_type.includes('video') ?
                                 `<video src="${item.url}" controls playsinline style="width:100%; height:100%; object-fit:cover;"></video>` :
                                 `<img src="${item.url}" alt="Ma réalisation">`
@@ -183,10 +184,10 @@
                         <div style="font-weight: 800; color: #333; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
                         <div style="font-size: 0.9rem; color: #666; margin: 3px 0;">Service : <b>${m.service}</b></div>
                         <div style="font-size: 1.1rem; color: #2e7d32; font-weight: 800; margin-top: 5px;">${m.prix} FCFA</div>
-                        <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ VITE (DÉLAI DE 1 MINUTE)</div>
+                        <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ DANS ${m.delaiMinutes || 1} MIN — sinon refus automatique</div>
                         <div style="display:flex; gap:10px;">
                             <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">ACCEPTER</button>
-                            <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#9e9e9e; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
+                            <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
                         </div>
                     </div>
                 `).join('');
@@ -204,6 +205,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ missionId: id, action })
             });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Action impossible (délai peut-être expiré).');
+                verifierMissions();
+                return;
+            }
             if (res.ok) {
                 if (action === 'accepter') {
                     await fetch('/preparer-commande', {
@@ -223,6 +230,17 @@
                 const data = await res.json();
                 if (res.ok) { alert(data.message); window.location.href = '/profil'; }
                 else alert(data.error);
+            }
+        }
+
+        async function supprimerPub(itemId) {
+            if (!confirm('Supprimer cette publication ?')) return;
+            const res = await fetch('/api/delete-showcase/' + itemId, { method: 'DELETE' });
+            if (res.ok) {
+                const userData = await fetch('/get-user-data').then(r => r.json());
+                if (userData.id) chargerMaGalerie(userData.id);
+            } else {
+                alert('Impossible de supprimer.');
             }
         }
 

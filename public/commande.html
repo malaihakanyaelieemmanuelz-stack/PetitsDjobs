@@ -51,20 +51,32 @@
                 Calcul de la distance avec le prestataire...
             </div>
 
+            <div style="margin-bottom: 20px;" id="bloc-delai-reponse">
+                <label style="font-weight: bold; color: #FF6600; display: block; margin-bottom: 8px;">⏰ Délai pour que le prestataire accepte :</label>
+                <select id="select-delai-reponse" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #2e7d32; color:#2e7d32; font-weight:bold;">
+                    <option value="1">1 minute</option>
+                    <option value="2">2 minutes</option>
+                    <option value="3" selected>3 minutes</option>
+                    <option value="4">4 minutes</option>
+                    <option value="5">5 minutes</option>
+                </select>
+                <p style="font-size:0.75rem; color:#2e7d32; margin-top:6px;">Sans réponse dans ce délai, l'offre est refusée automatiquement.</p>
+            </div>
+
             <div style="margin-bottom: 20px;">
                 <label style="font-weight: bold; color: #FF6600; display: block; margin-bottom: 8px;">Date de la prestation :</label>
-                <select id="select-date-mode" onchange="toggleDatePicker()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+                <select id="select-date-mode" onchange="toggleDatePicker()" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #FF6600; color:#2e7d32; font-weight:bold;">
                     <option value="today">Aujourd'hui (Maintenant)</option>
                     <option value="scheduled">Programmer à une autre date</option>
                 </select>
                 <div id="scheduled-fields" style="display:none; flex-direction: column; gap: 12px; margin-top: 12px;">
                     <div style="text-align: left;">
-                        <label for="input-date-custom" style="font-size: 0.8rem; color: #666; font-weight: bold; display: block; margin-bottom: 5px; margin-left: 5px;">CHOISIR LA DATE :</label>
-                        <input type="date" id="input-date-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ccc; background: white; font-family: inherit;">
+                        <label for="input-date-custom" style="font-size: 0.8rem; color: #2e7d32; font-weight: bold; display: block; margin-bottom: 5px;">📅 CHOISIR LA DATE :</label>
+                        <input type="date" id="input-date-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #FF6600; background: white; color:#2e7d32; font-weight:bold;">
                     </div>
                     <div style="text-align: left;">
-                        <label for="input-time-custom" style="font-size: 0.8rem; color: #666; font-weight: bold; display: block; margin-bottom: 5px; margin-left: 5px;">CHOISIR L'HEURE :</label>
-                        <input type="time" id="input-time-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ccc; background: white; font-family: inherit;">
+                        <label for="input-time-custom" style="font-size: 0.8rem; color: #FF6600; font-weight: bold; display: block; margin-bottom: 5px;">🕐 CHOISIR L'HEURE :</label>
+                        <input type="time" id="input-time-custom" style="width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #2e7d32; background: white; color:#FF6600; font-weight:bold;">
                     </div>
                 </div>
             </div>
@@ -96,6 +108,7 @@
                 <span>Total</span>
                 <span><span id="total-final">-</span> FCFA</span>
             </div>
+            <p style="font-size:0.8rem; color:#2e7d32; text-align:center; margin-top:8px;">Commission plateforme 5 % — le prestataire est payé uniquement après confirmation mutuelle de fin de travail.</p>
 
             <button id="btn-choisir" class="btn-primary-sm" style="width:100%; padding:14px; margin-top:12px;">
                 Choisir un autre prestataire
@@ -116,6 +129,7 @@
         function toggleDatePicker() {
             const mode = document.getElementById('select-date-mode').value;
             document.getElementById('scheduled-fields').style.display = (mode === 'scheduled') ? 'flex' : 'none';
+            document.getElementById('bloc-delai-reponse').style.display = (mode === 'today') ? 'block' : 'none';
             if (currentCmdData) verifierNecessiteAppel(currentCmdData);
         }
 
@@ -285,10 +299,11 @@
             }
 
             setTimeout(async () => {
+                const delaiReponse = document.getElementById('select-delai-reponse').value;
                 const res = await fetch('/api/simuler-paiement', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ datePrevue })
+                    body: JSON.stringify({ datePrevue, delaiReponse })
                 });
                 
                 const result = await res.json();

@@ -10,32 +10,38 @@
 <body class="auth-page">
     <div class="login-card" style="max-width: 480px;">
         <h1>NÉGOCIER UN PRIX</h1>
-        <p style="font-size:0.9rem; color:#666;">Décrivez le travail et fixez votre prix. Les prestataires proches verront votre offre.</p>
+        <p style="font-size:0.9rem; color:#2e7d32;">Décrivez le travail et fixez votre prix. Les prestataires proches verront votre offre.</p>
         
-        <textarea id="description-job" placeholder="Description brève du travail (ex: Nettoyer une cour de 20m2)" required style="width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd; min-height:80px;"></textarea>
-        <input type="number" id="prix-propose" placeholder="Prix proposé en FCFA" min="100" required style="width:100%; padding:12px; margin:10px 0;">
+        <textarea id="description-job" placeholder="Description brève du travail (ex: Nettoyer une cour de 20m2)" required class="pd-field"></textarea>
+        <input type="number" id="prix-propose" placeholder="Prix proposé en FCFA" min="100" required class="pd-field">
 
         <div style="margin-bottom: 20px; text-align: left;">
-            <label style="font-weight: bold; color: #FF6600; display: block; margin-bottom: 8px; font-size: 0.9rem;">QUAND ?</label>
-            <select id="select-date-mode" onchange="toggleDatePicker()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: white;">
+            <label class="pd-label">QUAND ?</label>
+            <select id="select-date-mode" onchange="toggleDatePicker()" class="pd-field">
                 <option value="today">Aujourd'hui (Maintenant)</option>
                 <option value="scheduled">Programmer une date ultérieure</option>
             </select>
             <div id="scheduled-fields" style="display:none; flex-direction: column; gap: 10px; margin-top: 10px;">
-                <input type="date" id="input-date-custom" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
-                <input type="time" id="input-time-custom" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                <div>
+                    <label for="input-date-custom" class="pd-sublabel">📅 CHOISIR LA DATE :</label>
+                    <input type="date" id="input-date-custom" class="pd-field">
+                </div>
+                <div>
+                    <label for="input-time-custom" class="pd-sublabel">🕐 CHOISIR L'HEURE :</label>
+                    <input type="time" id="input-time-custom" class="pd-field">
+                </div>
             </div>
         </div>
         
-        <p style="text-align:left; font-size:0.8rem; margin:0;">Photo du travail (optionnel) :</p>
-        <input type="file" id="photo-job" accept="image/*" style="width:100%; margin:8px 0;">
+        <p class="pd-sublabel" style="margin:0;">Photo du travail (optionnel) :</p>
+        <input type="file" id="photo-job" accept="image/*" class="pd-field" style="padding:8px;">
 
-        <p id="statut" style="font-size:0.85rem;"></p>
+        <p id="statut" style="font-size:0.85rem; color:#2e7d32;"></p>
         <div id="liste-volontaires" style="margin-top:15px; display:none;">
             <p style="font-weight:bold; color:#2e7d32;">Prestataires intéressés :</p>
             <div id="container-volontaires"></div>
         </div>
-        <button id="btn-envoyer" style="width:100%; padding:15px; background-color: #FF6600; color:white; border:none; border-radius:8px; cursor:pointer; margin-top:10px; font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">
+        <button id="btn-envoyer" class="btn-primary-sm" style="width:100%; padding:15px; margin-top:10px; font-size:1.1rem; text-transform:uppercase;">
             ENVOYER AUX PRESTATAIRES PROCHES
         </button>
         <button id="btn-augmenter" style="display:none; width:100%; padding:12px; margin-top:10px; background:#2e7d32; color:white; border:none; border-radius:8px;">
@@ -44,7 +50,7 @@
         <button id="btn-annuler" style="display:none; width:100%; padding:12px; margin-top:10px; background:#FF6600; color:white; border:none; border-radius:8px; cursor:pointer;">
             ANNULER MA TÂCHE
         </button>
-        <p style="margin-top:16px; text-align:center;"><a href="/">Retour accueil</a></p>
+        <p style="margin-top:16px; text-align:center;"><a href="/" style="color:#FF6600;">Retour accueil</a></p>
     </div>
     <script>
         let offreId = null;
@@ -84,10 +90,7 @@
                     formData.append('datePrevue', dateVal);
                     if (photoInput.files[0]) formData.append('photo_job', photoInput.files[0]);
 
-                    const res = await fetch('/proposer-prix-discuter', {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const res = await fetch('/proposer-prix-discuter', { method: 'POST', body: formData });
                     if (!res.ok) throw new Error("Erreur serveur (" + res.status + ")");
                     const data = await res.json();
                     document.getElementById('statut').innerText = data.message || '';
@@ -98,13 +101,9 @@
                         pollTimer = setInterval(verifierOffre, 3000);
                     }
                 } catch (err) {
-                    console.error("❌ [ENVOI] Échec de la publication de l'offre :", err.message);
-                    alert("❌ Erreur lors de l'envoi de l'offre.");
+                    alert("Erreur lors de l'envoi de l'offre.");
                 }
-            }, (err) => {
-                console.error("❌ [GPS] Accès refusé ou erreur :", err.message);
-                alert('❌ Autorisez la localisation.');
-            });
+            }, () => alert('Autorisez la localisation.'));
         };
 
         function activerModeGestion() {
@@ -118,14 +117,13 @@
             const res = await fetch('/annuler-job/' + offreId, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
-                alert("Tâche annulée avec succès.");
+                alert(data.message || "Tâche annulée.");
                 window.location.href = '/';
             } else {
                 alert(data.error || "Erreur lors de l'annulation");
             }
         };
 
-        // Charger une offre existante si l'ID est dans l'URL (mode "Gérer ma tâche")
         const urlParams = new URLSearchParams(window.location.search);
         const urlOffreId = urlParams.get('offreId');
         if (urlOffreId) {
@@ -149,53 +147,41 @@
         async function verifierOffre() {
             if (!offreId) return;
             try {
-                // Vérification du délai de 2 minutes
-                if (startTime && (Date.now() - startTime > 120000)) {
-                    const statusEl = document.getElementById('statut');
-                    if (!statusEl.innerHTML.includes('red')) {
-                        statusEl.innerHTML += '<br><span style="color:red; font-weight:bold;">⚠️ Cela fait 2 min. Toujours pas d\'acceptation ? Augmentez le prix pour attirer les prestataires !</span>';
-                    }
-                }
-
                 const res = await fetch('/statut-offre/' + offreId);
-                if (!res.ok) throw new Error("Échec polling (" + res.status + ")");
+                if (!res.ok) throw new Error("Échec polling");
                 const data = await res.json();
                 if (data.statut === 'accepte') {
-                    document.getElementById('btn-annuler').style.display = 'none';
+                    document.getElementById('btn-annuler').style.display = 'block';
                     document.getElementById('liste-volontaires').style.display = 'block';
-                    const container = document.getElementById('container-volontaires');
-                    container.innerHTML = data.list.map(p => `
-                        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#f0f7f0; border-radius:8px; margin-bottom:8px; border:1px solid #c8e6c9;">
+                    document.getElementById('container-volontaires').innerHTML = data.list.map(p => `
+                        <div style="display:flex; align-items:center; gap:10px; padding:10px; background:#e8f5e9; border-radius:8px; margin-bottom:8px; border:2px solid #2e7d32;">
                             <img src="${p.photo || 'default-profile.png'}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
                             <div style="flex:1; text-align:left;">
-                                <div style="font-size:0.85rem; font-weight:bold;">${p.prenom} ${p.nom}</div>
-                                <div style="font-size:0.75rem;">⭐ ${p.etoiles}/5 · ${p.profession}</div>
+                                <div style="font-size:0.85rem; font-weight:bold; color:#2e7d32;">${p.prenom} ${p.nom}</div>
+                                <div style="font-size:0.75rem; color:#FF6600;">⭐ ${p.etoiles}/5 · ${p.profession}</div>
                             </div>
-                            <button onclick="finaliserChoix(${p.id}, ${data.prix})" style="padding:6px 12px; background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">CHOISIR</button>
+                            <button onclick="finaliserChoix(${p.id}, ${data.prix})" style="padding:6px 12px; background:#FF6600; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">CHOISIR</button>
                         </div>
                     `).join('');
                     document.getElementById('statut').innerText = data.list.length + ' prestataire(s) ont accepté votre prix !';
                 } else if (data.suggestion) {
                     document.getElementById('statut').innerText = data.suggestion;
                 }
-            } catch (err) {
-                console.error("❌ [VERIFICATION] Erreur lors de la vérification du statut :", err.message);
-            }
+            } catch (err) { console.error(err); }
         }
 
         async function finaliserChoix(prestataireId, prix) {
-            try {
-                const res = await fetch('/selectionner-prestataire', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prestataireId })
-                });
-                if (!res.ok) throw new Error("Échec sélection (" + res.status + ")");
-                window.location.href = '/commande?service=Service%20particulier&prix=' + prix;
-            } catch (err) {
-                console.error("❌ [CHOIX] Échec de la sélection finale :", err.message);
-                alert("❌ Erreur lors de la sélection du prestataire.");
-            }
+            await fetch('/preparer-commande', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: 'Service particulier', prix, prixLibre: true, offreParticulierId: offreId })
+            });
+            const res = await fetch('/selectionner-prestataire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prestataireId, serviceChoisi: 'Service particulier' })
+            });
+            if (res.ok) window.location.href = '/commande?service=Service%20particulier&prix=' + prix;
         }
     </script>
 </body>

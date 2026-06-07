@@ -60,7 +60,7 @@
 
     <!-- Overlay du bas : Actions et Distance -->
     <div class="floating-bottom-actions">
-        <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #1a73e8; font-size: 1rem;">
+        <div id="gps-info" style="font-weight: bold; margin-bottom: 15px; color: #2e7d32; font-size: 1rem;">
             Initialisation du GPS...
         </div>
 
@@ -74,11 +74,14 @@
         <button id="btn-client-depart" onclick="clientConfirmerDepart()" class="btn-primary-sm" style="display:none; background:#FF6600; width:100%; height:50px;">
             VALIDER LE DÉPART
         </button>
+        <button id="btn-client-confirm-fin" onclick="clientConfirmerFinTravail()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; margin-bottom:10px; height:50px;">
+            ✅ CONFIRMER FIN DU TRAVAIL (PAIEMENT)
+        </button>
 
         <!-- Boutons Prestataire -->
         <div id="group-presta-arrive" style="display:none; gap:10px; margin-bottom:10px;">
-            <button onclick="marquerArrivee()" class="btn-primary-sm" style="flex:2; background:#1a73e8; height:50px;">JE SUIS ARRIVÉ</button>
-            <button onclick="alert('L\'itinéraire continue vers le point rouge.')" class="btn-primary-sm" style="flex:1; background:#757575; height:50px;">NON</button>
+            <button onclick="marquerArrivee()" class="btn-primary-sm" style="flex:2; background:#2e7d32; height:50px;">JE SUIS ARRIVÉ</button>
+            <button onclick="alert('L\'itinéraire continue vers le point rouge.')" class="btn-primary-sm" style="flex:1; background:#FF6600; height:50px;">NON</button>
         </div>
         <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm" style="display:none; background:#2e7d32; width:100%; height:50px;">
             MARQUER TÂCHE TERMINÉE
@@ -298,6 +301,7 @@
             const btnArriveC = document.getElementById('btn-client-arrive');
             const btnSosC = document.getElementById('btn-client-sos');
             const btnDepartC = document.getElementById('btn-client-depart');
+            const btnConfirmFinC = document.getElementById('btn-client-confirm-fin');
 
             if (isProvider) {
                 if (data.statut === 'en_route') {
@@ -309,11 +313,14 @@
                     btnSosP.style.display = 'block';
                     navHint.style.display = 'none';
                     document.getElementById('status-mission').innerText = "Travail en cours";
+                } else if (data.statut === 'attente_confirmation_client') {
+                    btnFiniP.style.display = 'none';
+                    document.getElementById('status-mission').innerText = "En attente de confirmation client pour le paiement";
                 } else if (data.statut === 'attente_securite') {
                     btnFiniP.style.display = 'none';
                     document.getElementById('status-mission').innerText = "Tâche finie - Éloignez-vous";
                 } else if (data.statut === 'termine') {
-                    alert("Mission terminée avec succès. Votre paiement a été débloqué.");
+                    alert("Mission terminée avec succès. Votre paiement a été débloqué (après commission 5 %).");
                     window.location.href = '/index.html';
                 }
             } else {
@@ -326,10 +333,17 @@
                     btnArriveC.style.display = 'none';
                     btnSosC.style.display = 'block';
                     btnDepartC.style.display = 'none';
+                } else if (data.statut === 'attente_confirmation_client') {
+                    btnArriveC.style.display = 'none';
+                    btnSosC.style.display = 'none';
+                    btnDepartC.style.display = 'none';
+                    btnConfirmFinC.style.display = 'block';
+                    document.getElementById('status-mission').innerText = "Le prestataire a terminé — confirmez pour payer";
                 } else if (data.statut === 'attente_securite') {
                     btnArriveC.style.display = 'none';
                     btnSosC.style.display = 'none';
                     btnDepartC.style.display = 'block';
+                    btnConfirmFinC.style.display = 'none';
                 } else if (data.statut === 'termine') {
                     alert("Mission terminée. Merci d'avoir utilisé PetitsDjobs !");
                     window.location.href = '/index.html';
@@ -420,8 +434,26 @@
         }
 
         async function terminerTache() {
-            if (confirm("Confirmez-vous avoir terminé le service ?")) {
-                await fetch('/api/terminer-tache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
+            if (confirm("Confirmez-vous avoir terminé le service ? Le client devra valider pour déclencher le paiement.")) {
+                const res = await fetch('/api/terminer-tache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
+                const data = await res.json();
+                alert(data.message || 'Demande envoyée au client.');
+                rafraichirStatut();
+            }
+        }
+
+        async function clientConfirmerFinTravail() {
+            const res = await fetch('/api/confirmer-fin-travail', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ missionId })
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                alert('Paiement validé. Merci !');
+                window.location.href = '/index.html';
+            } else {
+                alert(data.message || data.error || 'Confirmation impossible pour le moment.');
             }
         }
 

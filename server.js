@@ -107,7 +107,17 @@ const PRIX_PAR_KM = 200;
 const BATCH_PRESTATAIRES = 50;
 const RAYON_MAX_METRES = 50000; // Limite standard à 50km
 const BUCKET_NAME = 'prestataires';
+const COMMISSION_PCT = 0.05; // 5 % prélevés sur le paiement client
 const offresDiscuter = [];
+const missionMeta = new Map(); // id mission -> { delaiMinutes, prestaFin, clientFin, refuseNotified }
+
+function normaliserId(id) {
+    return id == null ? null : String(id);
+}
+
+function libelleDateOffre(datePrevue) {
+    return datePrevue === 'today' ? 'Maintenant' : datePrevue;
+}
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
@@ -576,14 +586,15 @@ app.get('/session-status', (req, res) => {
 });
 
 app.post('/preparer-commande', (req, res) => {
-    const { service, prix, prixLibre, missionId } = req.body;
+    const { service, prix, prixLibre, missionId, offreParticulierId } = req.body;
     // FIX: Fusionner avec la session existante pour ne pas perdre le prestataireId
     req.session.commande = req.session.commande || {};
     if (service) req.session.commande.service = service;
     if (prix !== undefined) req.session.commande.prixBase = parseInt(prixLibre || prix, 10) || 0;
     if (prixLibre !== undefined) req.session.commande.prixLibre = !!prixLibre;
     if (missionId) req.session.commande.missionId = missionId;
-    
+    if (offreParticulierId) req.session.commande.offreParticulierId = parseInt(offreParticulierId, 10);
+
     req.session.save((err) => {
         if (err) console.error("Erreur sauvegarde session preparer-commande:", err);
         res.json({ ok: true });
@@ -592,7 +603,8 @@ app.post('/preparer-commande', (req, res) => {
 
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
-    const { datePrevue } = req.body;
+    const { datePrevue, delaiReponse } = req.body;
+    const delaiMinutes = Math.min(5, Math.max(1, parseInt(delaiReponse, 10) || 1));
     const cmd = req.session.commande;
     const lat = req.session.latClient || req.session.user?.lat;
     const lon = req.session.lonClient || req.session.user?.lon;
@@ -608,12 +620,16 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         return res.status(400).json({ ok: false, error: "Localisation introuvable. Activez votre GPS et rafraîchissez la page." });
     }
 
+    const prixClient = parseInt(cmd.total || cmd.prixBase || 0, 10);
+    const commission = Math.round(prixClient * COMMISSION_PCT);
+    const netPresta = prixClient - commission;
+
     const payload = {
         client_id: parseInt(req.session.user.id, 10),
         prestataire_id: parseInt(cmd.prestataireId, 10),
         backup_ids: (cmd.backups && cmd.backups.length > 0) ? cmd.backups.map(b => b.id) : null,
         service: cmd.service,
-        prix: parseInt(cmd.total || cmd.prixBase || 0, 10),
+        prix: prixClient,
         statut: isToday ? 'en_attente_prestataire' : 'programmation_en_cours',
         lat_client: parseFloat(lat),
         lon_client: parseFloat(lon),
@@ -631,9 +647,22 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
+        missionMeta.set(data.id, {
+            delaiMinutes: isToday ? delaiMinutes : 60,
+            prestaFin: false,
+            clientFin: false,
+            refuseNotified: false,
+            commission,
+            netPresta
+        });
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = payload.statut;
+        req.session.commande.delaiReponse = delaiMinutes;
+        if (req.session.commande.offreParticulierId) {
+            const offre = offresDiscuter.find(o => o.id === req.session.commande.offreParticulierId);
+            if (offre) offre.paye = true;
+        }
 
         // --- NOTIFICATIONS DIFFÉRENCIÉES PAR EMAIL ---
         const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le **${datePrevue}**`;
@@ -652,7 +681,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                         <h2 style="color: #FF6600;">Bonjour ${pUser.prenom}, vous êtes en 1ère position !</h2>
                         <p>Un client vous a choisi comme <strong>prestataire principal</strong> pour : <strong>${cmd.service}</strong>.</p>
                         <p>📅 Date : ${msgDate}</p>
-                        <p>Vous avez jusqu'à 1 heure avant l'heure prévue pour confirmer ou infirmer votre présence.</p>
+                        <p>⏰ Vous avez <strong>${delaiMinutes} minute(s)</strong> pour accepter cette mission, sinon elle sera refusée automatiquement.</p>
+                        <p>💰 Commission plateforme : ${commission} FCFA (5 %). Vous recevrez ${netPresta} FCFA après validation client + prestataire.</p>
                         ${consigneAcceptation}
                         <a href="https://petitsdjobs.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Accéder à mon espace</a>
                     </div>
@@ -698,29 +728,30 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 });
 
 // --- LOGIQUE DE BASCULEMENT AUTOMATIQUE (GOUVERNANCE DES MISSIONS) ---
-// Cette fonction tourne en arrière-plan toutes les 15 secondes pour vérifier les délais
 setInterval(async () => {
-    const UNE_MINUTE_EN_MS = 60 * 1000;
     const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
-    const seuilExpiration = new Date(Date.now() - UNE_MINUTE_EN_MS).toISOString();
 
-    // 1. Trouver les missions qui n'ont pas été acceptées à temps
-    const { data: missionsExpirees } = await supabase
+    const { data: missionsEnAttente } = await supabase
         .from('missions')
         .select('*')
-        .eq('statut', 'en_attente_prestataire')
-        .lt('created_at', seuilExpiration);
+        .eq('statut', 'en_attente_prestataire');
 
-    if (!missionsExpirees || missionsExpirees.length === 0) return;
+    if (!missionsEnAttente || missionsEnAttente.length === 0) return;
+
+    const missionsExpirees = missionsEnAttente.filter(m => {
+        const meta = missionMeta.get(m.id) || { delaiMinutes: 1 };
+        const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
+        return (Date.now() - new Date(m.created_at).getTime()) >= delaiMs;
+    });
+
+    if (missionsExpirees.length === 0) return;
 
     for (const mission of missionsExpirees) {
-        // VÉRIFICATION : Le prestataire est-il en ligne ?
-        const { data: user } = await supabase.from('utilisateurs').select('dernier_acces').eq('id', mission.prestataire_id).maybeSingle();
+        const { data: user } = await supabase.from('utilisateurs').select('dernier_acces, email, prenom').eq('id', mission.prestataire_id).maybeSingle();
         const dernierAccesTs = user?.dernier_acces ? new Date(user.dernier_acces).getTime() : 0;
         const estEnLigne = (Date.now() - dernierAccesTs) < SEUIL_EN_LIGNE_MS;
 
-        // RÈGLE : On n'expire automatiquement QUE si le prestataire est EN LIGNE
-        if (!estEnLigne) continue; 
+        if (!estEnLigne) continue;
 
         const backups = mission.backup_ids || [];
         
@@ -743,7 +774,7 @@ setInterval(async () => {
                 .eq('id', mission.id);
 
             if (!updateError) {
-                // NOTIFIER LES DEUX PARTIES
+                missionMeta.set(mission.id, { ...(missionMeta.get(mission.id) || {}), delaiMinutes: missionMeta.get(mission.id)?.delaiMinutes || 1 });
                 const { data: anciens } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).single();
                 const { data: nouveaux } = await supabase.from('utilisateurs').select('email, prenom').eq('id', nouveauPrestaId).single();
 
@@ -766,13 +797,24 @@ setInterval(async () => {
                 }
             }
         } else {
-            // PLUS DE SECOURS : ANNULATION FINALE
-            console.log(`[AUTO-ANNULATION] Mission ${mission.id} : Aucun prestataire disponible.`);
-            await supabase.from('missions').update({ 
-                statut: 'refuse', 
-                raison_refus: "Temps de réponse expiré (Prestataire en ligne)" 
+            console.log(`[AUTO-ANNULATION] Mission ${mission.id} : Délai dépassé, refus automatique.`);
+            await supabase.from('missions').update({
+                statut: 'refuse',
+                raison_refus: 'Refus automatique : délai de réponse dépassé'
             }).eq('id', mission.id);
-            
+
+            const meta = missionMeta.get(mission.id) || {};
+            if (!meta.refuseNotified && user?.email) {
+                meta.refuseNotified = true;
+                missionMeta.set(mission.id, meta);
+                safeSendEmail({
+                    from: 'PetitsDjobs <alerte@mail.petitsdjobs.com>',
+                    to: user.email,
+                    subject: '⏰ Offre refusée automatiquement',
+                    html: `<p>Bonjour ${user.prenom || ''}, vous n'avez pas répondu à temps à la mission <strong>${mission.service}</strong>. Elle est considérée comme <strong>refusée</strong>. Vous ne pouvez plus l'accepter.</p>`
+                });
+            }
+
             const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
             if (client?.email) {
                 safeSendEmail({
@@ -981,10 +1023,18 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const { data: clients } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', clientIds);
     const clientMap = Object.fromEntries((clients || []).map(c => [c.id, { nom: c.nom, prenom: c.prenom, photo: c.photo_url }]));
 
-    const result = missions.map(m => ({
-        ...m,
-        client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
-    }));
+    const result = missions.map(m => {
+        const meta = missionMeta.get(m.id) || { delaiMinutes: 1 };
+        const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
+        const expireDans = Math.max(0, delaiMs - (Date.now() - new Date(m.created_at).getTime()));
+        return {
+            ...m,
+            delaiMinutes: meta.delaiMinutes || 1,
+            expireDansMs: expireDans,
+            expire: expireDans <= 0,
+            client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
+        };
+    }).filter(m => !m.expire);
 
     console.log("❌ [NOTIF-DEBUG] ENVOI DE " + result.length + " MISSIONS au navigateur du prestataire.");
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
@@ -1031,15 +1081,17 @@ app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
 });
 
 app.post('/api/send-message', requireAuth, async (req, res) => {
-    let { missionId, amiId, text } = req.body;
+    let { missionId, amiId, text, voiceUrl } = req.body;
     console.log(`🌐 [CHAT] Envoi message de ${req.session.user.id} (Mission: ${missionId})`);
-    
-    // Nettoyage pour éviter les erreurs de type dans Supabase
+
     const mId = (missionId && missionId !== 'undefined' && missionId !== 'null') ? parseInt(missionId) : null;
+    const messageText = voiceUrl
+        ? `🎤 Message vocal : <audio controls src="${voiceUrl}" style="max-width:220px;"></audio>`
+        : text;
 
     const payload = {
         sender_id: req.session.user.id,
-        text: text,
+        text: messageText,
         mission_id: mId,
         ami_id: (amiId && amiId !== 'undefined' && amiId !== 'null') ? parseInt(amiId) : null
     };
@@ -1133,8 +1185,19 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
 
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     const { missionId, action } = req.body;
+    const mId = parseInt(missionId, 10);
+    const { data: mission } = await supabase.from('missions').select('created_at, statut').eq('id', mId).eq('prestataire_id', req.session.user.id).maybeSingle();
+    if (!mission || mission.statut !== 'en_attente_prestataire') {
+        return res.status(400).json({ error: 'Mission introuvable ou déjà traitée.' });
+    }
+    const meta = missionMeta.get(mId) || { delaiMinutes: 1 };
+    const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
+    if (Date.now() - new Date(mission.created_at).getTime() >= delaiMs) {
+        await supabase.from('missions').update({ statut: 'refuse', raison_refus: 'Délai expiré' }).eq('id', mId);
+        return res.status(400).json({ error: 'Délai expiré. Cette offre est refusée automatiquement.' });
+    }
     const statut = action === 'accepter' ? 'en_route' : 'refuse';
-    const { error } = await supabase.from('missions').update({ statut }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    const { error } = await supabase.from('missions').update({ statut }).eq('id', mId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
 });
@@ -1156,9 +1219,62 @@ app.post('/api/marquer-arrivee', requireAuth, async (req, res) => {
 
 app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     const { missionId } = req.body;
-    const { error } = await supabase.from('missions').update({ statut: 'attente_securite' }).eq('id', missionId).eq('prestataire_id', req.session.user.id);
+    const mId = parseInt(missionId, 10);
+    const meta = missionMeta.get(mId) || { prestaFin: false, clientFin: false, commission: 0, netPresta: 0 };
+    meta.prestaFin = true;
+    missionMeta.set(mId, meta);
+
+    const { data: mission } = await supabase.from('missions').select('client_id, service, prix').eq('id', mId).maybeSingle();
+    const { error } = await supabase.from('missions').update({ statut: 'attente_confirmation_client' }).eq('id', mId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
-    res.json({ ok: true });
+
+    if (mission) {
+        const { data: client } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.client_id).maybeSingle();
+        if (client?.email) {
+            safeSendEmail({
+                from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+                to: client.email,
+                subject: '✅ Confirmez la fin du travail',
+                html: `<p>Bonjour ${client.prenom || ''}, le prestataire indique avoir terminé : <strong>${mission.service}</strong>.</p>
+                <p>Confirmez la fin du service pour déclencher le paiement (${meta.netPresta || mission.prix} FCFA au prestataire, commission 5 %).</p>
+                <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
+            });
+        }
+        await supabase.from('messages').insert({
+            sender_id: req.session.user.id,
+            mission_id: mId,
+            text: '🟠 Le prestataire a terminé le travail. Client : veuillez confirmer la fin pour valider le paiement.'
+        });
+    }
+    res.json({ ok: true, message: 'En attente de confirmation du client pour le paiement.' });
+});
+
+app.post('/api/confirmer-fin-travail', requireAuth, async (req, res) => {
+    const mId = parseInt(req.body.missionId, 10);
+    const { data: mission } = await supabase.from('missions').select('*').eq('id', mId).eq('client_id', req.session.user.id).maybeSingle();
+    if (!mission) return res.status(404).json({ error: 'Mission introuvable' });
+
+    const meta = missionMeta.get(mId) || { prestaFin: false, clientFin: false, netPresta: mission.prix };
+    meta.clientFin = true;
+    missionMeta.set(mId, meta);
+
+    if (!meta.prestaFin) {
+        return res.json({ ok: false, message: 'Le prestataire n\'a pas encore signalé la fin du travail.' });
+    }
+
+    const { error } = await supabase.from('missions').update({ statut: 'termine' }).eq('id', mId);
+    if (error) return res.status(500).json({ error: error.message });
+
+    const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).maybeSingle();
+    if (presta?.email) {
+        safeSendEmail({
+            from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+            to: presta.email,
+            subject: '💰 Paiement validé',
+            html: `<p>Bonjour ${presta.prenom || ''}, le client a confirmé la fin de <strong>${mission.service}</strong>. Paiement de <strong>${meta.netPresta || mission.prix} FCFA</strong> (après commission 5 %).</p>`
+        });
+    }
+    res.json({ ok: true, paye: true, montantPresta: meta.netPresta || mission.prix });
 });
 
 app.post('/api/terminer-tache-client', requireAuth, async (req, res) => {
@@ -1451,10 +1567,13 @@ async function uploadToSupabase(file, bucketName) {
             .toBuffer();
         fileName += '.webp';
         contentType = 'image/webp';
-    } else {
-        // Pour les vidéos (MP4, etc.), on lit le fichier brut sans Sharp
+    } else if (file.mimetype.startsWith('audio/')) {
         buffer = fs.readFileSync(file.path);
-        fileName += path.extname(file.originalname);
+        const ext = path.extname(file.originalname) || (file.mimetype.includes('mp4') ? '.m4a' : '.webm');
+        fileName += ext;
+    } else {
+        buffer = fs.readFileSync(file.path);
+        fileName += path.extname(file.originalname) || '.mp4';
     }
 
     const { data, error } = await supabase.storage
@@ -1584,8 +1703,8 @@ app.get('/get-prestataire-contact/:id', requireAuth, async (req, res) => {
 });
 
 // On utilise multer pour la photo du job
-app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res) => {
-    const { prix, lat, lon, description, datePrevue } = req.body;
+app.post('/proposer-prix-discuter', requireAuth, upload.single('photo_job'), async (req, res) => {
+    const { prix, lat, lon, description, datePrevue, delaiMinutes } = req.body;
     const prixNum = parseInt(prix, 10);
     if (!prixNum || lat == null || lon == null) {
         return res.status(400).json({ error: 'Prix et GPS requis' });
@@ -1605,7 +1724,7 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
     const offre = {
         id: Date.now(),
         clientNom: req.session.user?.nom || 'Client',
-        clientId: req.session.user.id, // Ajout de l'ID du client qui a posté l'offre
+        clientId: req.session.user.id,
         emailClient: req.session.user?.email,
         prix: prixNum,
         description: description || 'Besoin d\'un service particulier',
@@ -1615,6 +1734,7 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
         lon: parseFloat(lon),
         acceptations: [],
         statut: 'en_attente',
+        paye: false,
         timestamp: Date.now()
     };
 
@@ -1636,9 +1756,19 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
 app.get('/get-public-jobs', (req, res) => {
     const lat = parseFloat(req.query.lat);
     const lon = parseFloat(req.query.lon);
-    const RAYON_VISIBILITE_JOBS = 15000; // Rayon de 15 km pour ne pas surcharger
+    const viewerId = req.session?.user?.id;
+    const RAYON_VISIBILITE_JOBS = 15000;
 
-    let jobs = offresDiscuter.filter(o => o.statut === 'en_attente');
+    let jobs = offresDiscuter.filter(o => o.statut === 'en_attente' && !o.paye);
+
+    if (viewerId) {
+        jobs = jobs.filter(o => {
+            const estClient = normaliserId(o.clientId) === normaliserId(viewerId);
+            if (estClient) return true;
+            const dejaAccepte = (o.acceptations || []).some(a => normaliserId(a) === normaliserId(viewerId));
+            return !dejaAccepte;
+        });
+    }
 
     if (!isNaN(lat) && !isNaN(lon)) {
         jobs = jobs.map(j => {
@@ -1646,13 +1776,16 @@ app.get('/get-public-jobs', (req, res) => {
                 { latitude: lat, longitude: lon },
                 { latitude: j.lat, longitude: j.lon }
             );
-            return { ...j, distanceM: dist };
+            return {
+                ...j,
+                distanceM: dist,
+                dateLabel: libelleDateOffre(j.datePrevue)
+            };
         })
-        .filter(j => j.distanceM <= RAYON_VISIBILITE_JOBS) // Filtrage par rayon
-        .sort((a, b) => a.distanceM - b.distanceM); // Les plus proches en premier
+        .filter(j => j.distanceM <= RAYON_VISIBILITE_JOBS)
+        .sort((a, b) => a.distanceM - b.distanceM);
     } else {
-        // Si pas de GPS, on limite quand même pour ne pas surcharger
-        jobs = jobs.slice(-10);
+        jobs = jobs.slice(-10).map(j => ({ ...j, dateLabel: libelleDateOffre(j.datePrevue) }));
     }
 
     res.json(jobs);
@@ -1815,23 +1948,41 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
     const prestataireId = req.session.user.id;
     if (!req.session.user.isPrestataire) return res.status(403).json({ error: 'Seuls les prestataires peuvent accepter.' });
-    if (offre.clientId === prestataireId) return res.status(403).json({ error: 'Vous ne pouvez pas accepter votre propre tâche.' });
+    if (normaliserId(offre.clientId) === normaliserId(prestataireId)) {
+        return res.status(403).json({ error: 'Vous ne pouvez pas accepter votre propre tâche.' });
+    }
 
-    if (!offre.acceptations.includes(prestataireId)) {
+    const ids = (offre.acceptations || []).map(a => normaliserId(a));
+    if (!ids.includes(normaliserId(prestataireId))) {
         offre.acceptations.push(prestataireId);
     }
     res.json({ ok: true, message: 'Offre acceptée ! Attendez le choix du client.' });
 });
 
-app.post('/annuler-job/:id', requireAuth, (req, res) => {
+app.post('/annuler-job/:id', requireAuth, async (req, res) => {
     const offreId = parseInt(req.params.id, 10);
     const index = offresDiscuter.findIndex(o => o.id === offreId);
     if (index === -1) return res.status(404).json({ error: 'Offre introuvable' });
     const offre = offresDiscuter[index];
-    if (offre.clientId !== req.session.user.id) return res.status(403).json({ error: 'Non autorisé' });
-    if (offre.acceptations.length > 0) return res.status(400).json({ error: 'Un prestataire a déjà accepté.' });
+    if (normaliserId(offre.clientId) !== normaliserId(req.session.user.id)) {
+        return res.status(403).json({ error: 'Non autorisé' });
+    }
+    if (offre.paye) return res.status(400).json({ error: 'Impossible d\'annuler : le service est déjà payé.' });
+
+    const clientNom = req.session.user.prenom || req.session.user.nom || 'Le client';
+    for (const pid of offre.acceptations || []) {
+        const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', pid).maybeSingle();
+        if (presta?.email) {
+            safeSendEmail({
+                from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+                to: presta.email,
+                subject: '❌ Offre annulée par le client',
+                html: `<p>Bonjour ${presta.prenom || ''}, ${clientNom} a <strong>annulé</strong> l'offre de service particulier (${offre.description}, ${offre.prix} FCFA) avant paiement.</p>`
+            });
+        }
+    }
     offresDiscuter.splice(index, 1);
-    res.json({ ok: true, message: 'Tâche annulée.' });
+    res.json({ ok: true, message: 'Tâche annulée. Les prestataires intéressés ont été informés.' });
 });
 
 app.get('/statut-offre/:id', async (req, res) => {
@@ -1863,7 +2014,9 @@ app.get('/statut-offre/:id', async (req, res) => {
 app.get('/get-job-details/:id', requireAuth, (req, res) => {
     const offreId = parseInt(req.params.id, 10);
     const offre = offresDiscuter.find(o => o.id === offreId);
-    if (!offre || offre.clientId !== req.session.user.id) return res.status(404).json({ error: 'Offre introuvable ou non autorisée.' });
+    if (!offre || normaliserId(offre.clientId) !== normaliserId(req.session.user.id)) {
+        return res.status(404).json({ error: 'Offre introuvable ou non autorisée.' });
+    }
     res.json(offre);
 });
 
@@ -1927,13 +2080,34 @@ app.post('/api/upload-showcase', requireAuth, upload.single('media'), async (req
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
     try {
         const url = await uploadToSupabase(req.file, BUCKET_NAME);
-        const { error } = await supabase.from('showcase').insert({
+        const { data, error } = await supabase.from('showcase').insert({
             user_id: req.session.user.id,
             url: url,
             media_type: req.file.mimetype
-        });
+        }).select().single();
         if (error) throw error;
-        res.json({ ok: true });
+        res.json({ ok: true, item: data });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/delete-showcase/:id', requireAuth, async (req, res) => {
+    const itemId = req.params.id;
+    const { data: item } = await supabase.from('showcase').select('user_id').eq('id', itemId).maybeSingle();
+    if (!item || normaliserId(item.user_id) !== normaliserId(req.session.user.id)) {
+        return res.status(403).json({ error: 'Non autorisé' });
+    }
+    const { error } = await supabase.from('showcase').delete().eq('id', itemId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+});
+
+app.post('/api/upload-vocal', requireAuth, upload.single('audio'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier audio' });
+    try {
+        const url = await uploadToSupabase(req.file, BUCKET_NAME);
+        res.json({ url });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

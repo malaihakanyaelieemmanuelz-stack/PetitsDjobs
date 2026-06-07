@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>Profil Prestataire - PetitsDjobs</title>
 </head>
 <body style="background:#f4f4f4; margin:0;">
@@ -24,76 +23,57 @@
 
         const id = new URLSearchParams(location.search).get('id');
         if (!id) {
-            document.getElementById('carte').innerHTML = '<p>Profil introuvable.</p>';
+            document.getElementById('carte').innerHTML = '<p style="color:#FF6600;">Profil introuvable.</p>';
         } else {
             fetch('/prestataire-public/' + id).then(r => r.json()).then(p => {
                 if (!p.nom) {
-                    document.getElementById('carte').innerHTML = '<p>Profil introuvable.</p>';
+                    document.getElementById('carte').innerHTML = '<p style="color:#FF6600;">Profil introuvable.</p>';
                     return;
                 }
                 const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
                 const avis = (p.commentaires && p.commentaires.length)
-                    ? p.commentaires.map(c => `<li style="padding:15px 0; border-bottom:1px solid #e8f5e9; color:#333; font-size:0.95rem;">${typeof c === 'string' ? c : c.texte}</li>`).join('')
-                    : '<li style="color:#888; padding:10px 0;">Aucun avis pour le moment.</li>';
+                    ? p.commentaires.map(c => `<li style="padding:12px 0; border-bottom:1px solid #e8f5e9; color:#2e7d32;">${typeof c === 'string' ? c : c.texte}</li>`).join('')
+                    : '<li style="color:#FF6600; padding:10px 0;">Aucun avis pour le moment.</li>';
 
-                const listeServices = (p.services || 'Services divers')
-                    .split(',')
-                    .map(s => s.trim())
-                    .filter(s => s.toLowerCase() !== 'tout');
+                const listeServices = (p.services || 'Services divers').split(',').map(s => s.trim()).filter(s => s.toLowerCase() !== 'tout');
 
                 const boutonsServices = listeServices.map(s => `
-                    <label class="service-item-new" onclick="commanderDirectement('${p.id}', '${s}')">
+                    <label class="service-item-new" onclick="commanderDirectement('${p.id}', '${s.replace(/'/g, "\\'")}')">
                         <div style="display:flex; flex-direction:column; text-align:left;">
-                            <span style="text-transform:uppercase;">${s}</span>
+                            <span style="text-transform:uppercase; color:#2e7d32;">${s}</span>
                             <small style="color:#FF6600;">${servicePrices[s] ? servicePrices[s] + ' FCFA' : 'Prix à discuter'}</small>
                         </div>
-                        <div style="color:#2e7d32; font-weight:bold;">SÉLECTIONNER ➔</div>
+                        <span style="color:#FF6600; font-weight:bold;">➔</span>
                     </label>
                 `).join('');
 
                 document.getElementById('carte').innerHTML = `
-                    <div class="hero-premium">
+                    <div class="hero-premium presta-hero-compact">
                         <button class="btn-back" onclick="history.back()">←</button>
-                        <button onclick="inviterAmi('${p.id}')" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:white; padding:6px 12px; border-radius:12px; font-weight:bold; font-size:0.75rem; cursor:pointer;">INVITATION</button>
+                        <button onclick="inviterAmi('${p.id}')" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.2); border:1px solid white; color:white; padding:5px 10px; border-radius:10px; font-size:0.7rem; font-weight:bold; cursor:pointer;">INVITATION</button>
                         <div class="profile-wrapper">
                             <img src="${p.photo || 'default-profile.png'}" alt="">
                             <div class="status-dot ${p.enLigne ? 'online' : ''}"></div>
                         </div>
-                        <h2 style="margin:0; font-size:2rem; letter-spacing:-1px; font-weight:900;">${nom}</h2>
-
-                        <div style="display:flex; flex-direction:column; align-items:center; margin-top:15px;">
-                            <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
-                                <span style="font-weight:900; font-size:1.2rem;">⭐ ${p.etoiles || 0}</span>
-                                <small style="opacity:0.8;">(${p.commentaires?.length || 0} avis)</small>
-                            </div>
-                            <div style="width:140px; height:6px; background:rgba(255,255,255,0.2); border-radius:3px; overflow:hidden;">
-                                <div style="width:${Math.min((p.etoiles || 0) * 20, 100)}%; height:100%; background:#ffffff;"></div>
-                            </div>
-                            <div style="margin-top:10px; font-size:0.85rem; font-weight:bold; color:${p.enLigne ? '#4caf50' : 'rgba(255,255,255,0.6)'}">
-                                ${p.enLigne ? '● EN LIGNE' : '○ HORS LIGNE'}
-                            </div>
-                        </div>
+                        <h2 style="margin:8px 0 0; font-size:1.5rem; font-weight:900;">${nom}</h2>
+                        <p style="margin:4px 0; color:#e8f5e9; font-weight:bold;">${p.profession || '-'}</p>
+                        <p style="margin:0; font-size:0.85rem; color:${p.enLigne ? '#c8e6c9' : 'rgba(255,255,255,0.7)'};">${p.enLigne ? '● EN LIGNE' : '○ HORS LIGNE'} · ⭐ ${p.etoiles || 0}</p>
                     </div>
 
                     <div class="content-main">
-                        <span class="premium-label">Spécialiste en</span>
-                        <div class="premium-value">${p.profession || '-'}</div>
+                        <div class="orient-client-line">Prestataire → vers vous (client)</div>
 
-                        <div class="bio-card">
-                            "${p.bio || 'Votre satisfaction est ma priorité.'}"
-                        </div>
+                        <div class="bio-card" style="text-align:left; font-size:0.95rem;">${p.bio || 'Votre satisfaction est ma priorité.'}</div>
 
-                        <div id="section-realisations" style="display:none; text-align:left; margin-top:20px;">
-                            <h3 style="color:#2e7d32; font-weight:900; font-size:1rem; text-transform:uppercase;">📸 Mes réalisations</h3>
+                        <div id="section-realisations" style="display:none; text-align:left;">
+                            <h3 style="color:#2e7d32; font-weight:900; font-size:0.95rem;">📸 Réalisations</h3>
                             <div id="grid-realisations" class="realisations-grid"></div>
                         </div>
 
-                        <div class="service-selection-title">Que souhaitez-vous ?</div>
+                        <div class="service-selection-title presta-services-compact">Choisir un service</div>
                         <div id="services-selection">${boutonsServices}</div>
 
-                        <button class="btn-outline" style="width:100%; min-height:65px; border-radius:22px; margin-top:15px; font-weight:900; font-size:1.1rem;" onclick="inviterAmi('${p.id}')">
-                            🤝 DEVENIR AMIS
-                        </button>
+                        <button class="btn-outline" style="width:100%; min-height:52px; border-radius:16px; margin-top:12px; font-weight:900;" onclick="inviterAmi('${p.id}')">🤝 DEVENIR AMIS</button>
 
                         <div class="reviews-section">
                             <h3>RETOURS CLIENTS</h3>
@@ -108,7 +88,7 @@
                             <div class="realisation-item">
                                 ${item.media_type && item.media_type.includes('video') ?
                                     `<video src="${item.url}" controls playsinline style="width:100%; height:100%; object-fit:cover;"></video>` :
-                                    `<img src="${item.url}" alt="Réalisation" onclick="window.open(this.src)">`
+                                    `<img src="${item.url}" alt="Réalisation">`
                                 }
                             </div>
                         `).join('');
@@ -118,20 +98,16 @@
         }
 
         async function commanderDirectement(pid, serviceNom) {
-            const prix = servicePrices[serviceNom] || 0;
-
             await fetch('/preparer-commande', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ service: serviceNom, prix: prix })
+                body: JSON.stringify({ service: serviceNom, prix: servicePrices[serviceNom] || 0 })
             });
-
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prestataireId: pid, serviceChoisi: serviceNom })
             });
-
             if (res.ok) window.location.href = '/commande';
         }
 
