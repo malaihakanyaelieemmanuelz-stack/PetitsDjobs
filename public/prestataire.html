@@ -38,7 +38,7 @@
 
     <div class="login-card card-presta-mobile">
         <form id="form-presta" action="/devenir-prestataire" method="POST" enctype="multipart/form-data">
-            <p style="font-weight:bold; color:#5D4037; margin-top:0;">1. Qui êtes-vous ?</p>
+            <p style="font-weight:bold; color:#FF6600; margin-top:0;">1. Qui êtes-vous ?</p>
             <input type="text" name="nom" id="nom" placeholder="NOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <input type="text" name="prenom" id="prenom" placeholder="PRÉNOM" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <select name="age" id="age-select-presta" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; height: 42px; border: 1px solid #ccc; border-radius: 6px; background: white;">
@@ -48,13 +48,13 @@
             <input type="text" name="profession" placeholder="PROFESSION (ex: Cuisinière, Aide ménagère)" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
             <textarea name="bio" placeholder="Présentez-vous en 2 phrases (visible par les clients)" maxlength="200" style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box; min-height:70px; border-radius:6px; border:1px solid #ccc;"></textarea>
             <input type="tel" name="telephone" placeholder="VOTRE NUMÉRO DE TÉLÉPHONE" required style="width:100%; margin:8px 0; padding:10px; box-sizing:border-box;">
-            <label style="font-size:0.8rem; color:#5D4037; display:flex; align-items:flex-start; gap:8px;">
+            <label style="font-size:0.8rem; color:#FF6600; display:flex; align-items:flex-start; gap:8px;">
                 <input type="checkbox" name="autorise_numero" style="width:auto; height:auto; margin-top:3px;">
                 <span>Votre numéro sera transmis à l'employeur en cas de déconnexion si vous êtes à proximité.</span>
             </label>
             <input type="hidden" name="lat" id="lat">
             <input type="hidden" name="lon" id="lon">
-            <p style="font-weight:bold; color:#5D4037;">2. Ce que vous proposez</p>
+            <p style="font-weight:bold; color:#FF6600;">2. Ce que vous proposez</p>
             <p style="font-size:0.9rem; color:#666;">Cochez les services que vous proposez. Vous apparaîtrez automatiquement comme disponible pour ces derniers.</p>
             <div style="text-align:left; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:5px; font-size:0.9rem;">
                 <label><input type="checkbox" name="services" value="Cuisine"> Cuisine</label><br>
@@ -65,15 +65,15 @@
                 <label><input type="checkbox" name="services" value="Coiffure"> Coiffure</label><br>
                 <label><input type="checkbox" name="services" value="Remplacement"> Remplacement</label><br>
                 <label><input type="checkbox" name="services" value="Particulier"> Service particulier</label><br>
-                <label style="color:#5D4037; font-weight:bold; margin-top: 10px; display: block;"><input type="checkbox" id="select-all-services" name="services" value="Tout"> TOUT COCHER</label>
+                <label style="color:#FF6600; font-weight:bold; margin-top: 10px; display: block;"><input type="checkbox" id="select-all-services" name="services" value="Tout"> TOUT COCHER</label>
             </div>
 
-            <p style="font-weight:bold; color:#5D4037;">3. Photo & vérification</p>
+            <p style="font-weight:bold; color:#FF6600;">3. Photo & vérification</p>
             <p style="font-size:0.8rem; color:#666;">Pour remplacer une photo, choisissez un nouveau fichier. Laissez vide pour conserver l'actuelle.</p>
             
             <p>Photo de profil (votre visage) :</p>
             <div id="current-photo-box" style="margin-bottom:10px; display:none;">
-                <img id="current-photo-preview" src="" style="width:65px; height:65px; border-radius:50%; object-fit:cover; border:2px solid #5D4037;">
+                <img id="current-photo-preview" src="" style="width:65px; height:65px; border-radius:50%; object-fit:cover; border:2px solid #FF6600;">
                 <span style="font-size:0.75rem; color:#888; display:block;">Actuelle</span>
             </div>
             <input type="file" name="photo_profil" accept="image/*" required style="width:100%; margin-bottom:15px;">
@@ -85,7 +85,7 @@
             <input type="file" name="piece_verso" accept="image/*" required style="width:100%; margin-bottom:15px;">
 
             <p id="gps-p" style="font-size:0.85rem; color:#666;">Position GPS requise pour apparaître aux clients proches.</p>
-            <button type="submit" id="btn-submit-presta" style="width:100%; padding:15px; background:#5D4037; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>
+            <button type="submit" id="btn-submit-presta" style="width:100%; padding:15px; background:#FF6600; color:white; border:none; border-radius:8px; cursor:pointer;">VALIDER MA CANDIDATURE</button>
         </form>
         <p style="text-align:center; margin-top:12px;"><a href="/profil">Retour profil</a></p>
     </div>

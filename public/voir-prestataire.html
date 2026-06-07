@@ -7,92 +7,11 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <title>Profil Prestataire - PetitsDjobs</title>
-    <style>
-        .android-profile-view {
-            min-height: 100dvh; width: 100%; max-width: 600px;
-            margin: 0 auto; background: #ffffff; display: flex;
-            flex-direction: column; box-sizing: border-box;
-        }
-        .hero-premium {
-            background: linear-gradient(180deg, #5D4037 0%, #3e2723 100%);
-            color: white; padding: 60px 20px 50px; text-align: center;
-            position: relative; border-radius: 0 0 50px 50px;
-        }
-        .hero-premium .btn-back {
-            position: absolute; top: 20px; left: 20px;
-            background: rgba(255,255,255,0.15); border: none;
-            color: white; width: 45px; height: 45px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .profile-wrapper {
-            position: relative; display: inline-block; margin-bottom: 15px;
-        }
-        .profile-wrapper img {
-            width: 150px; height: 150px; border-radius: 50%;
-            border: 6px solid rgba(255,255,255,0.9); object-fit: cover;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-        }
-        .status-dot {
-            position: absolute; bottom: 12px; right: 12px;
-            width: 22px; height: 22px; border-radius: 50%;
-            border: 4px solid white; background: #ccc;
-        }
-        .status-dot.online { background: #4caf50; box-shadow: 0 0 10px #4caf50; }
-
-        .content-main { padding: 0 25px 40px; text-align: center; }
-        .premium-label {
-            font-size: 0.7rem; font-weight: 900; color: #aaa;
-            text-transform: uppercase; letter-spacing: 2px;
-            margin: 25px 0 5px; display: block;
-        }
-        .premium-value { font-size: 1.4rem; font-weight: 800; color: #333; }
-        
-        .bio-card {
-            background: #fdfaf9; padding: 25px; border-radius: 25px;
-            border: 1px solid #f2ece9; margin: 20px 0;
-            font-style: italic; color: #555; line-height: 1.6;
-        }
-
-        .service-selection-title {
-            color: #5D4037; font-weight: 900; font-size: 1.1rem;
-            margin: 35px 0 15px; text-transform: uppercase;
-        }
-        .service-item-new {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #ffffff; padding: 20px 25px; border-radius: 20px;
-            border: 2px solid #eee; margin-bottom: 12px; cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .service-item-new.selected { border-color: #5D4037; background: #fbf9f8; }
-        .service-item-new span { font-weight: 700; color: #333; font-size: 1.1rem; }
-        .service-item-new input { width: 24px; height: 24px; accent-color: #5D4037; }
-
-        .btn-reserve-xl {
-            width: 100%; min-height: 75px; background: #5D4037;
-            color: white; border: none; border-radius: 22px;
-            font-size: 1.3rem; font-weight: 900; margin-top: 30px;
-            box-shadow: 0 12px 25px rgba(93, 64, 55, 0.3);
-            letter-spacing: 1px;
-        }
-        .reviews-section {
-            margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;
-        }
-        .realisations-grid {
-            display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
-            scroll-snap-type: x mandatory;
-        }
-        .realisation-item {
-            flex: 0 0 140px; height: 200px; border-radius: 15px;
-            overflow: hidden; border: 2px solid #5D4037; scroll-snap-align: start;
-        }
-        .realisation-item img, .realisation-item video {
-            width: 100%; height: 100%; object-fit: cover;
-        }
-    </style>
 </head>
 <body style="background:#f4f4f4; margin:0;">
+    <div id="bg-logo-fixed" style="position: fixed !important;"></div>
     <div id="carte" class="android-profile-view">
-        <p style="padding:60px; text-align:center; color:#666;">Chargement du profil...</p>
+        <p style="padding:60px; text-align:center; color:#2e7d32;">Chargement du profil...</p>
     </div>
 
     <script>
@@ -113,8 +32,8 @@
                     return;
                 }
                 const nom = [p.prenom, p.nom].filter(Boolean).join(' ');
-                const avis = (p.commentaires && p.commentaires.length) 
-                    ? p.commentaires.map(c => `<li style="padding:15px 0; border-bottom:1px solid #eee; color:#555; font-size:0.95rem;">${typeof c === 'string' ? c : c.texte}</li>`).join('') 
+                const avis = (p.commentaires && p.commentaires.length)
+                    ? p.commentaires.map(c => `<li style="padding:15px 0; border-bottom:1px solid #e8f5e9; color:#333; font-size:0.95rem;">${typeof c === 'string' ? c : c.texte}</li>`).join('')
                     : '<li style="color:#888; padding:10px 0;">Aucun avis pour le moment.</li>';
 
                 const listeServices = (p.services || 'Services divers')
@@ -128,20 +47,20 @@
                             <span style="text-transform:uppercase;">${s}</span>
                             <small style="color:#FF6600;">${servicePrices[s] ? servicePrices[s] + ' FCFA' : 'Prix à discuter'}</small>
                         </div>
-                        <div style="color:#5D4037; font-weight:bold;">SÉLECTIONNER ➔</div>
+                        <div style="color:#2e7d32; font-weight:bold;">SÉLECTIONNER ➔</div>
                     </label>
                 `).join('');
 
                 document.getElementById('carte').innerHTML = `
                     <div class="hero-premium">
                         <button class="btn-back" onclick="history.back()">←</button>
-                        <button onclick="inviterAmi('${p.id}')" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:white; padding:6px 12px; border-radius:12px; font-weight:bold; font-size:0.75rem; cursor:pointer;">INVITATION</button>
+                        <button onclick="inviterAmi('${p.id}')" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); color:white; padding:6px 12px; border-radius:12px; font-weight:bold; font-size:0.75rem; cursor:pointer;">INVITATION</button>
                         <div class="profile-wrapper">
                             <img src="${p.photo || 'default-profile.png'}" alt="">
                             <div class="status-dot ${p.enLigne ? 'online' : ''}"></div>
                         </div>
                         <h2 style="margin:0; font-size:2rem; letter-spacing:-1px; font-weight:900;">${nom}</h2>
-                        
+
                         <div style="display:flex; flex-direction:column; align-items:center; margin-top:15px;">
                             <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
                                 <span style="font-weight:900; font-size:1.2rem;">⭐ ${p.etoiles || 0}</span>
@@ -155,42 +74,41 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="content-main">
                         <span class="premium-label">Spécialiste en</span>
                         <div class="premium-value">${p.profession || '-'}</div>
-                        
+
                         <div class="bio-card">
                             "${p.bio || 'Votre satisfaction est ma priorité.'}"
                         </div>
 
                         <div id="section-realisations" style="display:none; text-align:left; margin-top:20px;">
-                            <h3 style="color:#5D4037; font-weight:900; font-size:1rem; text-transform:uppercase;">📸 Mes réalisations</h3>
+                            <h3 style="color:#2e7d32; font-weight:900; font-size:1rem; text-transform:uppercase;">📸 Mes réalisations</h3>
                             <div id="grid-realisations" class="realisations-grid"></div>
                         </div>
 
                         <div class="service-selection-title">Que souhaitez-vous ?</div>
                         <div id="services-selection">${boutonsServices}</div>
 
-                        <button class="btn-outline" style="width:100%; min-height:65px; border-radius:22px; margin-top:15px; font-weight:900; border: 2px solid #FF6600; color:#FF6600; background:white; font-size:1.1rem;" onclick="inviterAmi('${p.id}')">
+                        <button class="btn-outline" style="width:100%; min-height:65px; border-radius:22px; margin-top:15px; font-weight:900; font-size:1.1rem;" onclick="inviterAmi('${p.id}')">
                             🤝 DEVENIR AMIS
                         </button>
 
                         <div class="reviews-section">
-                            <h3 style="color:#5D4037; font-weight:900;">RETOURS CLIENTS</h3>
+                            <h3>RETOURS CLIENTS</h3>
                             <ul style="padding:0; list-style:none; text-align:left;">${avis}</ul>
                         </div>
                     </div>`;
-                
-                // Charger les réalisations spécifiques
+
                 fetch('/api/get-user-showcase/' + p.id).then(r => r.json()).then(items => {
                     if (items && items.length > 0) {
                         document.getElementById('section-realisations').style.display = 'block';
                         document.getElementById('grid-realisations').innerHTML = items.map(item => `
                             <div class="realisation-item">
-                                ${item.media_type.includes('video') ? 
-                                    `<video src="${item.url}" controls style="width:100%; height:100%; object-fit:cover;"></video>` :
-                                    `<img src="${item.url}" onclick="window.open(this.src)">`
+                                ${item.media_type && item.media_type.includes('video') ?
+                                    `<video src="${item.url}" controls playsinline style="width:100%; height:100%; object-fit:cover;"></video>` :
+                                    `<img src="${item.url}" alt="Réalisation" onclick="window.open(this.src)">`
                                 }
                             </div>
                         `).join('');
@@ -201,15 +119,13 @@
 
         async function commanderDirectement(pid, serviceNom) {
             const prix = servicePrices[serviceNom] || 0;
-            
-            // 1. On prépare le service et le prix
+
             await fetch('/preparer-commande', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ service: serviceNom, prix: prix })
             });
 
-            // 2. On sélectionne le prestataire et on redirige
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -217,7 +133,6 @@
             });
 
             if (res.ok) window.location.href = '/commande';
-        }
         }
 
         async function inviterAmi(pid) {

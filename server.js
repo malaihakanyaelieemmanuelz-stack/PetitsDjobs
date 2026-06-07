@@ -49,7 +49,7 @@ if (!fs.existsSync('public/uploads/')) {
 
 const upload = multer({ 
     dest: 'public/uploads/',
-    limits: { fileSize: 5 * 1024 * 1024 } // Limite à 5Mo par fichier
+    limits: { fileSize: 50 * 1024 * 1024 } // 50 Mo (photos + vidéos showcase)
 });
 
 const port = process.env.PORT || 5500; // Utilise le port de Render si disponible
@@ -475,9 +475,21 @@ app.post('/deconnexion', async (req, res) => {
 });
 
 // --- API ---
-app.get('/get-user-data', (req, res) => {
+app.get('/get-user-data', async (req, res) => {
     console.log(`🌐 [API] /get-user-data - User: ${req.session.user?.id || 'Invité'}, Photo: ${req.session.user?.photo ? 'OK' : 'Manquante'}`);
-    res.json(req.session.user || {});
+    if (!req.session.user) return res.json({});
+    const user = { ...req.session.user };
+    if (user.isPrestataire && supabase) {
+        const { data: profil } = await supabase.from('infos_prestataires')
+            .select('commentaires, etoiles')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        if (profil) {
+            user.commentaires = profil.commentaires || [];
+            user.etoiles = profil.etoiles ?? user.etoiles;
+        }
+    }
+    res.json(user);
 });
 
 app.get('/get-session-commande', async (req, res) => {
@@ -1894,38 +1906,13 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     }
 });
 
-// --- DIAGNOSTIC GOOGLE : Autorisation et Logs de passage ---
-
-// Configuration de la mise en cache pour les fichiers statiques
-const optionsCache = {
-    maxAge: '30d', // Indique au navigateur de garder les fichiers 30 jours
-    maxAge: '0', // DESACTIVE LE CACHE : les changements seront visibles immédiatement
-    setHeaders: (res, path) => {
-        // On cible spécifiquement les images pour une mise en cache agressive
-        if (path.match(/\.(webp|jpg|jpeg|png|gif|ico|svg)$/)) {
-            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
-        }
-        // On peut aussi mettre en cache le CSS et le JS
-        if (path.match(/\.(css|js)$/)) {
-            res.setHeader('Cache-Control', 'public, max-age=604800'); // 7 jours
-        }
-    }
-};
-
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), optionsCache));
-app.use(express.static(publicDir, optionsCache));
-
-app.listen(port, () => {
-
-
 // --- ESPACE PUB / SHOWCASE ---
 app.get('/api/get-showcase', async (req, res) => {
-    const { data, error } = await supabase.from('showcase')
+    const { data } = await supabase.from('showcase')
         .select('*, infos_prestataires(profession)')
         .order('created_at', { ascending: false })
         .limit(10);
-    
-    res.json(data?.map(d => ({...d, profession: d.infos_prestataires?.profession})) || []);
+    res.json(data?.map(d => ({ ...d, profession: d.infos_prestataires?.profession })) || []);
 });
 
 app.get('/api/get-user-showcase/:userId', async (req, res) => {
@@ -1939,7 +1926,6 @@ app.get('/api/get-user-showcase/:userId', async (req, res) => {
 app.post('/api/upload-showcase', requireAuth, upload.single('media'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Fichier manquant' });
     try {
-        // On utilise le bucket 'prestataires' déjà existant sur ton Supabase
         const url = await uploadToSupabase(req.file, BUCKET_NAME);
         const { error } = await supabase.from('showcase').insert({
             user_id: req.session.user.id,
@@ -1958,7 +1944,7 @@ app.post('/api/inviter-ami', requireAuth, async (req, res) => {
     const senderId = req.session.user.id;
     const receiverId = req.body.targetId;
     if (senderId == receiverId) return res.status(400).json({ error: "Action impossible" });
-    
+
     const { error } = await supabase.from('invitations').upsert({
         sender_id: senderId,
         receiver_id: receiverId,
@@ -1972,7 +1958,7 @@ app.get('/api/mes-demandes-amis', requireAuth, async (req, res) => {
         .select('id, sender_id, utilisateurs!invitations_sender_id_fkey(prenom, nom)')
         .eq('receiver_id', req.session.user.id)
         .eq('statut', 'en_attente');
-    res.json(data.map(i => ({ id: i.id, user: i.utilisateurs })) || []);
+    res.json(data?.map(i => ({ id: i.id, user: i.utilisateurs })) || []);
 });
 
 app.post('/api/repondre-invitation', requireAuth, async (req, res) => {
@@ -1995,15 +1981,33 @@ app.get('/api/liste-amis', requireAuth, async (req, res) => {
     const { data } = await supabase.from('amis')
         .select('user_id2, utilisateurs!amis_user_id2_fkey(*)')
         .eq('user_id1', req.session.user.id);
-    
-    const { data: prestas } = await supabase.from('infos_prestataires').select('user_id, profession, photo_profil_url');
-    const prestaMap = Object.fromEntries(prestas.map(p => [p.user_id, p]));
 
-    res.json(data.map(d => ({
+    const { data: prestas } = await supabase.from('infos_prestataires').select('user_id, profession, photo_profil_url');
+    const prestaMap = Object.fromEntries((prestas || []).map(p => [p.user_id, p]));
+
+    res.json((data || []).map(d => ({
         ...d.utilisateurs,
         profession: prestaMap[d.user_id2]?.profession,
         photo: prestaMap[d.user_id2]?.photo_profil_url || d.utilisateurs.photo_url
     })));
 });
+
+// Configuration de la mise en cache pour les fichiers statiques
+const optionsCache = {
+    maxAge: '0',
+    setHeaders: (res, filePath) => {
+        if (filePath.match(/\.(webp|jpg|jpeg|png|gif|ico|svg)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+        }
+        if (filePath.match(/\.(css|js)$/)) {
+            res.setHeader('Cache-Control', 'public, max-age=604800');
+        }
+    }
+};
+
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), optionsCache));
+app.use(express.static(publicDir, optionsCache));
+
+app.listen(port, () => {
     console.log(`🚀 [SYSTEM] Serveur démarré sur le port ${port}`);
 });

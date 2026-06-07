@@ -9,7 +9,7 @@
 <body>
     <header class="home-header">
         <div class="header-content">
-            <a href="/profil" style="text-decoration:none; color:#5D4037; font-weight:bold;">← RETOUR PROFIL</a>
+            <a href="/profil" style="text-decoration:none; color:#FF6600; font-weight:bold;">← RETOUR PROFIL</a>
             <h1>MES COMMANDES</h1>
         </div>
     </header>
@@ -54,7 +54,7 @@
                         <small style="color:#999;">Commandé le ${new Date(m.created_at).toLocaleDateString('fr-FR')}</small>
                     </div>
                     <h3 style="margin:5px 0; color:#333;">${m.service}</h3>
-                    <p style="margin:5px 0; color:#5D4037; font-weight:bold;">Prestataire : ${m.prestataire.prenom} ${m.prestataire.nom}</p>
+                    <p style="margin:5px 0; color:#FF6600; font-weight:bold;">Prestataire : ${m.prestataire.prenom} ${m.prestataire.nom}</p>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
                         <span style="font-weight:bold; font-size:1.1rem;">${m.prix} FCFA</span>
                         ${m.statut === 'en_attente_prestataire' ? 

@@ -1,3 +1,13 @@
+/* --- Charte graphique PetitsDjobs (orange + vert) --- */
+:root {
+    --pd-orange: #FF6600;
+    --pd-orange-dark: #E65100;
+    --pd-green: #2e7d32;
+    --pd-green-light: #e8f5e9;
+    --pd-green-online: #4caf50;
+    --pd-bg: #f4f4f4;
+}
+
 /* --- Base --- */
 * {
     box-sizing: border-box; /* Empêche les éléments de déborder */
@@ -10,7 +20,24 @@ html, body {
     padding: 0 !important; 
     min-height: 100%;
     overflow-x: hidden !important;
-    background-color: #f4f4f4;
+    background-color: var(--pd-bg);
+}
+
+/* Logo filigrane sur toutes les pages */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -998;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%23FF6600'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%23FF6600'/%3E%3Cpath d='M15 50 L95 50' stroke='%232e7d32' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%232e7d32' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 70vw;
+    opacity: 0.35;
 }
 
 /* Logo en filigrane : FIXATION DÉFINITIVE */
@@ -893,8 +920,14 @@ body {
 
     /* Rendre les cartes de service cliquables directement */
     .card { cursor: pointer; }
-    /* Cacher les boutons sur mobile */
-    .service-grid .card button, .service-grid .card .price { display: none !important; }
+    .service-grid .card button {
+        padding: 8px !important;
+        font-size: 0.65rem !important;
+    }
+    .service-grid .card .price {
+        font-size: 0.7rem !important;
+        margin-bottom: 6px !important;
+    }
 
     .service-grid {
         display: grid !important;
@@ -978,18 +1011,26 @@ body {
         display: flex;
     }
 
-    /* Suppression de l'espace publicitaire sur mobile pour gagner de la place */
     #ad-banner {
-        display: none !important; /* On tue le bandeau sur mobile pour libérer l'espace */
-        height: 0 !important;
-        margin: 0 !important;
+        padding: 4px 10px !important;
+        margin: 5px auto !important;
+    }
+
+    #showcase-section {
+        display: block;
+    }
+
+    .showcase-card video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
 }
 
 /* --- Boutons d'action critique (Suppression) --- */
 .btn-danger {
-    background-color: #d32f2f;
+    background-color: var(--pd-orange-dark);
     color: white;
     border: none;
     padding: 16px 20px;
@@ -1000,60 +1041,209 @@ body {
     font-size: 1.1rem;
     margin-top: 10px;
     transition: background 0.2s;
-    display: flex; align-items: center; justify-content: center; min-height: 56px;
-/* --- Style Chat WhatsApp --- */
-.chat-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+}
+.btn-danger:hover { background-color: var(--pd-orange); }
+
+.btn-outline {
+    background: white;
+    border: 2px solid var(--pd-orange);
+    color: var(--pd-orange);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-primary-sm {
+    background: var(--pd-orange);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-secondary-green {
+    background: var(--pd-green);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* --- Carte de visite prestataire (page publique) --- */
+.android-profile-view {
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 15px;
-    background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png"); /* Fond pattern WhatsApp */
-    background-attachment: fixed;
-    flex: 1;
+    box-sizing: border-box;
 }
 
-.message-bubble {
-    max-width: 80%;
-    padding: 10px 14px;
-    font-size: 1.1rem;
+.hero-premium {
+    background: linear-gradient(180deg, var(--pd-orange) 0%, var(--pd-orange-dark) 100%);
+    color: white;
+    padding: 60px 20px 50px;
+    text-align: center;
     position: relative;
-    border-radius: 18px;
-    line-height: 1.4;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    border-radius: 0 0 50px 50px;
 }
 
-.message-bubble.me {
-    align-self: flex-end;
-    border-bottom-right-radius: 2px;
+.hero-premium .btn-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
-.message-bubble.other {
-    align-self: flex-start;
-    border-bottom-left-radius: 2px;
+.profile-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 15px;
 }
 
-.message-bubble.presta-style {
-    background-color: #ffffff;
-    border: 2px solid #FF6600; /* Contour Orange */
-    color: #FF6600; /* Écriture Orange */
+.profile-wrapper img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 6px solid rgba(255, 255, 255, 0.9);
+    object-fit: cover;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
-.message-bubble.client-style {
-    background-color: #ffffff;
-    border: 2px solid #2e7d32; /* Contour Vert */
-    color: #2e7d32; /* Écriture Verte */
+.status-dot {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 4px solid white;
+    background: #ccc;
 }
 
-.message-time {
-    font-size: 0.65rem;
-    color: inherit; /* Prend la couleur du texte de la bulle */
-    opacity: 0.7;
-    text-align: right;
-    margin-top: 4px;
+.status-dot.online {
+    background: var(--pd-green-online);
+    box-shadow: 0 0 10px var(--pd-green-online);
+}
+
+.content-main { padding: 0 25px 40px; text-align: center; }
+
+.premium-label {
+    font-size: 0.7rem;
+    font-weight: 900;
+    color: var(--pd-green);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 25px 0 5px;
     display: block;
+}
+
+.premium-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--pd-green);
+}
+
+.bio-card {
+    background: var(--pd-green-light);
+    padding: 25px;
+    border-radius: 25px;
+    border: 1px solid rgba(46, 125, 50, 0.2);
+    margin: 20px 0;
     font-style: italic;
-    border-top: 1px solid rgba(0,0,0,0.05);
-    padding-top: 2px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.service-selection-title {
+    color: var(--pd-orange);
+    font-weight: 900;
+    font-size: 1.1rem;
+    margin: 35px 0 15px;
+    text-transform: uppercase;
+}
+
+.service-item-new {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 20px 25px;
+    border-radius: 20px;
+    border: 2px solid #eee;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.service-item-new.selected,
+.service-item-new:active {
+    border-color: var(--pd-green);
+    background: var(--pd-green-light);
+}
+
+.service-item-new span { font-weight: 700; color: #333; font-size: 1.1rem; }
+.service-item-new input { width: 24px; height: 24px; accent-color: var(--pd-green); }
+
+.reviews-section {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid var(--pd-green-light);
+}
+
+.reviews-section h3 {
+    color: var(--pd-green);
+    font-weight: 900;
+}
+
+.realisations-grid {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.realisation-item {
+    flex: 0 0 140px;
+    height: 200px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid var(--pd-green);
+    scroll-snap-align: start;
+}
+
+.realisation-item img,
+.realisation-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.job-card-particulier {
+    flex: 0 0 220px;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    font-size: 0.85rem;
+    border: 2px solid var(--pd-green);
+    text-align: center;
 }
 
 /* --- Page Amis --- */
@@ -1065,6 +1255,14 @@ body {
     background: white;
     border-bottom: 1px solid #eee;
     cursor: pointer;
+}
+
+.friend-item img {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--pd-orange);
 }
 
 /* --- Espace Pub / Vitrine des Réalisations --- */
@@ -1101,19 +1299,11 @@ body {
 
 .showcase-badge {
     position: absolute; bottom: 10px; left: 8px; right: 8px;
-    background: rgba(255, 102, 0, 0.9); /* Orange */
+    background: rgba(255, 102, 0, 0.9);
     color: white; padding: 4px;
     border-radius: 6px; font-size: 0.65rem; font-weight: bold;
     text-align: center; text-transform: uppercase;
 }
-
-.friend-item img {
-    width: 55px; height: 55px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-}
-.btn-danger:hover { background-color: #b71c1c; }
 
 /* --- Style Chat (Sorti du Media Query pour fonctionner partout) --- */
 .chat-container {
@@ -1177,5 +1367,5 @@ body {
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
 }
-.btn-mic.recording { background: #b71c1c; animation: pulse 1s infinite; }
+.btn-mic.recording { background: var(--pd-orange-dark); animation: pulse 1s infinite; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
