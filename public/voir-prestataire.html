@@ -77,6 +77,17 @@
         .reviews-section {
             margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;
         }
+        .realisations-grid {
+            display: flex; gap: 10px; overflow-x: auto; padding: 10px 0;
+            scroll-snap-type: x mandatory;
+        }
+        .realisation-item {
+            flex: 0 0 140px; height: 200px; border-radius: 15px;
+            overflow: hidden; border: 2px solid #5D4037; scroll-snap-align: start;
+        }
+        .realisation-item img, .realisation-item video {
+            width: 100%; height: 100%; object-fit: cover;
+        }
     </style>
 </head>
 <body style="background:#f4f4f4; margin:0;">
@@ -85,6 +96,13 @@
     </div>
 
     <script>
+        const servicePrices = {
+            'Cuisine': 1500, 'Lavage': 800, 'Vaisselle': 400,
+            'Course': 500, 'Chauffeur': 3000, 'Ménage': 1000,
+            'Maquillage': 2000, 'Coiffure': 2500, 'Remplacement': 500,
+            'Particulier': 0
+        };
+
         const id = new URLSearchParams(location.search).get('id');
         if (!id) {
             document.getElementById('carte').innerHTML = '<p>Profil introuvable.</p>';
@@ -104,10 +122,13 @@
                     .map(s => s.trim())
                     .filter(s => s.toLowerCase() !== 'tout');
 
-                const checkboxesServices = listeServices.map(s => `
-                    <label class="service-item-new" onclick="this.classList.toggle('selected')">
-                        <span>${s}</span>
-                        <input type="checkbox" class="service-checkbox" value="${s}">
+                const boutonsServices = listeServices.map(s => `
+                    <label class="service-item-new" onclick="commanderDirectement('${p.id}', '${s}')">
+                        <div style="display:flex; flex-direction:column; text-align:left;">
+                            <span style="text-transform:uppercase;">${s}</span>
+                            <small style="color:#FF6600;">${servicePrices[s] ? servicePrices[s] + ' FCFA' : 'Prix à discuter'}</small>
+                        </div>
+                        <div style="color:#5D4037; font-weight:bold;">SÉLECTIONNER ➔</div>
                     </label>
                 `).join('');
 
@@ -143,12 +164,13 @@
                             "${p.bio || 'Votre satisfaction est ma priorité.'}"
                         </div>
 
+                        <div id="section-realisations" style="display:none; text-align:left; margin-top:20px;">
+                            <h3 style="color:#5D4037; font-weight:900; font-size:1rem; text-transform:uppercase;">📸 Mes réalisations</h3>
+                            <div id="grid-realisations" class="realisations-grid"></div>
+                        </div>
+
                         <div class="service-selection-title">Que souhaitez-vous ?</div>
-                        <div id="services-selection">${checkboxesServices}</div>
-                        
-                        <button id="btn-valider-multi" class="btn-reserve-xl" onclick="validerSelection('${p.id}')">
-                            RÉSERVER CE PRESTATAIRE
-                        </button>
+                        <div id="services-selection">${boutonsServices}</div>
 
                         <button class="btn-outline" style="width:100%; min-height:65px; border-radius:22px; margin-top:15px; font-weight:900; border: 2px solid #FF6600; color:#FF6600; background:white; font-size:1.1rem;" onclick="inviterAmi('${p.id}')">
                             🤝 DEVENIR AMIS
@@ -159,28 +181,43 @@
                             <ul style="padding:0; list-style:none; text-align:left;">${avis}</ul>
                         </div>
                     </div>`;
+                
+                // Charger les réalisations spécifiques
+                fetch('/api/get-user-showcase/' + p.id).then(r => r.json()).then(items => {
+                    if (items && items.length > 0) {
+                        document.getElementById('section-realisations').style.display = 'block';
+                        document.getElementById('grid-realisations').innerHTML = items.map(item => `
+                            <div class="realisation-item">
+                                ${item.media_type.includes('video') ? 
+                                    `<video src="${item.url}" controls style="width:100%; height:100%; object-fit:cover;"></video>` :
+                                    `<img src="${item.url}" onclick="window.open(this.src)">`
+                                }
+                            </div>
+                        `).join('');
+                    }
+                });
             });
         }
 
-        async function validerSelection(pid) {
-            const checkboxes = document.querySelectorAll('.service-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert("Veuillez sélectionner au moins un service.");
-                return;
-            }
+        async function commanderDirectement(pid, serviceNom) {
+            const prix = servicePrices[serviceNom] || 0;
+            
+            // 1. On prépare le service et le prix
+            await fetch('/preparer-commande', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ service: serviceNom, prix: prix })
+            });
 
-            const servicesSelectionnes = Array.from(checkboxes).map(cb => cb.value).join(', ');
-
+            // 2. On sélectionne le prestataire et on redirige
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prestataireId: pid, serviceChoisi: servicesSelectionnes })
+                body: JSON.stringify({ prestataireId: pid, serviceChoisi: serviceNom })
             });
-            if (res.ok) {
-                window.location.href = `/commande`;
-            } else {
-                alert("Erreur lors de la sélection.");
-            }
+
+            if (res.ok) window.location.href = '/commande';
+        }
         }
 
         async function inviterAmi(pid) {

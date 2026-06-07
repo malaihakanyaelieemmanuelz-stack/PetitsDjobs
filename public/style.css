@@ -35,7 +35,7 @@ html, body {
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
-    opacity: 0.1;
+    opacity: 0.4;
 }
 
 body { 
@@ -54,7 +54,10 @@ body {
 
 /* Styles spécifiques aux formulaires (CONNEXION/INSCRIPTION) */
 .login-card { 
-    background: white; padding: 40px; border-radius: 12px; 
+    background: rgba(255, 255, 255, 0.85); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 40px; border-radius: 12px; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; 
     text-align: center; border-top: 6px solid #2e7d32; margin: 10px;
 }
@@ -831,7 +834,8 @@ body {
         box-sizing: border-box;
         height: auto !important;
         min-height: auto !important;
-        background-color: white !important;
+        background-color: rgba(255, 255, 255, 0.75) !important;
+        backdrop-filter: blur(10px);
     }
 
     .app-wrap, section {
@@ -850,7 +854,8 @@ body {
         margin: 30px auto !important; /* Centrage forcé sur mobile */
         border-radius: 20px !important;
         box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
-        background-color: white !important;
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(10px);
         border: 1px solid #eee !important;
         min-height: auto !important;
         display: block !important;
@@ -1074,6 +1079,21 @@ body {
     box-shadow: 0 5px 15px rgba(0,0,0,0.15);
     cursor: pointer;
 }
+
+.showcase-track {
+    display: flex;
+    gap: 15px;
+    padding: 0 15px;
+    width: max-content;
+    animation: marquee-scroll 40s linear infinite;
+}
+
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.showcase-track:hover { animation-play-state: paused; }
 
 #container-showcase > * {
     direction: ltr !important; /* Remet le contenu des cartes de pub à l'endroit */

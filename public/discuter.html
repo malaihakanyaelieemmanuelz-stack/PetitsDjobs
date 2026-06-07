@@ -14,6 +14,18 @@
         
         <textarea id="description-job" placeholder="Description brève du travail (ex: Nettoyer une cour de 20m2)" required style="width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd; min-height:80px;"></textarea>
         <input type="number" id="prix-propose" placeholder="Prix proposé en FCFA" min="100" required style="width:100%; padding:12px; margin:10px 0;">
+
+        <div style="margin-bottom: 20px; text-align: left;">
+            <label style="font-weight: bold; color: #FF6600; display: block; margin-bottom: 8px; font-size: 0.9rem;">QUAND ?</label>
+            <select id="select-date-mode" onchange="toggleDatePicker()" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: white;">
+                <option value="today">Aujourd'hui (Maintenant)</option>
+                <option value="scheduled">Programmer une date ultérieure</option>
+            </select>
+            <div id="scheduled-fields" style="display:none; flex-direction: column; gap: 10px; margin-top: 10px;">
+                <input type="date" id="input-date-custom" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                <input type="time" id="input-time-custom" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+            </div>
+        </div>
         
         <p style="text-align:left; font-size:0.8rem; margin:0;">Photo du travail (optionnel) :</p>
         <input type="file" id="photo-job" accept="image/*" style="width:100%; margin:8px 0;">
@@ -39,6 +51,11 @@
         let pollTimer = null;
         let startTime = null;
 
+        function toggleDatePicker() {
+            const mode = document.getElementById('select-date-mode').value;
+            document.getElementById('scheduled-fields').style.display = (mode === 'scheduled') ? 'flex' : 'none';
+        }
+
         document.getElementById('btn-envoyer').onclick = () => {
             const prix = document.getElementById('prix-propose').value;
             const desc = document.getElementById('description-job').value;
@@ -48,6 +65,15 @@
             if (!desc) return alert('Précisez la nature du service.');
             if (!navigator.geolocation) return alert('GPS requis.');
 
+            const dateMode = document.getElementById('select-date-mode').value;
+            let dateVal = 'today';
+            if (dateMode === 'scheduled') {
+                const d = document.getElementById('input-date-custom').value;
+                const t = document.getElementById('input-time-custom').value;
+                if (!d || !t) return alert("Veuillez choisir une date et une heure.");
+                dateVal = `${d} à ${t}`;
+            }
+
             navigator.geolocation.getCurrentPosition(async pos => {
                 try {
                     const formData = new FormData();
@@ -55,6 +81,7 @@
                     formData.append('description', desc);
                     formData.append('lat', pos.coords.latitude);
                     formData.append('lon', pos.coords.longitude);
+                    formData.append('datePrevue', dateVal);
                     if (photoInput.files[0]) formData.append('photo_job', photoInput.files[0]);
 
                     const res = await fetch('/proposer-prix-discuter', {

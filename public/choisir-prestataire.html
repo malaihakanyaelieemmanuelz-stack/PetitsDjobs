@@ -79,7 +79,7 @@
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
             return `
-                <article class="profile-card" style="width:100%; max-width:320px; margin: 10px auto;" onclick="selectionner('${p.id}')">
+                <article class="profile-card" style="width:100%; max-width:320px; margin: 10px auto;" onclick="location.href='/voir-prestataire?id=${p.id}'">
                     <div class="card-header-banner"></div>
                     <div class="card-avatar-wrapper">
                         <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
@@ -93,8 +93,8 @@
                             <span>⭐ ${p.etoiles || 0}</span>
                             <span>📍 ${distanceLabel(p.distanceM)}</span>
                         </div>
-                        <button class="card-action-btn">
-                            SÉLECTIONNER
+                        <button class="card-action-btn" onclick="event.stopPropagation(); location.href='/voir-prestataire?id=${p.id}'">
+                            VOIR LE PROFIL
                         </button>
                     </div>
                 </article>

@@ -304,44 +304,57 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
         const nbTotalInscrits = eligibles.length;
         console.log(`[DEBUG SEARCH] ${nbTotalInscrits} prestataires validés après vérification des comptes.`);
 
-        // 3. Logique de tri ultra-précise
-        eligibles.sort((a, b) => {
-            // Gestion des cas sans GPS (Distance = Infinity)
-            if (a.distanceM === Infinity && b.distanceM !== Infinity) return 1;
-            if (a.distanceM !== Infinity && b.distanceM === Infinity) return -1;
+        // 3. Logique de tri "Proche en proche" (Algorithme spécifique)
+        const onlineList = eligibles.filter(p => p.enLigne);
+        const offlineList = eligibles.filter(p => !p.enLigne);
 
-            if (a.distanceM !== Infinity && b.distanceM !== Infinity) {
-                // Règle des buckets de 10 mètres pour l'expansion du rayon
+        // Fonction de tri commune (Distance > Étoiles > ID d'inscription)
+        const genericSort = (a, b) => {
+            if (a.distanceM !== b.distanceM) return a.distanceM - b.distanceM;
+            if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
+            return a.id - b.id; // Plus petit ID = inscrit en premier
+        };
+
+        let results = [];
+
+        if (onlineList.length < 20) {
+            // SCÉNARIO A : Pas assez de monde en ligne
+            // On affiche tous ceux en ligne d'abord, puis on complète avec les hors ligne par distance
+            onlineList.sort(genericSort);
+            offlineList.sort(genericSort);
+            results = [...onlineList, ...offlineList];
+        } else {
+            // SCÉNARIO B : Beaucoup de monde en ligne
+            // On utilise les tranches de 10m pour comparer en ligne et hors ligne
+            eligibles.sort((a, b) => {
+                // Tranches de 10 mètres
                 const bucketA = Math.floor(a.distanceM / 10);
                 const bucketB = Math.floor(b.distanceM / 10);
-                if (bucketA !== bucketB) return bucketA - bucketB;
-            }
-
-            // Dans le même bucket, "En ligne" d'abord
-            if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
-
-            if (a.enLigne) {
-                // En ligne -> priorité aux meilleures étoiles
-                return (b.etoiles || 0) - (a.etoiles || 0);
-            } else {
-                // Hors ligne -> priorité au plus récemment connecté
-                const timeA = new Date(a.dernier_acces || 0).getTime();
-                const timeB = new Date(b.dernier_acces || 0).getTime();
-                if (timeA !== timeB) return timeB - timeA;
-                return a.distanceM - b.distanceM;
-            }
-        });
-
-        // Règle d'affichage : Si moins de 20 prestataires AU TOTAL, on ignore la distance et on affiche tout
-        let results = eligibles;
-        if (nbInscritsTotalBase > 20 && type === 'service') {
-            results = eligibles.filter(p => p.distanceM <= RAYON_MAX_METRES);
+                
+                if (bucketA !== bucketB) {
+                    // Si un hors ligne est vraiment plus proche (tranche différente), il passe devant
+                    return bucketA - bucketB;
+                }
+                // Dans la même tranche de 10m, priorité au statut En Ligne
+                if (a.enLigne !== b.enLigne) return a.enLigne ? -1 : 1;
+                // Puis étoiles et ID
+                if (a.etoiles !== b.etoiles) return (b.etoiles || 0) - (a.etoiles || 0);
+                return a.id - b.id;
+            });
+            results = eligibles;
         }
 
-        console.log(`[DEBUG SEARCH] Résultat final : Envoi de ${results.length} prestataires.`);
+        // Règle d'affichage : Si moins de 20 prestataires AU TOTAL, on ignore la distance et on affiche tout
+        let finalSelection = results;
+        if (nbInscritsTotalBase > 20 && type === 'service' && query_text) {
+            // On ne limite par rayon que si on a bcp de monde, sinon on montre tout par ordre
+            finalSelection = results.filter(p => p.distanceM <= RAYON_MAX_METRES);
+        }
+
+        console.log(`[DEBUG SEARCH] Résultat final : Envoi de ${finalSelection.length} prestataires.`);
 
         const limitFixe = limit || 20;
-        const page = results.slice(offset, offset + limitFixe);
+        const page = finalSelection.slice(offset, offset + limitFixe);
 
         return {
             prestataires: page.map(p => ({
@@ -572,6 +585,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const lat = req.session.latClient || req.session.user?.lat;
     const lon = req.session.lonClient || req.session.user?.lon;
     
+    const isToday = datePrevue === 'today';
+
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
     console.log(`[DEBUG SIMU PAY] GPS récupéré: ${lat}, ${lon}`);
     console.log(`[DEBUG SIMU PAY] IDs: Client=${req.session.user?.id}, Presta=${cmd?.prestataireId}`);
@@ -1000,7 +1015,7 @@ app.get('/api/get-messages-ami/:amiId', requireAuth, async (req, res) => {
         console.error("❌ [CHAT ERR] Messages Ami:", error.message);
         return res.status(500).json([]);
     }
-    res.json(data);
+     res.json(data);
 });
 
 app.post('/api/send-message', requireAuth, async (req, res) => {
@@ -1558,7 +1573,7 @@ app.get('/get-prestataire-contact/:id', requireAuth, async (req, res) => {
 
 // On utilise multer pour la photo du job
 app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res) => {
-    const { prix, lat, lon, description } = req.body;
+    const { prix, lat, lon, description, datePrevue } = req.body;
     const prixNum = parseInt(prix, 10);
     if (!prixNum || lat == null || lon == null) {
         return res.status(400).json({ error: 'Prix et GPS requis' });
@@ -1582,6 +1597,7 @@ app.post('/proposer-prix-discuter', upload.single('photo_job'), async (req, res)
         emailClient: req.session.user?.email,
         prix: prixNum,
         description: description || 'Besoin d\'un service particulier',
+        datePrevue: datePrevue || 'today',
         photo: photoUrl,
         lat: parseFloat(lat),
         lon: parseFloat(lon),
@@ -1628,6 +1644,13 @@ app.get('/get-public-jobs', (req, res) => {
     }
 
     res.json(jobs);
+});
+
+// Route pour savoir si des prestataires ont accepté des offres particulières du client
+app.get('/api/notifs-offres-particulieres', requireAuth, (req, res) => {
+    const myId = req.session.user.id;
+    const mesOffres = offresDiscuter.filter(o => o.clientId === myId && o.acceptations.length > 0 && o.statut === 'en_attente');
+    res.json(mesOffres);
 });
 
 // --- Récupération de mot de passe ---
@@ -1903,6 +1926,14 @@ app.get('/api/get-showcase', async (req, res) => {
         .limit(10);
     
     res.json(data?.map(d => ({...d, profession: d.infos_prestataires?.profession})) || []);
+});
+
+app.get('/api/get-user-showcase/:userId', async (req, res) => {
+    const { data } = await supabase.from('showcase')
+        .select('*')
+        .eq('user_id', req.params.userId)
+        .order('created_at', { ascending: false });
+    res.json(data || []);
 });
 
 app.post('/api/upload-showcase', requireAuth, upload.single('media'), async (req, res) => {

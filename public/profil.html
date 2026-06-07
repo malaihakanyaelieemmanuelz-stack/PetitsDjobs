@@ -7,80 +7,127 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg transform='rotate(-30 50 50)'%3E%3Crect x='20' y='20' width='20' height='60' fill='%23FF6600'/%3E%3Crect x='50' y='30' width='30' height='40' fill='%23FF6600'/%3E%3Cpath d='M15 50 L95 50' stroke='%232e7d32' stroke-width='12' stroke-dasharray='3 3'/%3E%3Cpath d='M50 15 L50 85' stroke='%232e7d32' stroke-width='2' stroke-dasharray='1 1'/%3E%3Ctext x='55' y='75' font-family='monospace' font-size='5' font-weight='bold' fill='%23FFFFFF'%3Epd%3C/text%3E%3C/g%3E%3C/svg%3E">
     <title>Mon Profil</title>
     <style>
-        /* Style spécifique pour le plein écran Android */
-        .profile-container {
-            flex: 1;
-            width: 100%;
-            max-width: 650px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+        body { background: #f8f9fa !important; }
+        
+        .profile-hero {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+            border-radius: 0 0 30px 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            position: relative;
+            margin-bottom: 60px;
+        }
+
+        .avatar-container {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #user-photo-profil {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            object-fit: cover;
+            background: white;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .menu-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
             display: flex;
             flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .profile-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            gap: 10px;
         }
-        .info-card {
-            background: #f8f9fa;
-            padding: 20px;
+
+        .menu-card:active { transform: scale(0.95); }
+        
+        .menu-card .icon {
+            font-size: 1.8rem;
+            background: #e8f5e9;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 15px;
-            border: 1px solid #eee;
-            margin-bottom: 15px;
-        }
-        .info-label {
-            color: #2e7d32;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-            opacity: 0.8;
-        }
-        .info-value {
-            font-size: 1.2rem;
-            font-weight: 600;
             color: #2e7d32;
         }
-        .section-title {
-            color: #2e7d32;
-            font-size: 1.3rem;
-            margin: 25px 0 15px;
+
+        .menu-card.orange .icon { background: #fff3e0; color: #FF6600; }
+        
+        .menu-card span {
             font-weight: 800;
+            font-size: 0.85rem;
+            color: #333;
+            text-transform: uppercase;
         }
-        .action-block {
-            margin-bottom: 30px;
+
+        .notif-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #FF6600;
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
         }
-        .danger-zone {
-            margin-top: auto;
-            background: #fff5f5;
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px dashed #ffcdd2;
+
+        .settings-list {
+            background: white;
+            margin: 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
+
+        .settings-item {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #555;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .settings-item:last-child { border: none; }
+        .settings-item.danger { color: #c62828; }
     </style>
 </head>
-<body style="background:transparent; margin:0; display: flex; flex-direction: column; min-height: 100dvh;">
+<body style="margin:0; display: flex; flex-direction: column; min-height: 100dvh;">
     <header class="home-header">
         <div class="header-content">
-            <a href="index.html" style="text-decoration:none; display:block; margin:0;">
-                <h1 style="margin:0;">
-                    <svg class="home-logo" viewBox="0 0 100 100">
-                        <g transform="rotate(-30 50 50)">
-                            <rect x="20" y="20" width="20" height="60" fill="#FF6600"/>
-                            <rect x="50" y="30" width="30" height="40" fill="#FF6600"/>
-                            <path d="M15 50 L95 50" stroke="#2e7d32" stroke-width="12" stroke-dasharray="3 3"/>
-                            <path d="M50 15 L50 85" stroke="#2e7d32" stroke-width="2" stroke-dasharray="1 1"/>
-                            <text x="55" y="75" font-family="monospace" font-size="5" font-weight="bold" fill="#FFFFFF">pd</text>
-                        </g>
-                    </svg>
-                    PETITSDJOBS
-                </h1>
+            <a href="index.html" style="text-decoration:none;">
+                <h1 style="margin:0; font-size: 1.2rem;">PETITSDJOBS</h1>
             </a>
             <nav class="nav-compact">
                 <a href="index.html">ACCUEIL</a>
@@ -88,70 +135,75 @@
         </div>
     </header>
 
-    <div class="profile-container">
-        <h2 style="margin: 10px 0 30px; color:#000000; font-weight:900; text-align: center;">MON COMPTE</h2>
+    <div class="profile-hero">
+        <div style="font-size: 0.8rem; text-transform: uppercase; opacity: 0.8; letter-spacing: 2px;">Bienvenue</div>
+        <h2 style="margin: 5px 0 0; font-size: 1.8rem; font-weight: 900;"><span id="prenom">-</span> <span id="nom">-</span></h2>
+        <div id="email" style="font-size: 0.9rem; opacity: 0.7; margin-top: 5px;">-</div>
 
-        <!-- Photo de Profil Interactive -->
-        <div style="text-align: center; margin-bottom: 25px;">
-            <img id="user-photo-profil" src="default-profile.png" style="width: 110px; height: 110px; border-radius: 50%; border: 4px solid #FF6600; object-fit: cover; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" onclick="document.getElementById('input-photo-profil').click()">
+        <div class="avatar-container" onclick="document.getElementById('input-photo-profil').click()">
+            <img id="user-photo-profil" src="default-profile.png">
             <input type="file" id="input-photo-profil" style="display: none;" accept="image/*" onchange="changerPhotoProfil(this)">
-            <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">Appuyez pour changer de photo</p>
-        </div>
-
-        <!-- Infos Utilisateur -->
-        <div class="info-card">
-            <div class="info-label">Identité</div>
-            <div class="info-value"><span id="prenom">-</span> <span id="nom" style="text-transform:uppercase;">-</span></div>
-            <div style="margin-top:10px;" class="info-label">E-mail</div>
-            <div class="info-value" id="email" style="font-size:1rem;">-</div>
-        </div>
-
-        <!-- Bouton de validation de fin de mission (Apparaît si mission finie mais départ non validé) -->
-        <div id="zone-depart-urgent" style="display:none; margin-bottom:20px;">
-            <button onclick="location.href='/suivi'" class="btn-primary-sm" style="background:#FF6600; width:100%; border:3px solid #ff9800;">
-                📢 VALIDER LE DÉPART DU PRESTATAIRE
-            </button>
-        </div>
-
-        <!-- Section Client -->
-        <div class="action-block">
-            <div class="section-title">BESOIN D'UN SERVICE ?</div>
-            <button onclick="location.href='index.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem;">
-                COMMANDER MAINTENANT
-            </button>
-        </div>
-
-        <!-- Section Sociale -->
-        <div class="action-block">
-            <div class="section-title">COMMUNAUTÉ</div>
-            <button onclick="location.href='/amis.html'" class="btn-primary-sm" style="width:100%; min-height:65px; font-size:1.2rem; background:#2e7d32; position: relative;">
-                👥 MES AMIS & CHAT
-                <span id="amis-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#FF6600; color:white; border-radius:50%; width:24px; height:24px; font-size:0.8rem; border:2px solid white; display:flex; align-items:center; justify-content:center; font-weight:bold;">0</span>
-            </button>
-        </div>
-
-        <!-- Section Prestataire -->
-        <div class="action-block">
-            <div class="section-title">VOTRE TRAVAIL</div>
-            <button id="btn-devenir" onclick="location.href='/prestataire'" class="btn-outline" style="width:100%; min-height:80px; font-size:1.6rem; font-weight:bold;">
-                DEVENIR PRESTATAIRE
-            </button>
-            <button id="btn-espace" onclick="location.href='/prestataire-info'" class="btn-primary-sm" style="display:none; width:100%; min-height:85px; font-size:1.8rem; background:#FF6600; color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 4px 12px rgba(255,102,0,0.3);">
-                📇 MA CARTE DE VISITE
-            </button>
-        </div>
-
-        <!-- Zone Critique -->
-        <div class="danger-zone">
-            <div class="info-label" style="color:#c62828; margin-bottom:10px;">Options de compte</div>
-            <button id="btn-supprimer-carte" onclick="supprimerMaCarte()" class="btn-danger" style="display:none; width:100%; margin-bottom:10px; background:#f44336; min-height:60px;">SUPPRIMER MA CARTE</button>
-            <button onclick="supprimerCompte()" class="btn-danger" style="width:100%; min-height:60px;">SUPPRIMER MON COMPTE</button>
-        </div>
-
-        <div style="text-align:center; margin-top:30px; padding-bottom: 30px;">
-            <a href="index.html" style="color:#2e7d32; font-weight:bold; font-size: 1.1rem; text-decoration: none; border: 2px solid #2e7d32; padding: 12px 30px; border-radius: 12px; display: inline-block; background: white;">← RETOUR À L'ACCUEIL</a>
+            <div style="position: absolute; bottom: 5px; right: 5px; background: #FF6600; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 3px solid white;">📷</div>
         </div>
     </div>
+
+    <div style="flex: 1;">
+        <!-- Alertes de Suivi -->
+        <div id="zone-depart-urgent" style="display:none; padding: 0 20px 10px;">
+            <button onclick="location.href='/suivi'" style="width:100%; padding:15px; background:#FF6600; color:white; border:none; border-radius:15px; font-weight:900; box-shadow: 0 4px 12px rgba(255,102,0,0.2);">📢 VALIDER LE DÉPART DU PRESTATAIRE</button>
+        </div>
+
+        <div id="zone-offre-acceptee" style="display:none; padding: 0 20px 10px;">
+            <div style="background: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 15px; text-align: center; display: flex; align-items: center; justify-content: space-between;">
+                <span style="color: #2e7d32; font-weight: 800; font-size: 0.8rem;">🎉 OFFRE ACCEPTÉE !</span>
+                <button id="link-offre-gestion" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:10px; font-weight:bold;">VOIR</button>
+            </div>
+        </div>
+
+        <div class="menu-grid">
+            <!-- Commandes -->
+            <div class="menu-card" onclick="location.href='/mes-commandes'">
+                <div class="icon">📦</div>
+                <span>Mes Commandes</span>
+            </div>
+
+            <!-- Amis -->
+            <div class="menu-card" onclick="location.href='/amis.html'">
+                <div class="icon">👥</div>
+                <span>Mes Amis</span>
+                <span id="amis-badge" class="notif-badge" style="display:none;">0</span>
+            </div>
+
+            <!-- Commander -->
+            <div class="menu-card orange" onclick="location.href='index.html'">
+                <div class="icon">✨</div>
+                <span>Nouveau Service</span>
+            </div>
+
+            <!-- Prestataire -->
+            <div id="card-presta-toggle" class="menu-card orange">
+                <!-- Contenu injecté par JS -->
+            </div>
+        </div>
+
+        <div class="settings-list">
+            <div class="settings-item" onclick="location.href='/politique'">
+                <span>🛡️</span> Sécurité & Confidentialité
+            </div>
+            <div id="btn-supprimer-carte" class="settings-item" style="display:none;" onclick="supprimerMaCarte()">
+                <span>📇</span> Supprimer ma carte prestataire
+            </div>
+            <div class="settings-item danger" onclick="supprimerCompte()">
+                <span>🗑️</span> Supprimer mon compte
+            </div>
+            <div class="settings-item" onclick="document.forms[0].submit()">
+                <form action="/deconnexion" method="POST" style="display:none;"></form>
+                <span>🚪</span> Se déconnecter
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; padding: 20px; font-size: 0.7rem; color: #aaa;">PetitsDjobs © 2026 - Tous droits réservés</div>
 
     <script>
         fetch('/get-user-data')
@@ -161,10 +213,15 @@
                 document.getElementById('prenom').innerText = data.prenom || '-';
                 document.getElementById('email').innerText = data.email || '-';
                 if (data.photo) document.getElementById('user-photo-profil').src = data.photo;
+                
+                const prestaCard = document.getElementById('card-presta-toggle');
                 if (data.isPrestataire) {
-                    document.getElementById('btn-devenir').style.display = 'none';
-                    document.getElementById('btn-espace').style.display = 'block';
+                    prestaCard.innerHTML = `<div class="icon">📇</div><span>Ma Carte</span>`;
+                    prestaCard.onclick = () => location.href='/prestataire-info';
                     document.getElementById('btn-supprimer-carte').style.display = 'block';
+                } else {
+                    prestaCard.innerHTML = `<div class="icon">💼</div><span>Devenir Pro</span>`;
+                    prestaCard.onclick = () => location.href='/prestataire';
                 }
 
                 // Vérifier s'il y a une mission en attente de départ
@@ -181,6 +238,16 @@
                         const badge = document.getElementById('amis-badge');
                         badge.innerText = invits.length;
                         badge.style.display = 'flex';
+                    }
+                });
+
+                // Vérifier les offres particulières (Service Particulier)
+                fetch('/api/notifs-offres-particulieres').then(r => r.json()).then(offres => {
+                    if (offres && offres.length > 0) {
+                        document.getElementById('zone-offre-acceptee').style.display = 'block';
+                        document.getElementById('link-offre-gestion').onclick = () => {
+                            window.location.href = `/discuter?offreId=${offres[0].id}`;
+                        };
                     }
                 });
             });

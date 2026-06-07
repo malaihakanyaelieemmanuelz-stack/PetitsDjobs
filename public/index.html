@@ -41,9 +41,11 @@
     </header>
 
     <!-- Espace Pub : Positionné en haut entre Profil et Catégories, défilement Droite -> Gauche -->
-    <div class="app-wrap" id="showcase-section" style="display:none; margin-top: 10px; margin-bottom: 10px;">
-        <h2 style="font-size: 0.8rem; color: #FF6600; margin-bottom: 8px; border-left: 4px solid #FF6600; padding-left: 10px; text-transform: uppercase; font-weight: 900;">Vidéos & Réalisations</h2>
-        <div id="container-showcase" class="scroll-container" style="padding: 5px 0; gap: 15px; direction: rtl; display: flex; flex-direction: row;">
+    <div id="showcase-section" style="display:none; background: #fff; border-bottom: 1px solid #eee; padding: 15px 0; overflow: hidden;">
+        <div class="app-wrap">
+            <h2 style="font-size: 0.75rem; color: #FF6600; margin: 0 0 10px 15px; border-left: 3px solid #FF6600; padding-left: 8px; text-transform: uppercase; font-weight: 900;">En direct des prestataires</h2>
+        </div>
+        <div id="container-showcase" class="showcase-track">
             <!-- Rempli par JS -->
         </div>
     </div>
@@ -237,7 +239,7 @@
                 servicesAffiche = liste.slice(0, 2).join(', ') + (liste.length > 2 ? '...' : '');
             }
             
-            const cardAction = `selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')`;
+            const cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
             const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
             
@@ -259,7 +261,7 @@
                             ${p.distanceM != null ? `<span>📍 ${distanceLabel(p.distanceM)}</span>` : ''}
                         </div>
                         <p class="services-txt">${servicesAffiche}</p>
-                        <button class="card-action-btn" onclick="event.stopPropagation(); selectionnerPrestataireDirect('${p.id}', '${servicesAffiche.replace(/'/g, "\\'")}')">
+                        <button class="card-action-btn" onclick="event.stopPropagation(); ${cardAction}">
                             VOIR LE PROFIL
                         </button>
                     </div>
@@ -304,6 +306,7 @@
                                 <div style="margin-top:8px;">
                             <strong style="color:#FF6600; font-size:1.1rem; display:block; margin-bottom:4px;">${j.prix} FCFA</strong>
                                     <p style="margin:5px 0; color:#000000; font-weight:bold; height:2.4em; overflow:hidden; line-height:1.2;">Nature: ${j.description}</p>
+                                    <p style="color:#FF6600; font-size:0.75rem; margin:2px 0; font-weight:900;">📅 ${j.datePrevue === 'today' ? 'Maintenant' : j.datePrevue}</p>
                                     ${j.distanceM != null ? `<p style="color:#2e7d32; font-size:0.75rem; margin:4px 0;">📍 À ${distanceLabel(j.distanceM)} de vous</p>` : ''}
                                     ${j.clientId === currentUserId ? `
                                 <button onclick="location.href='/discuter.html?offreId=${j.id}'" style="width:100%; border:none; background:#FF6600; color:white; border-radius:6px; padding:10px; cursor:pointer; font-weight:bold; margin-top:8px;">GÉRER MA TÂCHE</button>
@@ -468,13 +471,15 @@
                 
                 if (items && items.length > 0) {
                     section.style.display = 'block';
-                    container.innerHTML = items.map(item => `
+                    // On double les items pour un défilement infini fluide
+                    const displayItems = [...items, ...items];
+                    container.innerHTML = displayItems.map(item => `
                         <div class="showcase-card" onclick="location.href='/voir-prestataire?id=${item.user_id}'">
                             ${item.media_type && item.media_type.includes('video') ? 
                                 `<video src="${item.url}" muted loop onmouseover="this.play()" onmouseout="this.pause()" style="width:100%; height:100%; object-fit:cover;"></video>` :
                                 `<img src="${item.url}" style="width:100%; height:100%; object-fit:cover;">`
                             }
-                            <div class="showcase-badge">${item.profession || 'PRESTATAIRE'}</div>
+                            <div class="showcase-badge">PRO</div>
                         </div>
                     `).join('');
                 }
