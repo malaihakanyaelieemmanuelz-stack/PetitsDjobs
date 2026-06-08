@@ -121,11 +121,11 @@
             <p class="price">500 F / heure</p>
             <button class="btn-commander" data-service="Remplacement" data-prix="500">Choisir ce service</button>
         </div>
-        <div class="card card-special" onclick="location.href='/discuter'">
+        <div class="card card-special" onclick="allerDiscuter()">
             <img src="particulier.jpg.jpg" alt="Particulier" onerror="this.src='default-profile.png'" loading="lazy" width="300" height="200">
             <h3>SERVICE PARTICULIER</h3>
             <p class="price">Prix à discuter</p>
-            <button class="btn-discuter" data-href="/discuter" style="width:100%;">DISCUTER LE PRIX</button>
+            <button class="btn-discuter" style="width:100%;">DISCUTER LE PRIX</button>
         </div>
     </div>
 
@@ -426,6 +426,14 @@
             window.location.href = `/choisir-prestataire?service=${encodeURIComponent(service)}`;
         }
 
+        function allerDiscuter() {
+            if (!connecte) {
+                window.location.href = 'connexion.html';
+                return;
+            }
+            window.location.href = '/discuter';
+        }
+
         async function selectionnerPrestataireDirect(id, service) {
             const res = await fetch('/selectionner-prestataire', {
                 method: 'POST',
@@ -452,12 +460,6 @@
 
         document.querySelectorAll('.btn-commander').forEach(btn => {
             btn.addEventListener('click', () => allerCommander(btn.dataset.service, btn.dataset.prix));
-        });
-        document.querySelectorAll('.btn-discuter').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (!connecte) { window.location.href = 'connexion.html'; return; }
-                window.location.href = btn.dataset.href;
-            });
         });
 
         let lastCarrouselHtml = "";
