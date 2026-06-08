@@ -1070,7 +1070,8 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const clientMap = Object.fromEntries((clients || []).map(c => [c.id, { nom: c.nom, prenom: c.prenom, photo: c.photo_url }]));
 
     const result = missions.map(m => {
-        const meta = missionMeta.get(m.id) || { delaiMinutes: 1 };
+        // On s'assure que l'ID est traité comme un nombre pour le Map
+        const meta = missionMeta.get(Number(m.id)) || { delaiMinutes: 1, vuParPresta: false };
         const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
         const expireDans = Math.max(0, delaiMs - (Date.now() - new Date(m.created_at).getTime()));
         return {
@@ -1086,6 +1087,17 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     console.log("❌ [NOTIF-DEBUG] ENVOI DE " + result.length + " MISSIONS au navigateur du prestataire.");
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
     res.json(result);
+});
+
+// Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)
+app.post('/api/marquer-mission-vue/:id', requireAuth, (req, res) => {
+    const mId = Number(req.params.id);
+    const meta = missionMeta.get(mId);
+    if (meta) {
+        meta.vuParPresta = true;
+        missionMeta.set(mId, meta);
+    }
+    res.json({ ok: true });
 });
 
 // --- ROUTES DE MESSAGERIE (CHAT) ---

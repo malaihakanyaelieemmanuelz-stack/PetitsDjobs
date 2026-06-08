@@ -396,9 +396,11 @@
                     const rM = await fetch('/api/mes-missions-prestataire');
                     const mData = await rM.json();
                     const flash = document.getElementById('alerte-mission-flash');
-                    // On n'affiche le flash que s'il y a des missions NON VUES
-                    if (mData && mData.some(m => !m.vuParPresta)) {
-                        if (mData.length > missionCount || mData.some(m => !m.vuParPresta)) {
+                    
+                    // On affiche le flash s'il y a au moins une mission que le pro n'a pas encore consultée
+                    const nouvellesMissions = (mData || []).filter(m => !m.vuParPresta);
+                    if (nouvellesMissions.length > 0) {
+                        if (mData.length > missionCount) {
                             document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));
                         }
                         flash.style.display = 'block';
