@@ -110,12 +110,15 @@
                     const res = await fetch('/proposer-prix-discuter', { method: 'POST', body: formData });
                     if (!res.ok) throw new Error("Erreur serveur (" + res.status + ")");
                     const data = await res.json();
-                    document.getElementById('statut').innerText = data.message || '';
+                    
                     if (data.offreId) {
                         offreId = data.offreId;
-                        startTime = Date.now();
-                        activerModeGestion();
-                        pollTimer = setInterval(verifierOffre, 3000);
+                        // Transition immédiate
+                        const recapData = { description: desc, prix: prix };
+                        activerModeGestion(recapData);
+                        marquerOffreVue(offreId);
+                        verifierOffre(); // Premier check immédiat
+                        pollTimer = setInterval(verifierOffre, 2000);
                     }
                 } catch (err) {
                     alert("Erreur lors de l'envoi de l'offre.");
@@ -137,6 +140,11 @@
                 alert('GPS non supporté.');
             }
         };
+
+        async function marquerOffreVue(id) {
+            if (!id) return;
+            await fetch(`/api/marquer-offre-vue/${id}`, { method: 'POST' });
+        }
 
         function activerModeGestion(data) {
             document.getElementById('page-title').innerText = "GESTION DE MON OFFRE";
@@ -181,15 +189,23 @@
                     document.getElementById('description-job').value = data.description;
                     document.getElementById('prix-propose').value = data.prix;
                     activerModeGestion(data);
+                    marquerOffreVue(offreId);
                     pollTimer = setInterval(verifierOffre, 3000);
                 }
             });
         }
 
-        document.getElementById('btn-augmenter').onclick = () => {
-            const input = document.getElementById('prix-propose');
-            input.value = (parseInt(input.value, 10) || 0) + 500;
-            document.getElementById('btn-envoyer').click();
+        document.getElementById('btn-augmenter').onclick = async () => {
+            const nouveauPrix = (parseInt(document.getElementById('recap-prix').innerText, 10) || 0) + 500;
+            const res = await fetch(`/api/modifier-prix-offre/${offreId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nouveauPrix })
+            });
+            if (res.ok) {
+                document.getElementById('recap-prix').innerText = nouveauPrix;
+                document.getElementById('statut').innerText = "Prix augmenté ! En attente de nouveaux prestataires...";
+            }
         };
 
         async function verifierOffre() {

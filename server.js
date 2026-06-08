@@ -1864,8 +1864,32 @@ app.get('/get-public-jobs', (req, res) => {
 // Route pour savoir si des prestataires ont accepté des offres particulières du client
 app.get('/api/notifs-offres-particulieres', requireAuth, (req, res) => {
     const myId = req.session.user.id;
-    const mesOffres = offresDiscuter.filter(o => o.clientId === myId && o.acceptations.length > 0 && o.statut === 'en_attente');
+    // On ne montre la notif que si le client n'a pas encore "vu" les nouvelles acceptations
+    const mesOffres = offresDiscuter.filter(o => o.clientId === myId && o.acceptations.length > 0 && o.statut === 'en_attente' && !o.vuParClient);
     res.json(mesOffres);
+});
+
+// Route pour marquer l'offre comme consultée (efface la notif accueil)
+app.post('/api/marquer-offre-vue/:id', requireAuth, (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const offre = offresDiscuter.find(o => o.id === id);
+    if (offre && normaliserId(offre.clientId) === normaliserId(req.session.user.id)) {
+        offre.vuParClient = true;
+    }
+    res.json({ ok: true });
+});
+
+// Route pour augmenter le prix d'une offre existante
+app.post('/api/modifier-prix-offre/:id', requireAuth, (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const { nouveauPrix } = req.body;
+    const offre = offresDiscuter.find(o => o.id === id);
+    if (offre && normaliserId(offre.clientId) === normaliserId(req.session.user.id)) {
+        offre.prix = parseInt(nouveauPrix, 10);
+        offre.vuParClient = false; // On reset pour que les prestataires soient notifiés du changement si besoin
+        return res.json({ ok: true, message: "Prix mis à jour !" });
+    }
+    res.status(404).json({ error: "Offre introuvable" });
 });
 
 // --- Récupération de mot de passe ---
