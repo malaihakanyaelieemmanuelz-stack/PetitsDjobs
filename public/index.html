@@ -396,8 +396,9 @@
                     const rM = await fetch('/api/mes-missions-prestataire');
                     const mData = await rM.json();
                     const flash = document.getElementById('alerte-mission-flash');
-                    if (mData && mData.length > 0) {
-                        if (mData.length > missionCount) {
+                    // On n'affiche le flash que s'il y a des missions NON VUES
+                    if (mData && mData.some(m => !m.vuParPresta)) {
+                        if (mData.length > missionCount || mData.some(m => !m.vuParPresta)) {
                             document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));
                         }
                         flash.style.display = 'block';
@@ -405,7 +406,7 @@
                         flash.style.display = 'none';
                     }
                     missionCount = mData.length;
-                }, 1500);
+                }, 1000); // Vérification missions toutes les secondes
             }
 
             // Surveillance des acceptations pour les Services Particuliers (Mode Client)
@@ -431,7 +432,7 @@
                     flashOffre.style.display = 'none';
                     offerNotifCount = 0;
                 }
-            }, 4000);
+            }, 2000); // Notifs client plus rapides (2s au lieu de 4s)
         }).catch(() => {});
         
         async function allerCommander(service, prix) {
@@ -525,7 +526,7 @@
 
         // Polling des données (3 s : pubs supprimées disparaissent vite de l'accueil)
         setInterval(rafraichirCarrousel, 3000);
-        setInterval(chargerJobsPublics, 5000);
+        setInterval(chargerJobsPublics, 2000); // Liste des jobs rafraîchie toutes les 2s
     </script>
 
     <!-- Éléments invisibles déplacés en bas pour ne pas pousser le contenu -->

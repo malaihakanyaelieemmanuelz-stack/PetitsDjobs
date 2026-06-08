@@ -196,7 +196,14 @@
         }
 
         document.getElementById('btn-augmenter').onclick = async () => {
-            const nouveauPrix = (parseInt(document.getElementById('recap-prix').innerText, 10) || 0) + 500;
+            const augmentation = prompt("De combien voulez-vous augmenter votre offre ? (ex: 500)", "500");
+            if (!augmentation) return;
+            const montant = parseInt(augmentation, 10);
+            if (isNaN(montant) || montant <= 0) return alert("Veuillez saisir un montant valide.");
+
+            const currentPrix = parseInt(document.getElementById('recap-prix').innerText, 10) || 0;
+            const nouveauPrix = currentPrix + montant;
+
             const res = await fetch(`/api/modifier-prix-offre/${offreId}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -231,6 +238,9 @@
                         </div>
                     `).join('');
                     document.getElementById('statut').innerText = data.list.length + ' prestataire(s) ont accepté votre prix !';
+                    
+                    // Puisqu'on voit la liste ici, on informe le serveur pour effacer la notif sur l'accueil
+                    marquerOffreVue(offreId);
                 } else if (data.suggestion) {
                     document.getElementById('statut').innerText = data.suggestion;
                 }

@@ -193,6 +193,11 @@
                 `).join('');
                 
                 liste.innerHTML = activeMissionsHtml;
+
+                // Marquer les missions comme vues pour effacer la notif accueil
+                missions.forEach(m => {
+                    if (!m.vuParPresta) fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
+                });
             } else {
                 zone.style.display = 'none';
             }

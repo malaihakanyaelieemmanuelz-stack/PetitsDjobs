@@ -685,6 +685,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             prestaFin: false,
             clientFin: false,
             refuseNotified: false,
+            vuParPresta: false,
             commission,
             netPresta
         });
@@ -1864,8 +1865,8 @@ app.get('/get-public-jobs', (req, res) => {
 // Route pour savoir si des prestataires ont accepté des offres particulières du client
 app.get('/api/notifs-offres-particulieres', requireAuth, (req, res) => {
     const myId = req.session.user.id;
-    // On ne montre la notif que si le client n'a pas encore "vu" les nouvelles acceptations
-    const mesOffres = offresDiscuter.filter(o => o.clientId === myId && o.acceptations.length > 0 && o.statut === 'en_attente' && !o.vuParClient);
+    // Utilisation de normaliserId pour une comparaison fiable entre String et Number
+    const mesOffres = offresDiscuter.filter(o => normaliserId(o.clientId) === normaliserId(myId) && o.acceptations.length > 0 && o.statut === 'en_attente' && !o.vuParClient);
     res.json(mesOffres);
 });
 
@@ -2051,6 +2052,8 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     const ids = (offre.acceptations || []).map(a => normaliserId(a));
     if (!ids.includes(normaliserId(prestataireId))) {
         offre.acceptations.push(prestataireId);
+        // Réinitialiser le statut "vu" pour alerter le client qu'il y a un nouveau volontaire
+        offre.vuParClient = false;
 
         // Notification par email au client
         if (offre.emailClient && resend) {
