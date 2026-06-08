@@ -9,13 +9,18 @@
 </head>
 <body class="auth-page">
     <div class="login-card" style="max-width: 480px;">
-        <h1>NÉGOCIER UN PRIX</h1>
+        <h1 id="page-title">NÉGOCIER UN PRIX</h1>
         <p style="font-size:0.9rem; color:#2e7d32;">Décrivez le travail et fixez votre prix. Les prestataires proches verront votre offre.</p>
         
+        <div id="details-recap" style="display:none; background:#e8f5e9; padding:15px; border-radius:10px; margin-bottom:15px; text-align:left; border:1px solid #2e7d32;">
+            <p style="margin:0 0 5px 0;"><strong>📝 Service :</strong> <span id="recap-desc"></span></p>
+            <p style="margin:0;"><strong>💰 Prix proposé :</strong> <span id="recap-prix"></span> FCFA</p>
+        </div>
+
         <textarea id="description-job" placeholder="Description brève du travail (ex: Nettoyer une cour de 20m2)" required class="pd-field"></textarea>
         <input type="number" id="prix-propose" placeholder="Prix proposé en FCFA" min="100" required class="pd-field">
 
-        <div style="margin-bottom: 20px; text-align: left;">
+        <div id="date-selection-block" style="margin-bottom: 20px; text-align: left;">
             <label class="pd-label">QUAND ?</label>
             <select id="select-date-mode" onchange="toggleDatePicker()" class="pd-field">
                 <option value="today">Aujourd'hui (Maintenant)</option>
@@ -33,12 +38,12 @@
             </div>
         </div>
         
-        <p class="pd-sublabel" style="margin:0;">Photo du travail (optionnel) :</p>
+        <p id="label-photo" class="pd-sublabel" style="margin:0;">Photo du travail (optionnel) :</p>
         <input type="file" id="photo-job" accept="image/*" class="pd-field" style="padding:8px;">
 
         <p id="statut" style="font-size:0.85rem; color:#2e7d32;"></p>
         <div id="liste-volontaires" style="margin-top:15px; display:none;">
-            <p style="font-weight:bold; color:#2e7d32;">Prestataires intéressés :</p>
+            <p style="font-weight:bold; color:#2e7d32; border-bottom: 2px solid #2e7d32; padding-bottom: 5px;">PRESTATAIRES INTÉRESSÉS :</p>
             <div id="container-volontaires"></div>
         </div>
         <button id="btn-envoyer" class="btn-primary-sm" style="width:100%; padding:15px; margin-top:10px; font-size:1.1rem; text-transform:uppercase;">
@@ -133,7 +138,23 @@
             }
         };
 
-        function activerModeGestion() {
+        function activerModeGestion(data) {
+            document.getElementById('page-title').innerText = "GESTION DE MON OFFRE";
+            
+            // Masquer le formulaire de création
+            document.getElementById('description-job').style.display = 'none';
+            document.getElementById('prix-propose').style.display = 'none';
+            document.getElementById('date-selection-block').style.display = 'none';
+            document.getElementById('label-photo').style.display = 'none';
+            document.getElementById('photo-job').style.display = 'none';
+            
+            // Afficher le récapitulatif
+            if (data) {
+                document.getElementById('details-recap').style.display = 'block';
+                document.getElementById('recap-desc').innerText = data.description;
+                document.getElementById('recap-prix').innerText = data.prix;
+            }
+
             document.getElementById('btn-envoyer').style.display = 'none';
             document.getElementById('btn-augmenter').style.display = 'block';
             document.getElementById('btn-annuler').style.display = 'block';
@@ -159,7 +180,7 @@
                 if (data.id) {
                     document.getElementById('description-job').value = data.description;
                     document.getElementById('prix-propose').value = data.prix;
-                    activerModeGestion();
+                    activerModeGestion(data);
                     pollTimer = setInterval(verifierOffre, 3000);
                 }
             });
@@ -187,7 +208,10 @@
                                 <div style="font-size:0.85rem; font-weight:bold; color:#2e7d32;">${p.prenom} ${p.nom}</div>
                                 <div style="font-size:0.75rem; color:#FF6600;">⭐ ${p.etoiles}/5 · ${p.profession}</div>
                             </div>
-                            <button onclick="finaliserChoix(${p.id}, ${data.prix})" style="padding:6px 12px; background:#FF6600; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">CHOISIR</button>
+                            <div style="display:flex; flex-direction:column; gap:5px;">
+                                <button onclick="location.href='/voir-prestataire?id=${p.id}'" style="padding:4px 8px; background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.7rem;">VOIR</button>
+                                <button onclick="finaliserChoix(${p.id}, ${data.prix})" style="padding:6px 12px; background:#FF6600; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:bold;">ACCEPTER</button>
+                            </div>
                         </div>
                     `).join('');
                     document.getElementById('statut').innerText = data.list.length + ' prestataire(s) ont accepté votre prix !';

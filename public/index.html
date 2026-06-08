@@ -407,6 +407,31 @@
                     missionCount = mData.length;
                 }, 2000);
             }
+
+            // Surveillance des acceptations pour les Services Particuliers (Mode Client)
+            let offerNotifCount = 0;
+            setInterval(async () => {
+                if (!connecte) return;
+                const rO = await fetch('/api/notifs-offres-particulieres');
+                const oData = await rO.json();
+                const flashOffre = document.getElementById('alerte-offre-particuliere-flash');
+                if (oData && oData.length > 0) {
+                    if (oData.length > offerNotifCount) {
+                        document.getElementById('notif-sound').play().catch(e => {});
+                    }
+                    const nb = oData.length;
+                    document.getElementById('notif-offre-text').innerText = 
+                        nb > 1 ? `${nb} prestataires ont accepté vos offres !` : `Un prestataire a accepté votre offre !`;
+                    document.getElementById('btn-notif-offre').onclick = () => {
+                        window.location.href = `/discuter?offreId=${oData[0].id}`;
+                    };
+                    flashOffre.style.display = 'block';
+                    offerNotifCount = nb;
+                } else {
+                    flashOffre.style.display = 'none';
+                    offerNotifCount = 0;
+                }
+            }, 4000);
         }).catch(() => {});
         
         async function allerCommander(service, prix) {
@@ -510,6 +535,12 @@
         🚨 NOUVELLE MISSION REÇUE ! 🚨 <br>
         <span style="font-size:0.9rem;">Répondez dans le délai choisi par le client.</span><br>
         <button onclick="location.href='/prestataire-info'" style="margin-top:10px; padding:8px 15px; background:#2e7d32; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">VOIR L'OFFRE MAINTENANT</button>
+    </div>
+
+    <div id="alerte-offre-particuliere-flash" style="display:none; position:fixed; bottom:0; left:0; width:100%; background:#2e7d32; color:white; padding:15px; text-align:center; z-index:10000; font-weight:bold; box-shadow:0 -4px 10px rgba(0,0,0,0.3); border-top:4px solid #FF6600;">
+        🎉 BONNE NOUVELLE ! 🎉 <br>
+        <span id="notif-offre-text" style="font-size:0.9rem;">Un prestataire a accepté votre prix !</span><br>
+        <button id="btn-notif-offre" style="margin-top:10px; padding:8px 15px; background:#FF6600; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">FINALISER MON CHOIX</button>
     </div>
 </body>
 </html>

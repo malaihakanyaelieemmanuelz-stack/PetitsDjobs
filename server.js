@@ -2017,6 +2017,8 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     const offre = offresDiscuter.find(o => o.id === offreId);
     if (!offre) return res.status(404).json({ error: 'Offre introuvable' });
     const prestataireId = req.session.user.id;
+    const prestaNom = [req.session.user.prenom, req.session.user.nom].filter(Boolean).join(' ');
+
     if (!req.session.user.isPrestataire) return res.status(403).json({ error: 'Seuls les prestataires peuvent accepter.' });
     if (normaliserId(offre.clientId) === normaliserId(prestataireId)) {
         return res.status(403).json({ error: 'Vous ne pouvez pas accepter votre propre tâche.' });
@@ -2025,6 +2027,23 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
     const ids = (offre.acceptations || []).map(a => normaliserId(a));
     if (!ids.includes(normaliserId(prestataireId))) {
         offre.acceptations.push(prestataireId);
+
+        // Notification par email au client
+        if (offre.emailClient && resend) {
+            safeSendEmail({
+                from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+                to: offre.emailClient,
+                subject: '🎉 Un prestataire a accepté votre offre !',
+                html: `
+                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #FF6600;">Bonne nouvelle !</h2>
+                        <p>Le prestataire <strong>${prestaNom}</strong> est intéressé par votre offre : <em>"${offre.description}"</em> pour <strong>${offre.prix} FCFA</strong>.</p>
+                        <p>Connectez-vous dès maintenant pour finaliser votre choix et démarrer la mission.</p>
+                        <a href="https://petitsdjobs.com/discuter?offreId=${offre.id}" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Finaliser mon choix</a>
+                    </div>
+                `
+            });
+        }
     }
     res.json({ ok: true, message: 'Offre acceptée ! Attendez le choix du client.' });
 });
