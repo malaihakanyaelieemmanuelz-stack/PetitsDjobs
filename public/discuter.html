@@ -118,7 +118,7 @@
                         activerModeGestion(recapData);
                         marquerOffreVue(offreId);
                         verifierOffre(); // Premier check immédiat
-                        pollTimer = setInterval(verifierOffre, 2000);
+                        pollTimer = setInterval(verifierOffre, 1500);
                     }
                 } catch (err) {
                     alert("Erreur lors de l'envoi de l'offre.");
@@ -190,7 +190,8 @@
                     document.getElementById('prix-propose').value = data.prix;
                     activerModeGestion(data);
                     marquerOffreVue(offreId);
-                    pollTimer = setInterval(verifierOffre, 3000);
+                    verifierOffre(); // Appel immédiat au chargement
+                    pollTimer = setInterval(verifierOffre, 1500);
                 }
             });
         }
@@ -212,6 +213,7 @@
             if (res.ok) {
                 document.getElementById('recap-prix').innerText = nouveauPrix;
                 document.getElementById('statut').innerText = "Prix augmenté ! En attente de nouveaux prestataires...";
+                verifierOffre(); // Rafraîchir immédiatement après l'augmentation
             }
         };
 

@@ -1076,6 +1076,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         return {
             ...m,
             delaiMinutes: meta.delaiMinutes || 1,
+            vuParPresta: meta.vuParPresta || false,
             expireDansMs: expireDans,
             expire: expireDans <= 0,
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }

@@ -218,6 +218,9 @@
             }
             if (res.ok) {
                 if (action === 'accepter') {
+                    // On informe immédiatement le serveur que la mission est vue
+                    await fetch('/api/marquer-mission-vue/' + id, { method: 'POST' });
+                    
                     await fetch('/preparer-commande', {
                        method: 'POST',
                        headers: {'Content-Type': 'application/json'},
