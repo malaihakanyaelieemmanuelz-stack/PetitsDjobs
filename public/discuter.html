@@ -56,6 +56,16 @@
         let offreId = null;
         let pollTimer = null;
         let startTime = null;
+        let userLat = null;
+        let userLon = null;
+
+        // Démarrer la recherche GPS dès le chargement pour éviter l'attente au clic
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(pos => {
+                userLat = pos.coords.latitude;
+                userLon = pos.coords.longitude;
+            }, null, { enableHighAccuracy: true });
+        }
 
         function toggleDatePicker() {
             const mode = document.getElementById('select-date-mode').value;
@@ -66,10 +76,10 @@
             const prix = document.getElementById('prix-propose').value;
             const desc = document.getElementById('description-job').value;
             const photoInput = document.getElementById('photo-job');
+            const btnEnvoyer = document.getElementById('btn-envoyer');
 
             if (!prix) return alert('Indiquez un prix.');
             if (!desc) return alert('Précisez la nature du service.');
-            if (!navigator.geolocation) return alert('GPS requis.');
 
             const dateMode = document.getElementById('select-date-mode').value;
             let dateVal = 'today';
@@ -80,13 +90,15 @@
                 dateVal = `${d} à ${t}`;
             }
 
-            navigator.geolocation.getCurrentPosition(async pos => {
+            async function executerEnvoi(lat, lon) {
+                btnEnvoyer.innerText = "ENVOI EN COURS...";
+                btnEnvoyer.disabled = true;
                 try {
                     const formData = new FormData();
                     formData.append('prix', prix);
                     formData.append('description', desc);
-                    formData.append('lat', pos.coords.latitude);
-                    formData.append('lon', pos.coords.longitude);
+                    formData.append('lat', lat);
+                    formData.append('lon', lon);
                     formData.append('datePrevue', dateVal);
                     if (photoInput.files[0]) formData.append('photo_job', photoInput.files[0]);
 
@@ -102,8 +114,23 @@
                     }
                 } catch (err) {
                     alert("Erreur lors de l'envoi de l'offre.");
+                    btnEnvoyer.innerText = "ENVOYER AUX PRESTATAIRES PROCHES";
+                    btnEnvoyer.disabled = false;
                 }
-            }, () => alert('Autorisez la localisation.'));
+            }
+
+            if (userLat && userLon) {
+                // Exécution instantanée car on a déjà la position en mémoire
+                executerEnvoi(userLat, userLon);
+            } else if (navigator.geolocation) {
+                btnEnvoyer.innerText = "RECHERCHE GPS...";
+                navigator.geolocation.getCurrentPosition(
+                    pos => executerEnvoi(pos.coords.latitude, pos.coords.longitude),
+                    () => { alert('Autorisez la localisation.'); btnEnvoyer.innerText = "ENVOYER AUX PRESTATAIRES PROCHES"; }
+                );
+            } else {
+                alert('GPS non supporté.');
+            }
         };
 
         function activerModeGestion() {
