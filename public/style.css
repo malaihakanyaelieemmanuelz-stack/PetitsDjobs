@@ -493,7 +493,7 @@ body {
 /* --- Indicateur de chargement discret --- */
 .loader-gps {
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #FF6600; /* Orange Modèle */
+    border-top: 4px solid #FF6600;
     border-radius: 50%;
     width: 45px; height: 45px;
     animation: spin-gps 1s linear infinite;
@@ -501,9 +501,29 @@ body {
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    width: auto;
+    height: auto;
+    animation: none;
 }
 
-@keyframes spin-gps { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+.loader-gps::before {
+    content: "";
+    border: 4px solid #e8f5e9;
+    border-top: 4px solid #FF6600;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin-gps 1s linear infinite;
+    display: block;
+}
+
+@keyframes spin-gps { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* --- Éléments de Navigation Flottants (Style Maps Android) --- */
 .floating-top-info {
@@ -551,11 +571,241 @@ body {
     left: 0;
     right: 0;
     background: white;
-    padding: 12px 15px 25px; /* Plus fin */
+    padding: 12px 15px calc(20px + env(safe-area-inset-bottom, 0px));
     border-radius: 25px 25px 0 0;
     box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
     z-index: 1001;
     text-align: center;
+}
+
+/* --- Suivi GPS Prestataire (navigation Android) --- */
+.tracking-presta #map {
+    z-index: 0;
+}
+
+.tracking-nav-card {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top, 0px));
+    left: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #FF6600 0%, #e55a00 100%);
+    color: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    z-index: 1001;
+}
+
+.tracking-nav-direction {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+}
+
+.tracking-nav-arrow {
+    font-size: 2.8rem;
+    line-height: 1;
+    font-weight: 900;
+    min-width: 52px;
+    text-align: center;
+    transition: transform 0.35s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.tracking-nav-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.tracking-nav-hint {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 4px;
+}
+
+.tracking-nav-bearing {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.tracking-client-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.tracking-client-photo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.tracking-client-name {
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.tracking-status-label {
+    font-size: 0.75rem;
+    opacity: 0.85;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tracking-presta .nav-actions-top {
+    margin-top: 0;
+    gap: 8px;
+}
+
+.tracking-presta .btn-nav {
+    min-height: 44px !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    max-width: none;
+    flex: 1 1 auto;
+}
+
+.tracking-fab {
+    position: fixed;
+    right: 14px;
+    z-index: 1002;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: #FF6600;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tracking-fab-recenter {
+    bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+}
+
+.tracking-fab-maps {
+    bottom: calc(195px + env(safe-area-inset-bottom, 0px));
+    background: #2e7d32;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.tracking-bottom-presta {
+    padding-top: 10px;
+}
+
+.tracking-distance-big {
+    font-weight: 900;
+    font-size: 1.35rem;
+    color: #FF6600;
+    margin-bottom: 4px;
+}
+
+.tracking-eta {
+    font-size: 0.85rem;
+    color: #2e7d32;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.tracking-sos-note {
+    font-size: 0.7rem;
+    color: #FF6600;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.tracking-legend {
+    position: fixed;
+    left: 10px;
+    bottom: calc(115px + env(safe-area-inset-bottom, 0px));
+    z-index: 1001;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    line-height: 1.5;
+}
+
+.tracking-legend span {
+    display: block;
+}
+
+.tracking-legend .leg-me { color: #2e7d32; }
+.tracking-legend .leg-client { color: #FF6600; }
+
+.loader-gps p {
+    margin: 12px 0 0;
+    font-size: 0.85rem;
+    color: #2e7d32;
+    font-weight: 700;
+    text-align: center;
+    width: 140px;
+}
+
+@media (max-width: 768px) {
+    .tracking-client .btn-nav,
+    .tracking-client .btn-primary-sm {
+        min-height: 48px !important;
+        font-size: 0.95rem !important;
+    }
+
+    .tracking-client-top {
+        padding: 12px 14px !important;
+    }
+
+    .tracking-client-top h2 {
+        font-size: 1.1rem !important;
+    }
+
+    .tracking-nav-card {
+        left: 8px;
+        right: 8px;
+        padding: 12px 14px;
+    }
+
+    .tracking-nav-arrow {
+        font-size: 3.2rem;
+        min-width: 56px;
+    }
+
+    .tracking-nav-hint {
+        font-size: 1.12rem;
+    }
+
+    .tracking-presta .btn-nav {
+        min-height: 48px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .tracking-distance-big {
+        font-size: 1.5rem;
+    }
+
+    .tracking-fab {
+        width: 56px;
+        height: 56px;
+    }
 }
 
 .provider-grid {
@@ -1069,13 +1319,13 @@ body {
     /* Centrage forcé du carrousel horizontal */
     .scroll-container {
         justify-content: flex-start !important; 
-        padding: 20px 10px !important;
+        padding: 8px 10px !important;
         display: flex;
-        gap: 15px;
+        gap: 12px;
     }
 
     .profile-card, .provider-card {
-        flex: 0 0 250px !important;
+        flex: 0 0 220px !important;
         background: white !important; /* Restaure le fond blanc pour la visibilité */
         box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; /* Restaure l'ombre des cartes */
         border: 1px solid #eee !important;
@@ -1342,6 +1592,70 @@ body {
     object-fit: cover;
 }
 
+/* Ma carte de visite — textes et zones un peu plus grands sur Android */
+@media (max-width: 768px) {
+    body.page-presta-carte {
+        font-size: 1.08rem;
+    }
+
+    body.page-presta-carte .profile-card.full-screen .card-body-content h2 {
+        font-size: 2.2rem !important;
+    }
+
+    body.page-presta-carte .profile-card.full-screen .profession {
+        font-size: 1.35rem !important;
+    }
+
+    body.page-presta-carte .profile-card.full-screen .stats-pill {
+        font-size: 1.15rem !important;
+        padding: 10px 20px !important;
+    }
+
+    body.page-presta-carte .profile-card.full-screen .card-avatar-wrapper {
+        width: 130px !important;
+        height: 130px !important;
+        margin: -65px auto 16px !important;
+    }
+
+    body.page-presta-carte .realisation-item {
+        flex: 0 0 160px;
+        height: 220px;
+    }
+
+    body.page-presta-carte .espace-pub-box p,
+    body.page-presta-carte .espace-pub-box .pub-empty-msg {
+        font-size: 1rem !important;
+    }
+
+    body.page-presta-carte .espace-pub-box h3 {
+        font-size: 1.35rem !important;
+    }
+
+    body.page-presta-carte .espace-pub-box button {
+        font-size: 1.05rem !important;
+        padding: 18px !important;
+    }
+
+    body.page-presta-carte #zone-missions h3 {
+        font-size: 1.25rem !important;
+    }
+
+    body.page-presta-carte .mission-card-item {
+        font-size: 1rem !important;
+    }
+
+    body.page-presta-carte .mission-card-item button {
+        font-size: 0.95rem !important;
+        padding: 14px !important;
+    }
+
+    body.page-presta-carte .btn-outline,
+    body.page-presta-carte .btn-primary-sm {
+        min-height: 72px !important;
+        font-size: 1.35rem !important;
+    }
+}
+
 .job-card-particulier {
     flex: 0 0 220px;
     background: white;
@@ -1412,9 +1726,93 @@ body {
     text-align: center; text-transform: uppercase;
 }
 
+.scroll-container .profile-card {
+    width: 235px;
+}
+
+.scroll-container .profile-card .card-header-banner {
+    height: 40px;
+}
+
+.scroll-container .profile-card .card-pub-preview,
+.scroll-container .profile-card .card-pub-empty {
+    height: 48px;
+}
+
+.scroll-container .profile-card .card-avatar-wrapper {
+    width: 52px;
+    height: 52px;
+    margin: -26px auto 2px;
+}
+
+.scroll-container .profile-card .card-avatar-wrapper img {
+    border-width: 2px;
+}
+
+.scroll-container .profile-card .card-status-dot {
+    width: 11px;
+    height: 11px;
+    bottom: 2px;
+    right: 2px;
+}
+
+.scroll-container .profile-card .card-body-content {
+    padding: 2px 10px 8px;
+}
+
+.scroll-container .profile-card .card-body-content > p:first-child {
+    font-size: 0.6rem !important;
+    margin-bottom: 2px !important;
+}
+
+.scroll-container .profile-card .card-body-content h3 {
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.scroll-container .profile-card .profession {
+    font-size: 0.65rem;
+    margin-bottom: 4px;
+}
+
+.scroll-container .profile-card .stats-pill {
+    padding: 2px 8px;
+    font-size: 0.62rem;
+    margin-bottom: 5px;
+    gap: 6px;
+}
+
+.scroll-container .profile-card .services-txt {
+    display: none;
+}
+
+.scroll-container .profile-card .card-action-btn {
+    padding: 6px 8px;
+    font-size: 0.62rem;
+    border-radius: 8px;
+}
+
+.card-pub-empty {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255, 102, 0, 0.1) 0%, rgba(46, 125, 50, 0.12) 100%);
+    border-bottom: 2px solid var(--pd-orange);
+}
+
+.card-pub-empty-text {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--pd-green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+}
+
 .card-pub-preview {
     width: 100%;
-    height: 100px;
+    height: 48px;
     overflow: hidden;
     background: var(--pd-green-light);
     border-bottom: 2px solid var(--pd-orange);

@@ -136,8 +136,8 @@
         </div>
     </section>
 
-    <section class="app-wrap" style="padding: 40px 20px; text-align: center; background: #f9f9f9; margin-top: 20px;">
-        <h2 style="color:#2e7d32;">Les meilleurs prestataires proches</h2>
+    <section class="app-wrap" style="padding: 15px 15px 10px; text-align: center; background: #f9f9f9; margin-top: 10px;">
+        <h2 style="color:#2e7d32; margin: 0 0 8px; font-size: 1.1rem;">Les meilleurs prestataires proches</h2>
         <div class="scroll-container" id="container-prestataires"></div>
     </section>
 
@@ -275,7 +275,8 @@
                     ${rendreMediaShowcase(p.showcaseUrl, p.showcaseType)}
                     ${inviteBtn}
                 </div>` : `
-                <div class="card-header-banner" style="position:relative;">
+                <div class="card-pub-empty" style="position:relative;">
+                    <span class="card-pub-empty-text">Aucune pub</span>
                     ${inviteBtn}
                 </div>`;
             
@@ -467,7 +468,7 @@
             let url = `/get-top-prestataires?lat=${userLat || 'undefined'}&lon=${userLon || 'undefined'}`;
             console.log("❌ [DEBUG-DATA] Appel API : " + url);
             
-            fetch(url).then(res => res.json()).then(data => {
+            fetch(url, { cache: 'no-store' }).then(res => res.json()).then(data => {
                 const container = document.getElementById('container-prestataires');
                 console.log(`❌ [DEBUG-DATA] Prestataires reçus : ${data ? data.length : 0}`);
                 
@@ -495,21 +496,9 @@
             }).catch(err => console.error("Erreur polling carrousel", err));
         }
 
-        // Polling des données
-        setInterval(rafraichirCarrousel, 5000);
+        // Polling des données (3 s : pubs supprimées disparaissent vite de l'accueil)
+        setInterval(rafraichirCarrousel, 3000);
         setInterval(chargerJobsPublics, 5000);
-
-        async function chargerShowcase() {
-            try {
-                const section = document.getElementById('showcase-section');
-                if (section.style.display === 'block') return;
-                const res = await fetch('/api/get-showcase');
-                const items = await res.json();
-                if (items && items.length > 0) afficherBandeauPub(items);
-            } catch (e) { console.warn("Showcase indisponible"); }
-        }
-        chargerShowcase();
-        setInterval(chargerShowcase, 15000);
     </script>
 
     <!-- Éléments invisibles déplacés en bas pour ne pas pousser le contenu -->

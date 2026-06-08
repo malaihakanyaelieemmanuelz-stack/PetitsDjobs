@@ -9,38 +9,56 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/leaflet-polyline-decorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
-    <title>Navigation Prestataire - PetitsDjobs</title>
+    <title>Navigation vers le client - PetitsDjobs</title>
 </head>
-<body class="tracking-body">
-    <div class="loader-gps" id="main-loader"></div>
+<body class="tracking-body tracking-presta">
+    <div class="loader-gps" id="main-loader"><p id="loader-msg">Recherche du GPS…</p></div>
     <div id="map"></div>
 
-    <div class="floating-top-info" style="background: #FF6600; color: white;">
-        <div id="navigation-hint" class="nav-hint-google">⬆️ Suivez l'itinéraire bleu</div>
-        <h2 id="status-mission" style="font-size: 1.1rem; margin: 0; color: white;">TABLEAU DE BORD PRESTATAIRE</h2>
-        <p id="mission-info" style="color:rgba(255,255,255,0.8); font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Initialisation du GPS...</p>
-        
+    <div class="tracking-legend">
+        <span class="leg-me">● Vous (vert)</span>
+        <span class="leg-client">● Client (orange)</span>
+    </div>
+
+    <button type="button" id="btn-recenter" class="tracking-fab tracking-fab-recenter" title="Me recentrer">📍</button>
+    <button type="button" id="btn-ext-nav" class="tracking-fab tracking-fab-maps" title="Ouvrir Google Maps">Maps</button>
+
+    <div class="tracking-nav-card">
+        <div class="tracking-nav-direction">
+            <div id="nav-arrow" class="tracking-nav-arrow">↑</div>
+            <div class="tracking-nav-text">
+                <div id="navigation-hint" class="tracking-nav-hint">Initialisation du GPS…</div>
+                <div id="nav-bearing-label" class="tracking-nav-bearing">Orientation en cours…</div>
+            </div>
+        </div>
+
+        <div class="tracking-client-row">
+            <img id="client-photo" src="default-profile.png" alt="Client" class="tracking-client-photo" onerror="this.src='default-profile.png'">
+            <div>
+                <div id="client-name" class="tracking-client-name">Votre client</div>
+                <div id="status-mission" class="tracking-status-label">En route vers le client</div>
+                <div id="mission-info" style="font-size:0.7rem; opacity:0.85; margin-top:2px;"></div>
+            </div>
+        </div>
+
         <div class="nav-actions-top">
-            <button onclick="location.href='/chat.html?missionId='+missionId" class="btn-primary-sm btn-nav" style="background:#fff; color:#FF6600;">💬 CHAT</button>
-            <div id="group-presta-arrive" style="display:none; width:100%; gap:8px;">
-                <button onclick="marquerArrivee()" class="btn-primary-sm btn-nav" style="background:#2e7d32; flex:1;">JE SUIS ARRIVÉ</button>
+            <button type="button" onclick="location.href='/chat.html?missionId='+missionId" class="btn-primary-sm btn-nav" style="background:#fff; color:#FF6600;">💬 CHAT</button>
+            <div id="group-presta-arrive" style="display:none; flex:1; gap:8px;">
+                <button type="button" onclick="marquerArrivee()" class="btn-primary-sm btn-nav" style="background:#2e7d32; flex:1;">✓ JE SUIS ARRIVÉ</button>
             </div>
-
-            <button id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm btn-nav" style="display:none; background:#FF6600;">TÂCHE TERMINÉE</button>
-            
-            <div id="group-securite" style="display:none; width:100%; gap:8px;">
-                <button onclick="repondreSecurite('safe')" class="btn-primary-sm btn-nav" style="background:#2e7d32; flex:1;">EN SÉCURITÉ</button>
+            <button type="button" id="btn-fini-tache" onclick="terminerTache()" class="btn-primary-sm btn-nav" style="display:none; background:#fff; color:#2e7d32;">TÂCHE TERMINÉE</button>
+            <div id="group-securite" style="display:none; flex:1; gap:8px;">
+                <button type="button" onclick="repondreSecurite('safe')" class="btn-primary-sm btn-nav" style="background:#2e7d32; flex:1;">EN SÉCURITÉ</button>
             </div>
-
-            <button id="btn-sos" onclick="declencherSOS()" class="btn-danger btn-nav" style="display:none;">🆘 SOS</button>
+            <button type="button" id="btn-sos" onclick="declencherSOS()" class="btn-danger btn-nav" style="display:none;">🆘 SOS</button>
         </div>
     </div>
 
-    <div class="floating-bottom-actions">
-        <div id="gps-info" style="font-weight: 800; margin-bottom: 15px; color: #FF6600; font-size: 1.1rem;">Calcul de la distance...</div>
-        <p style="font-size: 0.75rem; color: #FF6600; text-align: center; margin-top: 8px; font-weight: bold;">⚠️ Toute fausse alerte (usage abusif) entraînera la suppression définitive de votre compte.</p>
+    <div class="floating-bottom-actions tracking-bottom-presta">
+        <div id="gps-info" class="tracking-distance-big">Calcul de la distance…</div>
+        <div id="gps-eta" class="tracking-eta">Temps estimé à pied…</div>
+        <p class="tracking-sos-note">⚠️ Toute fausse alerte SOS entraînera la suppression de votre compte.</p>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -48,116 +66,257 @@
     <script>
         let map, markerMe, markerDest, routingControl, missionId;
         let clientPos = null;
+        let clientInfo = null;
         let lastDist = null;
         let aConfirmeSecurite = false;
         let hasCentered = false;
+        let followMode = true;
+        let fallbackLine = null;
+        let arrowDecorator = null;
+        let lastRouteUpdate = 0;
+        let lastRouteLat = null;
+        let lastRouteLon = null;
+        let deviceHeading = null;
+        let isUpdatingStatus = false;
 
-        function logDebug(msg) {
-            console.log("[DEBUG SUIVI] " + msg);
-            document.getElementById('mission-info').innerText = msg;
-        }
-
-        // Prestataire (Moi) en VERT
-        const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#2e7d32; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-        // Client en ORANGE
-        const iconDest = L.divIcon({ className: 'custom-icon', html: '<div style="background:#FF6600; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 0 8px rgba(0,0,0,0.4);"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-
-        // Initialisation avec délai pour Android
-        window.addEventListener('load', () => {
-            setTimeout(init, 500);
+        const iconMe = L.divIcon({
+            className: 'custom-icon',
+            html: '<div style="background:#2e7d32;width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 0 12px rgba(46,125,50,0.6);"></div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
+        });
+        const iconDest = L.divIcon({
+            className: 'custom-icon',
+            html: '<div style="background:#FF6600;width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 0 12px rgba(255,102,0,0.6);"></div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
         });
 
+        const DIRECTIONS = ['Nord', 'Nord-Est', 'Est', 'Sud-Est', 'Sud', 'Sud-Ouest', 'Ouest', 'Nord-Ouest'];
+
+        function haversineM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function getBearing(lat1, lon1, lat2, lon2) {
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+            const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+
+        function bearingLabel(b) {
+            return DIRECTIONS[Math.round(b / 45) % 8];
+        }
+
+        function formatDist(m) {
+            if (m == null || isNaN(m)) return '—';
+            return m < 1000 ? Math.round(m) + ' m' : (m / 1000).toFixed(1) + ' km';
+        }
+
+        function formatEtaMinutes(distM) {
+            const min = Math.max(1, Math.round(distM / 80));
+            return min < 60 ? `~${min} min à pied` : `~${Math.round(min / 60)} h ${min % 60} min`;
+        }
+
+        function logDebug(msg) {
+            console.log('[SUIVI PRESTA] ' + msg);
+            const el = document.getElementById('mission-info');
+            if (el) el.innerText = msg;
+        }
+
+        function updateDirectionUI(myLat, myLon, distM) {
+            if (!clientPos || clientPos.lat == null) return;
+            const bearing = getBearing(myLat, myLon, clientPos.lat, clientPos.lon);
+            const label = bearingLabel(bearing);
+            document.getElementById('nav-bearing-label').innerText = `Direction : ${label} (${Math.round(bearing)}°)`;
+
+            let arrowRotation = bearing;
+            if (deviceHeading != null) {
+                arrowRotation = bearing - deviceHeading;
+            }
+            document.getElementById('nav-arrow').style.transform = `rotate(${arrowRotation}deg)`;
+
+            if (distM != null) {
+                document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${formatDist(distM)}</strong>`;
+                document.getElementById('gps-eta').innerText = formatEtaMinutes(distM);
+            }
+        }
+
+        function drawFallbackLine(myLat, myLon) {
+            if (!clientPos || clientPos.lat == null) return;
+            const pts = [[myLat, myLon], [clientPos.lat, clientPos.lon]];
+            if (fallbackLine) map.removeLayer(fallbackLine);
+            fallbackLine = L.polyline(pts, {
+                color: '#FF6600',
+                weight: 5,
+                opacity: 0.85,
+                dashArray: '8, 12'
+            }).addTo(map);
+
+            if (arrowDecorator) map.removeLayer(arrowDecorator);
+            arrowDecorator = L.polylineDecorator(fallbackLine, {
+                patterns: [{
+                    offset: '100%', repeat: 0,
+                    symbol: L.Symbol.arrowHead({
+                        pixelSize: 14, polygon: false,
+                        pathOptions: { stroke: true, color: '#2e7d32', weight: 4 }
+                    })
+                }]
+            }).addTo(map);
+
+            const dist = haversineM(myLat, myLon, clientPos.lat, clientPos.lon);
+            document.getElementById('navigation-hint').innerText = `Avancez vers le ${bearingLabel(getBearing(myLat, myLon, clientPos.lat, clientPos.lon))}`;
+            updateDirectionUI(myLat, myLon, dist);
+            verifierProximite(dist);
+        }
+
+        function fitMapToRoute() {
+            const me = markerMe.getLatLng();
+            if (!clientPos || clientPos.lat == null || (me.lat === 0 && me.lng === 0)) return;
+            const bounds = L.latLngBounds([me.lat, me.lng], [clientPos.lat, clientPos.lon]);
+            map.fitBounds(bounds.pad(0.35), { animate: true, maxZoom: 17 });
+        }
+
+        function recenterOnMe() {
+            followMode = true;
+            const me = markerMe.getLatLng();
+            if (me.lat !== 0 || me.lng !== 0) {
+                map.setView([me.lat, me.lng], 17, { animate: true });
+            }
+        }
+
+        function openExternalNav() {
+            if (!clientPos || clientPos.lat == null) {
+                alert('Position du client pas encore reçue.');
+                return;
+            }
+            const { lat, lon } = clientPos;
+            const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`;
+            window.open(gmaps, '_blank');
+        }
+
+        window.addEventListener('load', () => setTimeout(init, 400));
+
         function init() {
-            map = L.map('map', { zoomControl: false }).setView([0, 0], 15);
+            if (map) return;
+
+            map = L.map('map', { zoomControl: false, attributionControl: false }).setView([0, 0], 16);
             L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
-                subdomains:['mt0','mt1','mt2','mt3'],
-                attribution: '© Google Maps'
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(map);
-            
-            markerMe = L.marker([0, 0], { icon: iconMe }).addTo(map);
-            markerDest = L.marker([0, 0], { icon: iconDest }).addTo(map);
+
+            markerMe = L.marker([0, 0], { icon: iconMe, zIndexOffset: 1000 }).addTo(map);
+            markerDest = L.marker([0, 0], { icon: iconDest, zIndexOffset: 999 }).addTo(map);
 
             routingControl = L.Routing.control({
                 waypoints: [],
-                lineOptions: { 
+                lineOptions: {
                     styles: [
-                        { color: 'white', opacity: 0.6, weight: 12 }, 
-                        { color: '#2e7d32', opacity: 1, weight: 7, dashArray: '10, 15' } // Ligne en pointillés verts
-                    ] 
+                        { color: 'white', opacity: 0.5, weight: 14 },
+                        { color: '#2e7d32', opacity: 1, weight: 8 }
+                    ]
                 },
                 createMarker: () => null,
                 addWaypoints: false,
                 show: false,
-                router: L.Routing.osrmv1({ serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1' }),
-                routeWhileDragging: true // Permet de recalculer la route si les marqueurs sont déplacés (utile pour le debug)
+                fitSelectedRoutes: false,
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://routing.openstreetmap.de/routed-foot/route/v1'
+                })
             }).addTo(map);
 
-            routingControl.on('routesfound', function(e) {
-                const routes = e.routes;
-                const summary = routes[0].summary;
+            routingControl.on('routesfound', (e) => {
+                const route = e.routes[0];
+                const summary = route.summary;
+                const distM = summary.totalDistance;
 
-                // Ajout de la flèche dirigée vers le client (fin de la ligne)
-                if (window.arrowDecorator) map.removeLayer(window.arrowDecorator);
-                window.arrowDecorator = L.polylineDecorator(routes[0].coordinates, {
-                    patterns: [
-                        {offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 15, polygon: false, pathOptions: {stroke: true, color: '#2e7d32', weight: 4}})}
-                    ]
+                if (arrowDecorator) map.removeLayer(arrowDecorator);
+                arrowDecorator = L.polylineDecorator(route.coordinates, {
+                    patterns: [{
+                        offset: '100%', repeat: 0,
+                        symbol: L.Symbol.arrowHead({
+                            pixelSize: 16, polygon: false,
+                            pathOptions: { stroke: true, color: '#FF6600', weight: 5 }
+                        })
+                    }]
                 }).addTo(map);
 
-                const instructions = routes[0].instructions;
-
-                const distM = summary.totalDistance; // Distance réelle à pied
-                const label = distM < 1000 ? Math.round(distM) + " mètres" : (distM/1000).toFixed(2) + " km";
-                document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${label}</strong>`;
-                
-                // Affiche le guidage dynamique dans le bandeau marron
-                if (instructions && instructions.length > 0) {
-                    const nextStep = instructions[1] || instructions[0];
-                    document.getElementById('navigation-hint').innerHTML = `⬆️ ${nextStep.text}`;
-                    document.getElementById('navigation-hint').style.display = 'block';
+                if (fallbackLine) {
+                    map.removeLayer(fallbackLine);
+                    fallbackLine = null;
                 }
 
+                document.getElementById('gps-info').innerHTML = `📍 Client à <strong>${formatDist(distM)}</strong> (à pied)`;
+                document.getElementById('gps-eta').innerText = formatEtaMinutes(distM);
+
+                const instructions = route.instructions;
+                if (instructions && instructions.length > 0) {
+                    const step = instructions.find(s => s.distance > 5) || instructions[0];
+                    document.getElementById('navigation-hint').innerText = step.text.replace(/<[^>]*>/g, '');
+                }
+
+                const me = markerMe.getLatLng();
+                updateDirectionUI(me.lat, me.lng, distM);
                 verifierProximite(distM);
             });
 
+            routingControl.on('routingerror', () => {
+                const me = markerMe.getLatLng();
+                if (me.lat !== 0) drawFallbackLine(me.lat, me.lng);
+            });
+
+            document.getElementById('btn-recenter').addEventListener('click', recenterOnMe);
+            document.getElementById('btn-ext-nav').addEventListener('click', openExternalNav);
+
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (e) => {
+                    if (e.alpha != null) deviceHeading = e.alpha;
+                }, true);
+            }
+
+            map.on('dragstart', () => { followMode = false; });
+
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-                if (!cmd.missionId) {
-                    logDebug("Erreur : ID Mission manquant dans la session.");
-                    alert("Code Erreur: M1-NULL (Mission introuvable)");
+                const urlMissionId = new URLSearchParams(location.search).get('missionId');
+                missionId = cmd.missionId || urlMissionId;
+                if (!missionId) {
+                    alert('Mission introuvable. Retour à l\'accueil.');
+                    location.href = '/index.html';
                     return;
                 }
-                missionId = cmd.missionId;
-                logDebug("Mission " + missionId + " chargée. Recherche GPS...");
-                setInterval(pollClient, 3000);
-                setInterval(checkStatus, 2000);
-                startGPS(); // Lancer le GPS après avoir initialisé missionId
-            }).catch(e => logDebug("Erreur chargement session: " + e.message));
+                logDebug('Mission ' + missionId);
+                pollClient();
+                setInterval(pollClient, 2000);
+                setInterval(checkStatus, 2500);
+                startGPS();
+            }).catch(e => logDebug('Erreur session: ' + e.message));
         }
 
-        let isUpdatingStatus = false;
-
         function startGPS() {
-            const gpsOptions = {
-                enableHighAccuracy: false, // Plus rapide pour l'initialisation sur Android
-                maximumAge: 5000,
-                timeout: 10000
-            };
+            if (!navigator.geolocation) {
+                logDebug('GPS non disponible sur cet appareil.');
+                return;
+            }
 
-            navigator.geolocation.watchPosition(pos => {
-                // On cache le loader dès qu'on a le premier signal
+            const onPos = (pos) => {
                 document.getElementById('main-loader').style.display = 'none';
-
                 const { latitude: lat, longitude: lon, accuracy } = pos.coords;
-                logDebug(`GPS OK (±${Math.round(accuracy)}m)`);
 
-                const newPos = [lat, lon];
-                markerMe.setLatLng(newPos);
-                
-                // Suit le prestataire au fur et à mesure de son déplacement
-                if (!hasCentered || map.getBounds().contains(newPos) === false) {
-                    map.panTo(newPos);
-                    if(!hasCentered) { map.setZoom(17); hasCentered = true; }
+                if (accuracy > 120) {
+                    document.getElementById('loader-msg').innerText = 'GPS imprécis… restez dehors';
+                }
+
+                markerMe.setLatLng([lat, lon]);
+
+                if (followMode) {
+                    map.setView([lat, lon], map.getZoom() || 17, { animate: true });
+                    if (!hasCentered) { hasCentered = true; map.setZoom(17); }
                 }
 
                 fetch('/sauvegarder-position', {
@@ -166,43 +325,92 @@
                     body: JSON.stringify({ lat, lon })
                 });
 
-                if (clientPos) updateNav(lat, lon);
-            }, (err) => logDebug("Erreur GPS: " + err.message), gpsOptions);
+                if (clientPos && clientPos.lat != null) {
+                    updateNav(lat, lon);
+                    updateDirectionUI(lat, lon, haversineM(lat, lon, clientPos.lat, clientPos.lon));
+                }
+            };
+
+            const onErr = (err) => {
+                logDebug('GPS : ' + (err.message || 'autorisez la localisation'));
+                document.getElementById('navigation-hint').innerText = 'Autorisez le GPS dans les paramètres';
+            };
+
+            navigator.geolocation.watchPosition(onPos, onErr, {
+                enableHighAccuracy: true,
+                maximumAge: 3000,
+                timeout: 15000
+            });
+
+            navigator.geolocation.getCurrentPosition(onPos, () => {
+                navigator.geolocation.watchPosition(onPos, onErr, {
+                    enableHighAccuracy: false,
+                    maximumAge: 5000,
+                    timeout: 10000
+                });
+            }, { enableHighAccuracy: true, timeout: 8000 });
         }
 
         function pollClient() {
-            fetch('/api/suivi-client-gps?missionId=' + missionId).then(r => r.json()).then(pos => {
-                if (pos.lat) {
-                    logDebug("Position client reçue.");
-                    clientPos = pos;
-                    markerDest.setLatLng([pos.lat, pos.lon]);
-                    updateNav(); // Appeler updateNav sans arguments
-                } else {
-                    logDebug("En attente de la position du client...");
-                }
-            });
+            if (!missionId) return;
+            fetch('/api/suivi-client-gps?missionId=' + missionId, { cache: 'no-store' })
+                .then(r => r.json())
+                .then(pos => {
+                    if (pos.lat != null && pos.lon != null) {
+                        clientPos = pos;
+                        markerDest.setLatLng([pos.lat, pos.lon]);
+
+                        if (pos.client) {
+                            clientInfo = pos.client;
+                            const nom = [pos.client.prenom, pos.client.nom].filter(Boolean).join(' ') || 'Client';
+                            document.getElementById('client-name').innerText = nom;
+                            if (pos.client.photo) document.getElementById('client-photo').src = pos.client.photo;
+                        }
+                        if (pos.service) {
+                            document.getElementById('status-mission').innerText =
+                                (pos.service || 'Mission') + (pos.prix ? ' · ' + pos.prix + ' FCFA' : '');
+                        }
+
+                        const me = markerMe.getLatLng();
+                        if (me.lat !== 0 || me.lng !== 0) updateNav(me.lat, me.lng);
+                    } else {
+                        document.getElementById('navigation-hint').innerText = 'En attente de la position du client…';
+                    }
+                });
         }
 
-        async function updateNav() {
-            const myPos = markerMe.getLatLng(); // Position actuelle du prestataire
-            if (!clientPos || (myPos.lat === 0 && myPos.lng === 0) || (clientPos.lat === 0 && clientPos.lon === 0)) {
-                logDebug("En attente des deux positions pour l'itinéraire...");
+        function updateNav(lat, lon) {
+            if (!clientPos || clientPos.lat == null) return;
+            if (lat == null) {
+                const me = markerMe.getLatLng();
+                lat = me.lat; lon = me.lng;
+            }
+            if ((lat === 0 && lon === 0) || (clientPos.lat === 0 && clientPos.lon === 0)) return;
+
+            const now = Date.now();
+            const moved = lastRouteLat == null ? 999 : haversineM(lat, lon, lastRouteLat, lastRouteLon);
+            if (now - lastRouteUpdate < 10000 && moved < 20) {
+                updateDirectionUI(lat, lon, haversineM(lat, lon, clientPos.lat, clientPos.lon));
                 return;
             }
+
+            lastRouteUpdate = now;
+            lastRouteLat = lat;
+            lastRouteLon = lon;
+
             routingControl.setWaypoints([
-                L.latLng(myPos.lat, myPos.lng), // Prestataire
-                L.latLng(clientPos.lat, clientPos.lon) // Client
+                L.latLng(lat, lon),
+                L.latLng(clientPos.lat, clientPos.lon)
             ]);
         }
 
         async function verifierProximite(dist) {
-            // Vérification automatique du statut pour la zone de sécurité
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
             const data = await res.json();
             if (data.statut === 'en_route' && dist < 50 && (!lastDist || lastDist >= 50)) {
                 document.getElementById('group-presta-arrive').style.display = 'flex';
+                document.getElementById('navigation-hint').innerText = 'Vous êtes proche du client !';
             }
-            // Zone de sécurité des 20 mètres pour paiement automatique
             if (data.statut === 'attente_securite' && dist > 20 && !aConfirmeSecurite) {
                 aConfirmeSecurite = true;
                 repondreSecurite('safe');
@@ -211,17 +419,15 @@
         }
 
         async function checkStatus() {
-            // Si on est en train de cliquer sur un bouton, on ne laisse pas le polling écraser l'affichage
-            if (isUpdatingStatus) return;
-
+            if (isUpdatingStatus || !missionId) return;
             const res = await fetch('/api/statut-mission?missionId=' + missionId);
             const data = await res.json();
             if (data.statut === 'travail_en_cours') {
                 document.getElementById('group-presta-arrive').style.display = 'none';
                 document.getElementById('btn-fini-tache').style.display = 'block';
-                document.getElementById('status-mission').innerText = "Travail en cours";
+                document.getElementById('navigation-hint').innerText = 'Travail en cours chez le client';
             } else if (data.statut === 'termine') {
-                alert("Mission terminée !");
+                alert('Mission terminée !');
                 window.location.href = '/index.html';
             }
         }
@@ -229,39 +435,43 @@
         async function marquerArrivee() {
             isUpdatingStatus = true;
             document.getElementById('group-presta-arrive').style.display = 'none';
-            
-            await fetch('/api/marquer-arrivee', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
-            
-            setTimeout(() => {
-                isUpdatingStatus = false;
-                checkStatus();
-            }, 1000);
+            await fetch('/api/marquer-arrivee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ missionId })
+            });
+            setTimeout(() => { isUpdatingStatus = false; checkStatus(); }, 1000);
         }
 
         async function terminerTache() {
-            if (confirm("Confirmer la fin ?")) {
-                await fetch('/api/terminer-tache', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ missionId }) });
+            if (confirm('Confirmer la fin de la tâche ?')) {
+                await fetch('/api/terminer-tache', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ missionId })
+                });
             }
         }
 
         async function repondreSecurite(action) {
-            const res = await fetch('/api/confirmer-securite', { 
-                method: 'POST', 
-                headers: {'Content-Type':'application/json'}, 
-                body: JSON.stringify({ missionId, action }) 
+            const res = await fetch('/api/confirmer-securite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ missionId, action })
             });
             if (res.ok && action === 'safe') window.location.href = '/index.html';
         }
 
         async function declencherSOS() {
-            if (confirm("🚨 SIGNALER UN DANGER IMMÉDIAT ?\n\nATTENTION : L'usage abusif de ce bouton sans danger réel est strictement interdit. Toute fausse alerte entraînera des sanctions immédiates pouvant aller jusqu'à la suppression définitive de votre compte.")) {
-                const pos = markerMe.getLatLng();
-                await fetch('/alerte-sos', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ lat: pos.lat, lon: pos.lng }) });
-                alert("Alerte envoyée aux services de sécurité.");
-            }
+            if (!confirm('🚨 SIGNALER UN DANGER IMMÉDIAT ?\n\nUsage abusif = suppression du compte.')) return;
+            const pos = markerMe.getLatLng();
+            await fetch('/alerte-sos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat: pos.lat, lon: pos.lng })
+            });
+            alert('Alerte envoyée.');
         }
-
-        init();
     </script>
 </body>
 </html>

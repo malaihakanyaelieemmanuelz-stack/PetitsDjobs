@@ -482,6 +482,9 @@ app.get('/suivi', requireAuth, async (req, res) => {
         const missionId = req.query.missionId || req.session.commande?.missionId;
         
         if (missionId) {
+            if (!req.session.commande) req.session.commande = {};
+            req.session.commande.missionId = missionId;
+
             const { data: mission } = await supabase.from('missions').select('prestataire_id, client_id').eq('id', missionId).maybeSingle();
             if (mission) {
                 // Si l'utilisateur connecté est le prestataire de CETTE mission
@@ -880,16 +883,28 @@ app.post('/sauvegarder-position', async (req, res) => {
                     .eq('user_id', req.session.user.id);
                 
                 console.log(`[GPS UPDATE] Prestataire ${req.session.user.id} : Lat=${lat}, Lon=${lon}`);
-                const { error: mErr } = await supabase.from('missions').update({ lat_prestataire: lat, lon_prestataire: lon })
-                    .eq('prestataire_id', req.session.user.id)
-                    .in('statut', ['en_route', 'travail_en_cours', 'attente_securite']);
-                if (mErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission prestataire:`, mErr.message);
+                const missionId = req.session.commande?.missionId;
+                const updatePresta = { lat_prestataire: lat, lon_prestataire: lon };
+                if (missionId) {
+                    await supabase.from('missions').update(updatePresta).eq('id', missionId);
+                } else {
+                    const { error: mErr } = await supabase.from('missions').update(updatePresta)
+                        .eq('prestataire_id', req.session.user.id)
+                        .in('statut', ['en_route', 'travail_en_cours', 'attente_securite']);
+                    if (mErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission prestataire:`, mErr.message);
+                }
             } else {
                 console.log(`[GPS UPDATE] Client ${req.session.user.id} : Lat=${lat}, Lon=${lon}`);
-                const { error: cErr } = await supabase.from('missions').update({ lat_client: lat, lon_client: lon })
-                    .eq('client_id', req.session.user.id)
-                    .in('statut', ['en_route', 'travail_en_cours']);
-                if (cErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission client:`, cErr.message);
+                const missionId = req.session.commande?.missionId;
+                const updateClient = { lat_client: lat, lon_client: lon };
+                if (missionId) {
+                    await supabase.from('missions').update(updateClient).eq('id', missionId);
+                } else {
+                    const { error: cErr } = await supabase.from('missions').update(updateClient)
+                        .eq('client_id', req.session.user.id)
+                        .in('statut', ['en_route', 'travail_en_cours']);
+                    if (cErr) console.error(`[GPS UPDATE ERR] Echec mise à jour mission client:`, cErr.message);
+                }
             }
         }
     }
@@ -1364,13 +1379,38 @@ app.get('/api/suivi-client-gps', requireAuth, async (req, res) => {
     
     if (!missionId) return res.json({});
 
-    const { data, error } = await supabase.from('missions').select('lat_client, lon_client').eq('id', missionId).maybeSingle();
+    const { data, error } = await supabase.from('missions')
+        .select('lat_client, lon_client, client_id, service, prix')
+        .eq('id', missionId)
+        .maybeSingle();
     if (error || !data) {
         console.error(`[DEBUG GPS CLIENT] Erreur ou données absentes:`, error?.message);
         return res.json({});
     }
+
+    let client = null;
+    if (data.client_id) {
+        const { data: u } = await supabase.from('utilisateurs')
+            .select('nom, prenom, photo_url')
+            .eq('id', data.client_id)
+            .maybeSingle();
+        if (u) {
+            client = {
+                nom: u.nom,
+                prenom: u.prenom,
+                photo: u.photo_url
+            };
+        }
+    }
+
     console.log(`[DEBUG GPS CLIENT] Position client renvoyée: ${data.lat_client}, ${data.lon_client}`);
-    res.json({ lat: data.lat_client, lon: data.lon_client });
+    res.json({
+        lat: data.lat_client,
+        lon: data.lon_client,
+        client,
+        service: data.service,
+        prix: data.prix
+    });
 });
 
 app.get('/api/statut-mission', requireAuth, async (req, res) => {

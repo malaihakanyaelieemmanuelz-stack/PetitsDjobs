@@ -11,11 +11,11 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-polyline-decorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <title>Suivi de votre prestataire - PetitsDjobs</title>
 </head>
-<body class="tracking-body">
+<body class="tracking-body tracking-client">
     <div class="loader-gps" id="main-loader"></div>
     <div id="map"></div>
 
-    <div class="floating-top-info" style="background: white; border: 1px solid #eee; display: flex; align-items: center; gap: 12px;">
+    <div class="floating-top-info tracking-client-top" style="background: white; border: 2px solid #FF6600; display: flex; align-items: center; gap: 12px;">
         <div style="position: relative; width: 55px; height: 55px; flex-shrink: 0;" onclick="document.getElementById('upload-avatar').click()">
             <img id="client-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08s5.97 1.09 6 3.08c-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E" 
                  style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #FF6600; background: #f9f9f9; cursor: pointer;">
@@ -23,8 +23,8 @@
             <input type="file" id="upload-avatar" style="display: none;" accept="image/*" onchange="changerMaPhoto(this)">
         </div>
         <div style="flex: 1;">
-            <h2 id="status-mission" style="font-size: 1rem; margin: 0; color: #FF6600;">ÉCRAN DE SUIVI CLIENT</h2>
-            <p id="mission-info" style="color:#666; font-size: 0.75rem; margin: 3px 0 0; font-weight: bold;">Attente du signal...</p>
+            <h2 id="status-mission" style="font-size: 1.05rem; margin: 0; color: #FF6600;">Suivi de votre prestataire</h2>
+            <p id="mission-info" style="color:#2e7d32; font-size: 0.8rem; margin: 3px 0 0; font-weight: bold;">Attente du signal GPS…</p>
         </div>
         
         <div class="nav-actions-top">
@@ -37,14 +37,15 @@
     </div>
 
     <div class="floating-bottom-actions">
-        <div id="gps-info" style="font-weight: 800; margin-bottom: 15px; color: #ff5252; font-size: 1.1rem;">Recherche du prestataire...</div>
+        <div id="gps-info" style="font-weight: 800; margin-bottom: 8px; color: #2e7d32; font-size: 1.2rem;">Recherche du prestataire…</div>
+        <div id="gps-eta-client" style="font-size: 0.85rem; color: #FF6600; font-weight: 700; margin-bottom: 12px;"></div>
     </div>
 
     <!-- Modal de notation -->
     <div id="modal-notation" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
         <div class="login-card" style="max-width:400px; text-align:center;">
             <h2 style="color:#FF6600; margin-top:0;">MISSION TERMINÉE !</h2>
-            <p style="font-size:0.9rem; color:#666;">Notez la prestation (10 petites étoiles = 1 grande étoile)</p>
+            <p style="font-size:0.9rem; color:#2e7d32;">Notez la prestation (10 petites étoiles = 1 grande étoile)</p>
             
             <div id="star-rating" style="display:flex; justify-content:center; gap:4px; margin:20px 0; font-size:1.8rem; cursor:pointer; color:#ccc;">
                 <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span>
@@ -64,6 +65,20 @@
         let lastDist = null;
         let noteSelectionnee = 0;
         let hasCentered = false;
+        let followProvider = true;
+
+        function haversineM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function formatDist(m) {
+            return m < 1000 ? Math.round(m) + ' m' : (m / 1000).toFixed(1) + ' km';
+        }
 
         // Client (Moi) en ORANGE
         const iconMe = L.divIcon({ className: 'custom-icon', html: '<div style="background:#FF6600; width:20px; height:20px; border-radius:50%; border:2px solid white; box-shadow:0 0 10px rgba(255,102,0,0.5);"></div>', iconSize: [20, 20], iconAnchor: [10, 10] });
@@ -157,9 +172,12 @@
 
                 const instructions = routes[0].instructions;
 
-                const distM = summary.totalDistance; // Distance réelle à pied
-                const label = distM < 1000 ? Math.round(distM) + " m" : (distM/1000).toFixed(1) + " km";
-                document.getElementById('gps-info').innerHTML = `🛵 Prestataire en approche : <strong>${label}</strong>`;
+                const distM = summary.totalDistance;
+                const label = formatDist(distM);
+                document.getElementById('gps-info').innerHTML = `🛵 Prestataire à <strong>${label}</strong>`;
+                document.getElementById('gps-eta-client').innerText = distM < 1000
+                    ? `Arrivée estimée dans ~${Math.max(1, Math.round(distM / 80))} min`
+                    : 'En route vers vous';
                 
                 // Affiche les instructions de direction (les "flèches") en texte
                 if (instructions && instructions.length > 0) {
@@ -177,16 +195,17 @@
             });
 
             fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-                if (!cmd.missionId) {
+                const urlMissionId = new URLSearchParams(location.search).get('missionId');
+                missionId = urlMissionId || cmd.missionId;
+                prestataireId = cmd.prestataireId;
+                if (!missionId) {
                     logDebug("Mission ID introuvable.");
                     return;
                 }
-                missionId = cmd.missionId;
-                prestataireId = cmd.prestataireId;
                 logDebug("Suivi mission " + missionId + " prêt.");
                 setInterval(pollProvider, 2000);
                 setInterval(checkStatus, 2000);
-                startGPS(); // Lancer le GPS après avoir initialisé missionId
+                startGPS();
             }).catch(e => logDebug("Erreur session: " + e.message));
         }
 
@@ -194,9 +213,9 @@
 
         function startGPS() {
             const gpsOptions = {
-                enableHighAccuracy: false,
-                maximumAge: 5000,
-                timeout: 10000
+                enableHighAccuracy: true,
+                maximumAge: 3000,
+                timeout: 15000
             };
 
             navigator.geolocation.watchPosition(pos => {
@@ -221,7 +240,7 @@
         }
 
         function pollProvider() {
-            fetch('/api/suivi-prestataire-gps?missionId=' + missionId).then(r => r.json()).then(async pos => {
+            fetch('/api/suivi-prestataire-gps?missionId=' + missionId, { cache: 'no-store' }).then(r => r.json()).then(async pos => {
                 if (pos.lat) {
                     logDebug("Position prestataire reçue.");
                     const pPos = L.latLng(pos.lat, pos.lon);
@@ -230,9 +249,11 @@
                     const myPos = markerMe.getLatLng();
                     if (myPos.lat !== 0 && myPos.lng !== 0 && pPos.lat !== 0 && pPos.lng !== 0) {
                         routingControl.setWaypoints([pPos, myPos]);
-                        if (!map.getBounds().contains(pPos)) map.panTo(pPos);
-                    } else {
-                        logDebug("En attente de votre position pour l'itinéraire...");
+                        const dist = haversineM(pPos.lat, pPos.lng, myPos.lat, myPos.lng);
+                        document.getElementById('gps-info').innerHTML = `🛵 Prestataire à <strong>${formatDist(dist)}</strong>`;
+                        document.getElementById('gps-eta-client').innerText =
+                            dist < 80 ? 'Il arrive !' : `~${Math.max(1, Math.round(dist / 80))} min à pied`;
+                        if (followProvider && !map.getBounds().contains(pPos)) map.panTo(pPos);
                     }
                 }
             });
@@ -364,7 +385,6 @@
             }
         }
 
-        init();
     </script>
 </body>
 </html>

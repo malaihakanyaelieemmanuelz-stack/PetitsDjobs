@@ -6,7 +6,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <title>Ma carte de visite</title>
 </head>
-<body>
+<body class="page-presta-carte">
     <!-- Son de notification -->
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
@@ -59,17 +59,17 @@
             </button>
 
             <!-- Espace Pub / Réalisations -->
-            <div style="margin-top: 25px; padding: 20px; background: white; border: 3px dashed #FF6600; border-radius: 20px; text-align: center;">
+            <div class="espace-pub-box" style="margin-top: 25px; padding: 20px; background: white; border: 3px dashed #FF6600; border-radius: 20px; text-align: center;">
                 <h3 style="color:#FF6600; margin-top:0; font-weight: 900;">🚀 ESPACE PUB</h3>
-                <p style="font-size:0.9rem; color:#666;">Ajoutez une vidéo ou photo de votre travail pour apparaître sur votre carte de visite et la page d'accueil !</p>
+                <p style="font-size:0.9rem; color:#2e7d32;">Ajoutez une vidéo ou photo de votre travail pour apparaître sur votre carte de visite et la page d'accueil !</p>
                 <div id="ma-galerie-showcase" class="realisations-grid" style="margin:15px 0; justify-content:center;"></div>
                 <button onclick="document.getElementById('input-showcase').click()" style="width:100%; padding:15px; background:#2e7d32; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">PUBLIER UNE VIDÉO / PHOTO</button>
                 <input type="file" id="input-showcase" style="display:none;" accept="image/*,video/*" onchange="uploadShowcase(this)">
             </div>
 
             <div style="margin-top: 40px; text-align: center; opacity: 1;">
-                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#c62828; font-size:1.1rem !important; cursor:pointer; text-decoration:underline; font-weight: bold !important;">Supprimer ma carte de visite</button><br><br>
-                <button onclick="supprimerCompte()" style="background:none; border:none; color:#c62828; font-size:1.1rem !important; cursor:pointer; text-decoration:underline; font-weight: bold !important;">Supprimer définitivement mon compte</button>
+                <button onclick="supprimerMaCarte()" style="background:none; border:none; color:#FF6600; font-size:1.1rem !important; cursor:pointer; text-decoration:underline; font-weight: bold !important;">Supprimer ma carte de visite</button><br><br>
+                <button onclick="supprimerCompte()" style="background:none; border:none; color:#FF6600; font-size:1.1rem !important; cursor:pointer; text-decoration:underline; font-weight: bold !important;">Supprimer définitivement mon compte</button>
             </div>
         </div>
     </div>
@@ -95,8 +95,8 @@
             
             // Formatage de la date comme sur l'accueil
             const statusLabel = enLigne ? 
-                '<span style="color:#4caf50; font-weight:bold; font-size:1.8rem;">● Disponible actuellement</span>' : 
-                '<span style="color:#757575; font-weight:bold; font-size:1.8rem;">○ Hors ligne</span>';
+                '<span style="color:#2e7d32; font-weight:bold; font-size:1.8rem;">● Disponible actuellement</span>' : 
+                '<span style="color:#FF6600; font-weight:bold; font-size:1.8rem;">○ Hors ligne</span>';
 
             document.getElementById('ma-carte-container').innerHTML = `
                 <article class="profile-card full-screen">
@@ -119,13 +119,13 @@
                             <p style="margin: 15px 0;"><strong>🛠️ Services :</strong> ${data.services || '-'}</p>
                         </div>
 
-                        <p class="services-txt" style="height:auto; font-size: 1rem; line-height: 1.5; color: #444; font-style: italic;">
+                        <p class="services-txt" style="height:auto; font-size: 1rem; line-height: 1.5; color: #2e7d32; font-style: italic;">
                             "${data.bio || 'Aucune présentation renseignée.'}"
                         </p>
 
                         <div style="margin-top: 30px; text-align: left;">
                             <h3 style="font-size:1.2rem; color:#2e7d32; margin-bottom:15px; text-transform: uppercase; letter-spacing: 1px;">💬 Avis vérifiés</h3>
-                            <ul style="padding:0; list-style:none; font-size:1rem; color:#666; line-height:1.4;">${avis}</ul>
+                            <ul style="padding:0; list-style:none; font-size:1rem; color:#FF6600; line-height:1.4;">${avis}</ul>
                         </div>
                     </div>
                 </article>`;
@@ -152,7 +152,7 @@
                         </div>
                     `).join('');
                 } else {
-                    galerie.innerHTML = '<p style="font-size:0.85rem; color:#2e7d32; width:100%;">Aucune publication pour le moment.</p>';
+                    galerie.innerHTML = '<p class="pub-empty-msg" style="font-size:0.95rem; color:#2e7d32; width:100%; font-weight:700; padding:12px; background:#e8f5e9; border-radius:10px; border:2px dashed #FF6600;">Aucune pub — publiez une photo ou vidéo pour apparaître sur l\'accueil.</p>';
                 }
             } catch (e) {
                 galerie.innerHTML = '';
@@ -179,10 +179,10 @@
                 }
                 zone.style.display = 'block';
                 const activeMissionsHtml = missions.map(m => `
-                    <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 5px solid #FF6600;">
+                    <div class="mission-card-item" style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 5px solid #FF6600;">
                         <div style="font-size: 0.85rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px;">OFFRE DE SERVICE</div>
-                        <div style="font-weight: 800; color: #333; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
-                        <div style="font-size: 0.9rem; color: #666; margin: 3px 0;">Service : <b>${m.service}</b></div>
+                        <div style="font-weight: 800; color: #2e7d32; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
+                        <div style="font-size: 0.9rem; color: #FF6600; margin: 3px 0;">Service : <b>${m.service}</b></div>
                         <div style="font-size: 1.1rem; color: #2e7d32; font-weight: 800; margin-top: 5px;">${m.prix} FCFA</div>
                         <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ DANS ${m.delaiMinutes || 1} MIN — sinon refus automatique</div>
                         <div style="display:flex; gap:10px;">
@@ -234,7 +234,7 @@
         }
 
         async function supprimerPub(itemId) {
-            if (!confirm('Supprimer cette publication ?')) return;
+            if (!confirm('Supprimer cette publication ? Elle disparaîtra aussi de la page d\'accueil.')) return;
             const res = await fetch('/api/delete-showcase/' + itemId, { method: 'DELETE' });
             if (res.ok) {
                 const userData = await fetch('/get-user-data').then(r => r.json());
