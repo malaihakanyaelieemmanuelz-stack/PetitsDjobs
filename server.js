@@ -640,12 +640,20 @@ app.post('/preparer-commande', (req, res) => {
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const { datePrevue, delaiReponse } = req.body;
-    const delaiMinutes = Math.min(5, Math.max(1, parseInt(delaiReponse, 10) || 1)); // Entre 1 et 5 min
+    
+    const isToday = datePrevue === 'today';
+    let delaiMinutes = parseInt(delaiReponse, 10);
+
+    if (isToday) {
+        delaiMinutes = Math.min(5, Math.max(1, delaiMinutes || 1)); // 1-5 min pour immédiat
+    } else {
+        // Pour le futur, le délai est facultatif (on met 24h par défaut si non spécifié)
+        delaiMinutes = delaiMinutes || 1440; 
+    }
+
     const cmd = req.session.commande;
     const lat = req.session.latClient || req.session.user?.lat;
     const lon = req.session.lonClient || req.session.user?.lon;
-    
-    const isToday = datePrevue === 'today';
 
     console.log("[DEBUG SIMU PAY] Vérification session avant insertion...");
     console.log(`[DEBUG SIMU PAY] GPS récupéré: ${lat}, ${lon}`);
@@ -995,6 +1003,27 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
     console.log(`🚀 [RENDER-DEBUG] Envoi de ${result.length} mission(s) au prestataire ${pId}`);
     res.json(result);
+});
+
+// Route pour le gestionnaire de demandes du client
+app.get('/api/mes-demandes-client', requireAuth, async (req, res) => {
+    const cId = req.session.user.id;
+    const { data: missions, error } = await supabase.from('missions')
+        .select('*')
+        .eq('client_id', cId)
+        .order('created_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+    
+    // Récupérer les noms des prestataires pour l'affichage
+    const pIds = missions.map(m => m.prestataire_id);
+    const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', pIds);
+    const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+
+    res.json(missions.map(m => ({
+        ...m,
+        prestataire: userMap[m.prestataire_id] || { nom: 'Inconnu', prenom: 'Pro' }
+    })));
 });
 
 // Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)

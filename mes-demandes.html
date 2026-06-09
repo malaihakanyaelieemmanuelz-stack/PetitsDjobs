@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Mes Demandes - PetitsDjobs</title>
+    <style>
+        .demand-list { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .demand-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 5px solid #FF6600; cursor: pointer; }
+        .status-pill { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-en_attente_prestataire { background: #fff3e0; color: #e65100; }
+        .status-en_route { background: #e8f5e9; color: #2e7d32; }
+        .status-refuse { background: #ffebee; color: #c62828; }
+        .status-termine { background: #f5f5f5; color: #999; }
+    </style>
+</head>
+<body>
+    <header class="home-header">
+        <div class="header-content"><a href="index.html"><h1>PETITSDJOBS</h1></a></div>
+    </header>
+
+    <div class="demand-list">
+        <h2 style="color:#2e7d32; display:flex; align-items:center; gap:10px;">📋 Mes Demandes de Services</h2>
+        <div id="liste-demandes">Chargement de vos demandes...</div>
+    </div>
+
+    <script>
+        async function chargerDemandes() {
+            const res = await fetch('/api/mes-demandes-client');
+            const data = await res.json();
+            const container = document.getElementById('liste-demandes');
+
+            if (!data || !data.length) {
+                container.innerHTML = "<div class='info-tile'>Vous n'avez envoyé aucune demande pour le moment.</div>";
+                return;
+            }
+
+            container.innerHTML = data.map(m => `
+                <div class="demand-card" onclick="location.href='/suivi?missionId=${m.id}'">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:#FF6600; font-size:1.1rem;">${m.service}</strong>
+                        <span class="status-pill status-${m.statut}">${m.statut.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.9rem; color:#666; line-height:1.4;">
+                        <b>Prestataire :</b> ${m.prestataire.prenom} ${m.prestataire.nom}<br>
+                        <b>Date prévue :</b> ${m.date_prevue === 'today' ? 'Immédiat' : m.date_prevue}<br>
+                        <b>Prix payé :</b> ${m.prix} FCFA
+                    </div>
+                    ${['en_route','travail_en_cours'].includes(m.statut) ? 
+                        `<div style="margin-top:12px; color:#2e7d32; font-weight:bold; font-size:0.85rem; text-align:right;">➔ Suivre en temps réel</div>` : ''}
+                </div>
+            `).join('');
+        }
+        chargerDemandes();
+        setInterval(chargerDemandes, 5000);
+    </script>
+</body>
+</html>

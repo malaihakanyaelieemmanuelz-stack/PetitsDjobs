@@ -162,9 +162,15 @@
 
         <div class="menu-grid">
             <!-- Commandes -->
-            <div class="menu-card" onclick="location.href='/mes-commandes'">
+            <div class="menu-card" onclick="location.href='/mes-demandes.html'">
                 <div class="icon">📦</div>
                 <span>Mes Commandes</span>
+            </div>
+
+            <!-- Gestionnaire Tâches (Pour les pros) -->
+            <div id="card-tasks" class="menu-card" style="display:none;" onclick="location.href='/nouvelle-offre.html'">
+                <div class="icon">📋</div>
+                <span>Gestionnaire Tâches</span>
             </div>
 
             <!-- Amis -->
@@ -216,6 +222,7 @@
                 
                 const prestaCard = document.getElementById('card-presta-toggle');
                 if (data.isPrestataire) {
+                    document.getElementById('card-tasks').style.display = 'flex';
                     prestaCard.innerHTML = `<div class="icon">📇</div><span>Ma Carte</span>`;
                     prestaCard.onclick = () => location.href='/prestataire-info';
                     document.getElementById('btn-supprimer-carte').style.display = 'block';
