@@ -948,17 +948,19 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const pId = req.session.user.id;
 
-    // On cherche où l'utilisateur est PRO ou SECOURS
-    const { data: missions, error: mError } = await supabase.from('missions')
-        .select('*')
-        .or(`prestataire_id.eq.${pId},backup_ids.cs.{${pId}}`)
-        .in('statut', ['en_attente_prestataire', 'programmation_en_cours'])
-        .order('created_at', { ascending: false });
+    // On récupère d'abord les missions où l'utilisateur est le prestataire principal
+    const { data: mPrimary, error: err1 } = await supabase.from('missions').select('*').eq('prestataire_id', pId).in('statut', ['en_attente_prestataire', 'programmation_en_cours']);
+    
+    // On récupère ensuite les missions où l'utilisateur est dans la liste des secours (backup_ids)
+    const { data: mBackup, error: err2 } = await supabase.from('missions').select('*').contains('backup_ids', [pId]).in('statut', ['en_attente_prestataire', 'programmation_en_cours']);
 
+    const mError = err1 || err2;
     if (mError) {
         console.error(`❌ [NOTIF-ERR] Erreur Supabase pour ${pId}:`, mError.message);
         return res.status(500).json({ error: mError.message });
     }
+
+    const missions = [...(mPrimary || []), ...(mBackup || [])];
 
     if (!missions || missions.length === 0) {
         console.log(`⚠️ [NOTIF-STEP-2] Aucune mission active trouvée en base pour ${pId}`);
