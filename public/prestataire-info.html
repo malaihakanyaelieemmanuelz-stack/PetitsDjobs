@@ -169,12 +169,13 @@
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
 
-            // 1. Filtrer les missions à afficher (Non expirées ou Programmées)
             const missionsActives = (missions || []).filter(m => {
                 if (m.statut === 'en_attente_prestataire') return !m.expire;
                 if (m.statut === 'programmation_en_cours') return true;
                 return false;
             });
+            
+            console.log("DEBUG FRONT: Missions actives à afficher sur le profil:", missionsActives.length);
             
             if (missionsActives.length > 0) {
                 zone.style.display = 'block';
@@ -191,12 +192,12 @@
                         </div>
                         <div style="font-weight: 800; color: #2e7d32; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
                         ${m.statut === 'en_attente_prestataire' ? `
-                            <div style="color:#FF6600; font-weight:900; font-size:1rem; margin:15px 0; background: #fff8f1; padding: 10px; border-radius: 10px; text-align: center; border: 2px solid #FF6600; animation: pulse 1s infinite;">
-                                ⏰ RÉPONDRE AVANT : ${Math.ceil(m.expireDansMs / 60000)} min
+                            <div id="countdown-${m.id}" style="color:#FF6600; font-weight:900; font-size:1rem; margin:15px 0; background: #fff8f1; padding: 10px; border-radius: 10px; text-align: center; border: 2px solid #FF6600;">
+                                ⏰ EXPIRE DANS : ${Math.ceil(m.expireDansMs / 1000)}s
                             </div>
                             <div style="display:flex; gap:10px;">
-                                <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">ACCEPTER</button>
-                                <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">REFUSER</button>
+                                <button onclick="repondreMission(${m.id}, 'accepter', this)" style="flex:1; background:#2e7d32; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">ACCEPTER</button>
+                                <button onclick="repondreMission(${m.id}, 'refuser', this)" style="flex:1; background:#FF6600; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">REFUSER</button>
                             </div>
                         ` : `
                             <div style="color:#2e7d32; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #e8f5e9; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #2e7d32;">📅 PRÉVUE POUR : ${m.date_prevue}</div>
@@ -221,12 +222,18 @@
             }
         }
 
-        async function repondreMission(id, action) {
+        async function repondreMission(id, action, btn) {
             if (action === 'voir_details') {
                 // For scheduled missions, just mark as seen and redirect to a detailed view (e.g., chat or a specific mission page)
                 await fetch('/api/marquer-mission-vue/' + id, { method: 'POST' });
                 window.location.href = `/suivi?missionId=${id}`; // Or a dedicated mission detail page
                 return;
+            }
+
+            // Désactiver le bouton pour éviter le double-clic
+            if (btn) {
+                btn.innerText = "TRAITEMENT...";
+                btn.disabled = true;
             }
 
             const res = await fetch('/api/repondre-mission', {
