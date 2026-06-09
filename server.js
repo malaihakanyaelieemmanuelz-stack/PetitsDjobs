@@ -1058,31 +1058,26 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const clientMap = Object.fromEntries((clients || []).map(c => [c.id, { nom: c.nom, prenom: c.prenom, photo: c.photo_url }]));
 
     const result = missions.map(m => {
-        // On s'assure que l'ID est traité comme un nombre pour le Map
         const delaiMinutes = m.delai_reponse_minutes || 1; // Use DB value
         const delaiMs = delaiMinutes * 60 * 1000;
         const tempsEcoule = Date.now() - new Date(m.created_at).getTime();
-        const expireDans = Math.max(0, delaiMs - tempsEcoule);
+        // On garde le calcul pour l'affichage, mais on ne bloque plus l'envoi
+        const expireDans = Math.max(0, delaiMs - tempsEcoule); 
         const estExpire = m.statut === 'en_attente_prestataire' && expireDans <= 0;
 
-        console.log(`🧐 [NOTIF-STEP-3] Mission ID ${m.id} : Statut=${m.statut}, ExpireDans=${Math.round(expireDans/1000)}s, Vu=${m.vu_par_prestataire}`);
+        console.log(`🧐 [NOTIF-STEP-3] Mission ID ${m.id} : Statut=${m.statut}, ExpireDans=${Math.round(expireDans/1000)}s`);
 
         return {
             ...m,
             delaiMinutes: delaiMinutes,
             vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: estExpire,
+            expire: estExpire, // Sera utilisé par le front pour afficher "Expiré" mais pas pour cacher
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
-    }).filter(m => {
-        // For scheduled missions, they don't expire in the same way as 'en_attente_prestataire'
-        if (m.statut === 'programmation_en_cours') return true;
-        if (m.expire) console.log(`🗑️ [NOTIF-STEP-4] Mission ${m.id} masquée car expirée.`);
-        return !m.expire; // Filter expired 'en_attente_prestataire' missions
     });
 
-    console.log(`🚀 [NOTIF-STEP-5] Envoi de ${result.length} mission(s) filtrée(s) au prestataire ${pId}`);
+    console.log(`🚀 [NOTIF-STEP-5] Succès : ${result.length} mission(s) envoyée(s) au prestataire ${pId}`);
     res.json(result);
 });
 
