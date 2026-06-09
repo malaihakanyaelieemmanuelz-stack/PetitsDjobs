@@ -22,6 +22,10 @@ requiredVars.forEach(v => {
     }
 });
 
+// Note: Si votre domaine n'est pas vérifié sur Resend, utilisez 'onboarding@resend.dev' pour tester
+const SENDER_EMAIL_NOTIF_TEST = 'PetitsDjobs <onboarding@resend.dev>'; // Utilisation de l'adresse de test Resend pour toutes les notifications
+
+
 const app = express();
 
 // --- CONFIGURATION DES SESSIONS (Rétablie et Sécurisée) ---
