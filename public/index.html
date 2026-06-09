@@ -399,7 +399,7 @@
                     
                     console.log(`📡 [CLIENT-POLL] Missions reçues: ${mData?.length || 0}`);
 
-                    // On n'affiche l'alerte QUE si la mission n'est pas encore vue ET pas encore expirée (pour éviter les notifications figées)
+                    // On n'affiche l'alerte QUE si la mission n'est pas encore vue, pas encore expirée ET en attente du prestataire
                     const nouvellesMissions = (mData || []).filter(m => !m.vuParPresta && !m.expire && m.statut === 'en_attente_prestataire');
                     if (nouvellesMissions.length > 0) {
                         console.log("🔔 [CLIENT-POLL] Nouvelle mission non vue ! Affichage du flash.");

@@ -685,6 +685,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             throw error;
         }
 
+        console.log(`[RENDER-DEBUG] Mission ${data.id} insérée. created_at (DB): ${data.created_at}, delai_reponse_minutes: ${delaiMinutes}`);
         console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
@@ -720,8 +721,20 @@ setInterval(async () => {
     const missionsExpirees = missionsEnAttente.filter(m => {
         // Use delai_reponse_minutes from DB
         const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
-        const tempsPasse = Date.now() - new Date(m.created_at).getTime();
-        return tempsPasse >= (delaiMs + 10000); // Marge de 10s pour éviter les bugs
+        const missionCreatedAt = new Date(m.created_at).getTime();
+        const currentTime = Date.now();
+        const tempsPasse = currentTime - missionCreatedAt;
+
+        console.log(`[RENDER-DEBUG-EXPIRATION] Mission ${m.id}:`);
+        console.log(`  - created_at (DB): ${new Date(missionCreatedAt).toISOString()} (${missionCreatedAt}ms)`);
+        console.log(`  - current_time (Server): ${new Date(currentTime).toISOString()} (${currentTime}ms)`);
+        console.log(`  - delai_reponse_minutes: ${delaiMinutes} min (${delaiMs}ms)`);
+        console.log(`  - temps_passe: ${tempsPasse}ms`);
+        console.log(`  - Condition: ${tempsPasse} >= ${delaiMs} + 30000 (margin) = ${delaiMs + 30000}ms`);
+
+        const shouldExpire = tempsPasse >= (delaiMs + 30000); // Marge de 30s pour éviter les bugs et donner plus de temps pour le test
+        if (shouldExpire) console.log(`  - RESULT: Mission ${m.id} is marked for expiration.`);
+        return shouldExpire;
     });
 
     if (missionsExpirees.length === 0) return;
@@ -751,7 +764,8 @@ setInterval(async () => {
             console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
             const { error: refuseError } = await supabase.from('missions').update({
                 statut: 'refuse',
-                vu_par_prestataire: true // On force le "vu" pour nettoyer l'interface
+                raison_refus: 'Refus automatique : délai de réponse dépassé',
+                vu_par_prestataire: true 
             }).eq('id', mission.id);
             
             if (refuseError) {
@@ -974,18 +988,22 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         // On s'assure que l'ID est traité comme un nombre pour le Map
         const delaiMinutes = m.delai_reponse_minutes || 1; // Use DB value
         const delaiMs = delaiMinutes * 60 * 1000;
-        const tempsEcoule = Date.now() - new Date(m.created_at).getTime();
-        const expireDans = Math.max(0, delaiMs - tempsEcoule);
-        const estExpire = m.statut === 'en_attente_prestataire' && expireDans <= 0;
+        const missionCreatedAt = new Date(m.created_at).getTime();
+        const currentTime = Date.now();
+        const tempsEcoule = currentTime - missionCreatedAt;
+        // Add a small buffer (e.g., 5 seconds) to expireDans calculation to account for clock skew
+        const expireDans = Math.max(0, delaiMs - tempsEcoule + 5000); // Add 5 seconds buffer
+        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 0 || tempsEcoule >= delaiMs); // Also check tempsEcoule directly
 
         console.log(`🧐 [NOTIF-STEP-3] Mission ID ${m.id} : Statut=${m.statut}, ExpireDans=${Math.round(expireDans/1000)}s, Vu=${m.vu_par_prestataire}`);
+        console.log(`   -> created_at (DB): ${new Date(missionCreatedAt).toISOString()}, delai_reponse_minutes: ${delaiMinutes}, Server Date.now(): ${new Date(currentTime).toISOString()}, tempsEcoule: ${tempsEcoule}ms, delaiMs: ${delaiMs}ms, estExpire: ${estExpire}`);
 
         return {
             ...m,
             delaiMinutes: delaiMinutes,
             vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: estExpire, // On ne filtre plus ici pour laisser le front gérer la disparition
+            expire: estExpire, 
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
     });
@@ -1231,7 +1249,7 @@ app.post('/api/confirmer-fin-travail', requireAuth, async (req, res) => {
     if (updateError) return res.status(500).json({ error: updateError.message });
 
     // Suppression des emails de mission pour préserver le quota
-    const meta = missionMeta.get(mId) || {};
+    const meta = missionMeta.get(mId) || {}; // Ensure meta is defined
     res.json({ ok: true, paye: true, montantPresta: meta.netPresta || mission.prix });
 });
 
