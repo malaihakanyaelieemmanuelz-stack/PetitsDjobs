@@ -180,19 +180,23 @@
                 zone.style.display = 'block';
                 liste.innerHTML = missionsActives.map(m => `
                     <div class="mission-card-item" style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 5px solid #FF6600;">
-                        <div style="font-size: 0.85rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px;">
-                            ${m.statut === 'en_attente_prestataire' ? 'OFFRE DE SERVICE IMMÉDIATE' : 'MISSION PROGRAMMÉE'}
+                        <div style="font-size: 0.9rem; color: #2e7d32; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">
+                            ${m.statut === 'en_attente_prestataire' ? '⚡ NOUVELLE COMMANDE' : '📅 MISSION PROGRAMMÉE'}
+                        </div>
+                        <div style="background: #fdfaf9; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #eee;">
+                            <div style="font-size: 0.9rem; color: #666;">Service demandé :</div>
+                            <div style="font-weight: 800; color: #FF6600; font-size: 1.2rem;">${m.service}</div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">Prix proposé :</div>
+                            <div style="font-weight: 800; color: #2e7d32; font-size: 1.3rem;">${m.prix} FCFA</div>
                         </div>
                         <div style="font-weight: 800; color: #2e7d32; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
-                        <div style="font-size: 0.9rem; color: #FF6600; margin: 3px 0;">Service : <b>${m.service}</b></div>
-                        <div style="font-size: 1.1rem; color: #2e7d32; font-weight: 800; margin-top: 5px;">${m.prix} FCFA</div>
                         ${m.statut === 'en_attente_prestataire' ? `
-                            <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">
-                                ⏰ TEMPS RESTANT : ${Math.ceil(m.expireDansMs / 60000)} MIN
+                            <div style="color:#FF6600; font-weight:900; font-size:1rem; margin:15px 0; background: #fff8f1; padding: 10px; border-radius: 10px; text-align: center; border: 2px solid #FF6600; animation: pulse 1s infinite;">
+                                ⏰ RÉPONDRE AVANT : ${Math.ceil(m.expireDansMs / 60000)} min
                             </div>
                             <div style="display:flex; gap:10px;">
-                                <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">ACCEPTER</button>
-                                <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
+                                <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">ACCEPTER</button>
+                                <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">REFUSER</button>
                             </div>
                         ` : `
                             <div style="color:#2e7d32; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #e8f5e9; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #2e7d32;">📅 PRÉVUE POUR : ${m.date_prevue}</div>
@@ -201,17 +205,16 @@
                     </div>
                 `).join('');
 
-                // 2. Gérer le son et marquer comme "vu" pour l'accueil
-                const nouvelles = missionsActives.filter(m => !m.vuParPresta);
-                if (nouvelles.length > 0) {
-                    if (nouvelles.length > lastCount) {
-                        console.log("🔔 [FRONT] Son de notification !");
-                        document.getElementById('notif-sound').play().catch(() => {});
+                // 2. Marquer TOUTES les missions actives comme "vues" sur le profil
+                // Cela fait disparaître la notification flash de l'accueil immédiatement
+                missionsActives.forEach(m => {
+                    if (!m.vuParPresta) {
+                        fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
+                        // On joue le son une seule fois
+                        if (lastCount === 0) document.getElementById('notif-sound').play().catch(() => {});
                     }
-                    // On marque comme vu immédiatement : le flash orange d'accueil disparaîtra au prochain refresh
-                    nouvelles.forEach(m => fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' }));
-                    lastCount = nouvelles.length;
-                }
+                });
+                lastCount = missionsActives.length;
             } else {
                 zone.style.display = 'none';
                 lastCount = 0;

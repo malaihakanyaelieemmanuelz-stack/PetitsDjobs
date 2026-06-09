@@ -640,7 +640,7 @@ app.post('/preparer-commande', (req, res) => {
 // Route pour simuler la réussite d'un paiement (Mode Test)
 app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const { datePrevue, delaiReponse } = req.body;
-    const delaiMinutes = Math.min(5, Math.max(1, parseInt(delaiReponse, 10) || 1));
+    const delaiMinutes = Math.min(5, Math.max(1, parseInt(delaiReponse, 10) || 1)); // Entre 1 et 5 min
     const cmd = req.session.commande;
     const lat = req.session.latClient || req.session.user?.lat;
     const lon = req.session.lonClient || req.session.user?.lon;
@@ -701,55 +701,11 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         const consigneAcceptation = isToday ? "<p style='color: #b71c1c; font-weight: bold;'>⚠️ IMPORTANT : N'appuyez sur 'ACCEPTER' que lorsque vous êtes réellement prêt à partir pour la mission. L'acceptation déclenche immédiatement le suivi GPS.</p>" : "";
         const actionButtonText = isToday ? "Accéder à mon espace" : "Voir les détails de la mission";
         const actionButtonLink = isToday ? "https://petitsdjobs.com/prestataire-info" : `https://petitsdjobs.com/prestataire-info?missionId=${data.id}`; // Link to specific mission if scheduled
-
-        // Note: Si votre domaine n'est pas vérifié sur Resend, utilisez 'onboarding@resend.dev' pour tester
-        const SENDER_EMAIL_NOTIF_TEST = 'PetitsDjobs <onboarding@resend.dev>'; // Utilisation de l'adresse de test Resend pour toutes les notifications
-
+        
+        // SENDER_EMAIL_NOTIF_TEST est déjà défini globalement.
+        // [NOTE] Les notifications par email pour les missions ont été désactivées à la demande de l'utilisateur.
+        
         // 1. Notification du Prestataire Principal
-        const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
-        console.log("❌ [NOTIF-DEBUG] Tentative envoi email au principal:", pUser?.email);
-        // if (pUser && pUser.email && resend) { // Désactivé : notification in-app uniquement
-        //     safeSendEmail({
-        //         from: SENDER_EMAIL,
-        //         to: pUser.email,
-        //         subject: `⭐ Vous êtes le prestataire principal - Mission ${msgDate}`,
-        //         html: `
-        //             <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        //                 <h2 style="color: #FF6600;">Bonjour ${pUser.prenom}, vous êtes en 1ère position !</h2>
-        //                 <p>Un client vous a choisi comme <strong>prestataire principal</strong> pour : <strong>${cmd.service}</strong>.</p>
-        //                 <p>📅 Date : ${msgDate}</p>
-        //                 ${isToday ? `<p>⏰ Vous avez <strong>${delaiMinutes} minute(s)</strong> pour accepter cette mission, sinon elle sera refusée automatiquement.</p>` : `<p>Veuillez consulter les détails de cette mission programmée.</p>`}
-        //                 <p>💰 Commission plateforme : ${commission} FCFA (5 %). Vous recevrez ${netPresta} FCFA après validation client + prestataire.</p>
-        //                 ${consigneAcceptation}
-        //                 <a href="${actionButtonLink}" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">${actionButtonText}</a>
-        //             </div>
-        //         `
-        //     });
-        // }
-
-        // 2. Notification des Prestataires de Secours
-        // if (cmd.backups && cmd.backups.length > 0 && resend) { // Désactivé : notification in-app uniquement
-        //     for (const backup of cmd.backups) {
-        //         const { data: bUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', backup.id).single();
-        //         if (bUser && bUser.email) {
-        //             safeSendEmail({
-        //                 from: SENDER_EMAIL,
-        //                 to: bUser.email,
-        //                 subject: `🛡️ Mission de secours - Mission ${msgDate}`,
-        //                 html: `
-        //                     <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        //                         <h2 style="color: #2e7d32;">Bonjour ${bUser.prenom}, vous êtes en secours.</h2>
-        //                         <p>Vous avez été sélectionné comme <strong>prestataire de secours</strong> pour : <strong>${cmd.service}</strong>.</p>
-        //                         <p>📅 Date : ${msgDate}</p>
-        //                         <p>Si le prestataire principal se désiste ou ne répond pas, cette mission vous sera automatiquement attribuée.</p>
-        //                         ${consigneAcceptation}
-        //                         <a href="${actionButtonLink}" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">${actionButtonText}</a>
-        //                     </div>
-        //                 `
-        //             });
-        //         }
-        //     }
-        // }
 
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
@@ -797,7 +753,7 @@ setInterval(async () => {
             const nouveauPrestaId = backups[0];
             const resteBackups = backups.slice(1);
 
-            console.log(`[AUTO-BASCULE] Mission ${mission.id} : Délai dépassé. Passage au secours ${nouveauPrestaId}`);
+            console.log(`[AUTO-REFUS/BASCULE] Mission ${mission.id} : Délai dépassé pour ${mission.prestataire_id}.`);
 
             // Mise à jour de la mission
             const { error: updateError } = await supabase
@@ -810,44 +766,12 @@ setInterval(async () => {
                     vu_par_prestataire: false // Reset vu_par_prestataire for new primary
                 })
                 .eq('id', mission.id);
-            if (!updateError) {
-                const { data: anciens } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).single();
-                const { data: nouveaux } = await supabase.from('utilisateurs').select('email, prenom').eq('id', nouveauPrestaId).single();
-
-                // if (anciens?.email) { // Désactivé : notification in-app uniquement
-                //     safeSendEmail({
-                //         from: 'PetitsDjobs <alerte@mail.petitsdjobs.com>',
-                //         to: anciens.email,
-                //         subject: '⏰ Temps de réponse expiré',
-                //         html: `<p>Bonjour ${anciens.prenom}, vous n'avez pas répondu à temps pour la mission de <strong>${mission.service}</strong>. Elle a été attribuée à un autre prestataire.</p>`
-                //     });
-                // }
-
-                // if (nouveaux?.email) { // Désactivé : notification in-app uniquement
-                //     safeSendEmail({
-                //         from: 'PetitsDjobs <alerte@mail.petitsdjobs.com>',
-                //         to: nouveaux.email,
-                //         subject: '🚨 Mission de secours disponible !',
-                //         html: `<p>Bonjour ${nouveaux.prenom}, le premier prestataire n'étant pas disponible, cette mission de <strong>${mission.service}</strong> vous est maintenant proposée ! Connectez-vous vite.</p>`
-                //     });
-                // }
-            }
         } else {
-            console.log(`[AUTO-ANNULATION] Mission ${mission.id} : Délai dépassé, refus automatique.`);
+            console.log(`[AUTO-REFUS] Mission ${mission.id} : Délai dépassé, refusé par défaut.`);
             await supabase.from('missions').update({
                 statut: 'refuse',
                 raison_refus: 'Refus automatique : délai de réponse dépassé'
             }).eq('id', mission.id);
-
-            const { data: client } = await supabase.from('utilisateurs').select('email').eq('id', mission.client_id).single();
-            if (client?.email) {
-                safeSendEmail({
-                        from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
-                    to: client.email,
-                    subject: '😔 Désolé, aucun prestataire disponible',
-                    html: `<p>Nous avons sollicité tous les prestataires choisis pour votre service de <strong>${mission.service}</strong>, mais aucun n'a pu répondre à temps. Vous allez être remboursé.</p>`
-                });
-            }
         }
     }
 }, 15000); // Vérification toutes les 15 secondes
@@ -1039,7 +963,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     
     // On récupère les missions seules d'abord pour éviter l'erreur de relation
     const { data: missions, error: mError } = await supabase.from('missions')
-        .select('*')
+        .select('*, created_at')
         .eq('prestataire_id', pId) // Filter by current prestataire
         .in('statut', ['en_attente_prestataire', 'programmation_en_cours']) // Include scheduled missions
         .order('created_at', { ascending: false });
@@ -1102,6 +1026,11 @@ app.post('/api/marquer-mission-vue/:id', requireAuth, async (req, res) => {
     if (error) {
         console.error(`[MARQUER VU ERR] Mission ${mId}:`, error.message);
         return res.status(500).json({ error: error.message });
+    }
+    
+    // On nettoie aussi la session pour arrêter les alertes immédiates
+    if (req.session.commande && req.session.commande.missionId == mId) {
+        req.session.commande.vu_par_prestataire = true;
     }
     res.json({ ok: true });
 });
@@ -1251,13 +1180,14 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     const { missionId, action } = req.body;
     const mId = parseInt(missionId, 10);
-    const { data: mission } = await supabase.from('missions').select('created_at, statut').eq('id', mId).eq('prestataire_id', req.session.user.id).maybeSingle();
+    const { data: mission } = await supabase.from('missions').select('created_at, statut, delai_reponse_minutes').eq('id', mId).eq('prestataire_id', req.session.user.id).maybeSingle();
+    
     if (!mission || mission.statut !== 'en_attente_prestataire') {
         return res.status(400).json({ error: 'Mission introuvable ou déjà traitée.' });
     }
-    const meta = missionMeta.get(mId) || { delaiMinutes: 1 };
-    const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
-    if (Date.now() - new Date(mission.created_at).getTime() >= delaiMs) {
+    
+    const delaiMs = (mission.delai_reponse_minutes || 1) * 60 * 1000;
+    if ((Date.now() - new Date(mission.created_at).getTime()) >= delaiMs) {
         await supabase.from('missions').update({ statut: 'refuse', raison_refus: 'Délai expiré' }).eq('id', mId);
         return res.status(400).json({ error: 'Délai expiré. Cette offre est refusée automatiquement.' });
     }
@@ -1294,17 +1224,17 @@ app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     if (mission) {
-        const { data: client } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.client_id).maybeSingle();
-        if (client?.email) {
-            safeSendEmail({ // Utilisation de l'adresse de notification
-                from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
-                to: client.email,
-                subject: '✅ Confirmez la fin du travail',
-                html: `<p>Bonjour ${client.prenom || ''}, le prestataire indique avoir terminé : <strong>${mission.service}</strong>.</p>
-                <p>Confirmez la fin du service pour déclencher le paiement (${meta.netPresta || mission.prix} FCFA au prestataire, commission 5 %).</p>
-                <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
-            });
-        }
+        // const { data: client } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.client_id).maybeSingle();
+        // if (client?.email) {
+        //     safeSendEmail({ // Utilisation de l'adresse de notification
+        //         from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
+        //         to: client.email,
+        //         subject: '✅ Confirmez la fin du travail',
+        //         html: `<p>Bonjour ${client.prenom || ''}, le prestataire indique avoir terminé : <strong>${mission.service}</strong>.</p>
+        //         <p>Confirmez la fin du service pour déclencher le paiement (${meta.netPresta || mission.prix} FCFA au prestataire, commission 5 %).</p>
+        //         <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
+        //     });
+        // }
         await supabase.from('messages').insert({
             sender_id: req.session.user.id,
             mission_id: mId,
@@ -1331,15 +1261,15 @@ app.post('/api/confirmer-fin-travail', requireAuth, async (req, res) => {
     const { error: updateError } = await supabase.from('missions').update({ statut: 'termine', client_a_confirme_fin: true }).eq('id', mId);
     if (updateError) return res.status(500).json({ error: updateError.message });
 
-    const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).maybeSingle();
-    if (presta?.email) {
-        safeSendEmail({ // Utilisation de l'adresse de test Resend
-            from: SENDER_EMAIL_NOTIF_TEST,
-            to: presta.email,
-            subject: '💰 Paiement validé',
-            html: `<p>Bonjour ${presta.prenom || ''}, le client a confirmé la fin de <strong>${mission.service}</strong>. Paiement de <strong>${meta.netPresta || mission.prix} FCFA</strong> (après commission 5 %).</p>`
-        });
-    }
+    // const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).maybeSingle();
+    // if (presta?.email) {
+    //     safeSendEmail({ // Utilisation de l'adresse de test Resend
+    //         from: SENDER_EMAIL_NOTIF_TEST,
+    //         to: presta.email,
+    //         subject: '💰 Paiement validé',
+    //         html: `<p>Bonjour ${presta.prenom || ''}, le client a confirmé la fin de <strong>${mission.service}</strong>. Paiement de <strong>${meta.netPresta || mission.prix} FCFA</strong> (après commission 5 %).</p>`
+    //     });
+    // }
     res.json({ ok: true, paye: true, montantPresta: meta.netPresta || mission.prix });
 });
 
@@ -2047,12 +1977,12 @@ Note : Cette alerte a été déclenchée manuellement par le prestataire depuis 
     console.error(alerteTexte);
 
     // ENVOI D'UN EMAIL D'URGENCE À L'ADMINISTRATEUR
-    safeSendEmail({
-        from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
-        to: process.env.ADMIN_EMAIL || 'votre-email-de-test@gmail.com',
-        subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
-        text: alerteTexte
-    });
+    // safeSendEmail({
+    //     from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
+    //     to: process.env.ADMIN_EMAIL || 'votre-email-de-test@gmail.com',
+    //     subject: `🚨 SOS URGENCE : ${user.prenom} ${user.nom}`,
+    //     text: alerteTexte
+    // });
 
     res.json({ ok: true, message: "Alerte envoyée aux services de sécurité de PetitsDjobs." });
 });
@@ -2076,21 +2006,6 @@ app.post('/accepter-job/:id', requireAuth, async (req, res) => {
         offre.vuParClient = false;
 
         // Notification par email au client
-        if (offre.emailClient && resend) {
-            safeSendEmail({
-                from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
-                to: offre.emailClient,
-                subject: '🎉 Un prestataire a accepté votre offre !',
-                html: `
-                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #FF6600;">Bonne nouvelle !</h2>
-                        <p>Le prestataire <strong>${prestaNom}</strong> est intéressé par votre offre : <em>"${offre.description}"</em> pour <strong>${offre.prix} FCFA</strong>.</p>
-                        <p>Connectez-vous dès maintenant pour finaliser votre choix et démarrer la mission.</p>
-                        <a href="https://petitsdjobs.com/discuter?offreId=${offre.id}" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Finaliser mon choix</a>
-                    </div>
-                `
-            });
-        }
     }
     res.json({ ok: true, message: 'Offre acceptée ! Attendez le choix du client.' });
 });
@@ -2106,17 +2021,7 @@ app.post('/annuler-job/:id', requireAuth, async (req, res) => {
     if (offre.paye) return res.status(400).json({ error: 'Impossible d\'annuler : le service est déjà payé.' });
 
     const clientNom = req.session.user.prenom || req.session.user.nom || 'Le client';
-    for (const pid of offre.acceptations || []) {
-        const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', pid).maybeSingle();
-        if (presta?.email) {
-            safeSendEmail({ // Utilisation de l'adresse de test Resend
-                from: SENDER_EMAIL_NOTIF_TEST,
-                to: presta.email,
-                subject: '❌ Offre annulée par le client',
-                html: `<p>Bonjour ${presta.prenom || ''}, ${clientNom} a <strong>annulé</strong> l'offre de service particulier (${offre.description}, ${offre.prix} FCFA) avant paiement.</p>`
-            });
-        }
-    }
+    // Suppression de l'envoi d'emails aux prestataires
     offresDiscuter.splice(index, 1);
     res.json({ ok: true, message: 'Tâche annulée. Les prestataires intéressés ont été informés.' });
 });
