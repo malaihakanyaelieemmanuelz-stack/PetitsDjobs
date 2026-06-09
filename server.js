@@ -658,15 +658,15 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
     const netPresta = prixClient - commission;
 
     const payload = {
-        client_id: parseInt(req.session.user.id, 10),
-        prestataire_id: parseInt(cmd.prestataireId, 10),
-        backup_ids: (cmd.backups && cmd.backups.length > 0) ? cmd.backups.map(b => b.id) : null,
+        client_id: parseInt(req.session.user.id, 10) || null,
+        prestataire_id: parseInt(cmd.prestataireId, 10) || null,
+        backup_ids: (cmd.backups && cmd.backups.length > 0) ? cmd.backups.map(b => parseInt(b.id, 10)) : null,
         service: cmd.service,
         prix: prixClient,
         statut: isToday ? 'en_attente_prestataire' : 'programmation_en_cours',
         lat_client: parseFloat(lat),
         lon_client: parseFloat(lon),
-        date_prevue: datePrevue,
+        date_prevue: datePrevue || 'today',
         delai_reponse_minutes: delaiMinutes, // Store in DB
         vu_par_prestataire: false // Store in DB
     };
@@ -706,12 +706,15 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         const actionButtonText = isToday ? "Accéder à mon espace" : "Voir les détails de la mission";
         const actionButtonLink = isToday ? "https://petitsdjobs.com/prestataire-info" : `https://petitsdjobs.com/prestataire-info?missionId=${data.id}`; // Link to specific mission if scheduled
 
+        // Note: Si votre domaine n'est pas vérifié sur Resend, utilisez 'onboarding@resend.dev' pour tester
+        const SENDER_EMAIL = 'PetitsDjobs <notifications@mail.petitsdjobs.com>';
+
         // 1. Notification du Prestataire Principal
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
         console.log("❌ [NOTIF-DEBUG] Tentative envoi email au principal:", pUser?.email);
         if (pUser && pUser.email && resend) {
             safeSendEmail({
-                from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+                from: SENDER_EMAIL,
                 to: pUser.email,
                 subject: `⭐ Vous êtes le prestataire principal - Mission ${msgDate}`,
                 html: `
@@ -734,7 +737,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                 const { data: bUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', backup.id).single();
                 if (bUser && bUser.email) {
                     safeSendEmail({
-                        from: 'PetitsDjobs <notifications@mail.petitsdjobs.com>',
+                        from: SENDER_EMAIL,
                         to: bUser.email,
                         subject: `🛡️ Mission de secours - Mission ${msgDate}`,
                         html: `
@@ -754,14 +757,14 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
-        console.error("❌ ERREUR CRITIQUE simuler-paiement:", err);
+        console.error("❌ ERREUR CRITIQUE simuler-paiement:", err.message || err);
         if (err.code === 'PGRST204') {
             console.error("👉 ANALYSE : La colonne 'date_prevue' est manquante dans votre table 'missions'. Exécutez l'ALTER TABLE dans Supabase.");
         }
         if (err.code === '22P02') {
             console.error("👉 ANALYSE : Erreur de type UUID. Allez sur votre tableau de bord Supabase, table 'missions', et changez le type des colonnes 'client_id' et 'prestataire_id' de 'UUID' vers 'BIGINT' ou 'INT8'.");
         }
-        res.status(500).json({ error: "Erreur technique" });
+        res.status(500).json({ error: "Erreur technique : " + (err.message || "Problème de base de données") });
     }
 });
 
