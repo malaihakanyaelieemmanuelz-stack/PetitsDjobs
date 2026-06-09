@@ -734,7 +734,8 @@ setInterval(async () => {
     const missionsExpirees = missionsEnAttente.filter(m => {
         // Use delai_reponse_minutes from DB
         const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
-        return (Date.now() - new Date(m.created_at).getTime()) >= delaiMs;
+        const tempsPasse = Date.now() - new Date(m.created_at).getTime();
+        return tempsPasse >= (delaiMs + 10000); // Marge de 10s pour éviter les bugs
     });
 
     if (missionsExpirees.length === 0) return;
