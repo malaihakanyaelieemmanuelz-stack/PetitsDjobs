@@ -161,9 +161,10 @@
 
         let lastCount = 0;
         async function verifierMissions() {
-            console.log("❌ [FRONT-DEBUG] Vérification des missions sur le serveur...");
+            console.log("🔍 [FRONT-PRESTA] Vérification des détails des missions...");
             const res = await fetch('/api/mes-missions-prestataire');
             const missions = await res.json();
+            console.log("📦 [FRONT-PRESTA] Données reçues du serveur:", missions);
 
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
