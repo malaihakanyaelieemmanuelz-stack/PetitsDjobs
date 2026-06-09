@@ -666,7 +666,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         statut: isToday ? 'en_attente_prestataire' : 'programmation_en_cours',
         lat_client: parseFloat(lat),
         lon_client: parseFloat(lon),
-        date_prevue: datePrevue
+        date_prevue: datePrevue,
         delai_reponse_minutes: delaiMinutes, // Store in DB
         vu_par_prestataire: false // Store in DB
     };
@@ -1098,7 +1098,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 });
 
 // Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)
-app.post('/api/marquer-mission-vue/:id', requireAuth, (req, res) => {
+app.post('/api/marquer-mission-vue/:id', requireAuth, async (req, res) => {
     const mId = parseInt(req.params.id, 10);
     // Update vu_par_prestataire in the database
     const { error } = await supabase.from('missions')
