@@ -763,10 +763,15 @@ setInterval(async () => {
                 .eq('id', mission.id);
         } else {
             console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
-            await supabase.from('missions').update({
+            const { error: refuseError } = await supabase.from('missions').update({
                 statut: 'refuse',
-                raison_refus: 'Refus automatique : délai de réponse dépassé'
+                raison_refus: 'Refus automatique : délai de réponse dépassé',
+                vu_par_prestataire: true // On marque comme vu pour être sûr
             }).eq('id', mission.id);
+            
+            if (refuseError) {
+                console.error(`❌ [RENDER-DEBUG ERR] Échec refus mission ${mission.id}:`, refuseError.message);
+            }
         }
     }
 }, 15000); // Vérification toutes les 15 secondes
