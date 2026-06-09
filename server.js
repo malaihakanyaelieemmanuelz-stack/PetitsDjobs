@@ -685,6 +685,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             throw error;
         }
 
+        console.log(`[MISSION-NEW] ID: ${data.id} créé pour Presta: ${payload.prestataire_id}. Délai: ${delaiMinutes}min`);
+        
         console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
@@ -748,11 +750,11 @@ setInterval(async () => {
                 })
                 .eq('id', mission.id);
         } else {
-            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
+            console.log(`[ANNULATION] Mission ${mission.id} : Délai expiré.`);
             const { error: refuseError } = await supabase.from('missions').update({
                 statut: 'refuse',
-                raison_refus: 'Refus automatique : délai de réponse dépassé',
-                vu_par_prestataire: true 
+                raison_refus: 'Délai dépassé',
+                vu_par_prestataire: true // On marque comme vu pour nettoyer l'interface
             }).eq('id', mission.id);
             
             if (refuseError) {
@@ -972,21 +974,18 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const clientMap = Object.fromEntries((clients || []).map(c => [c.id, { nom: c.nom, prenom: c.prenom, photo: c.photo_url }]));
 
     const result = missions.map(m => {
-        // On s'assure que l'ID est traité comme un nombre pour le Map
-        const delaiMinutes = m.delai_reponse_minutes || 1; // Use DB value
-        const delaiMs = delaiMinutes * 60 * 1000;
-        const tempsEcoule = Date.now() - new Date(m.created_at).getTime();
-        const expireDans = Math.max(0, delaiMs - tempsEcoule);
-        const estExpire = m.statut === 'en_attente_prestataire' && expireDans <= 0;
-
-        console.log(`🧐 [NOTIF-STEP-3] Mission ID ${m.id} : Statut=${m.statut}, ExpireDans=${Math.round(expireDans/1000)}s, Vu=${m.vu_par_prestataire}`);
+        const dMinutes = m.delai_reponse_minutes || 1;
+        const dMs = dMinutes * 60 * 1000;
+        const tEcoule = Date.now() - new Date(m.created_at).getTime();
+        const expireDans = Math.max(0, dMs - tEcoule);
+        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 0);
 
         return {
             ...m,
-            delaiMinutes: delaiMinutes,
+            delaiMinutes: dMinutes,
             vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: estExpire, // On ne filtre plus ici pour laisser le front gérer la disparition
+            expire: estExpire,
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
     });
@@ -1231,15 +1230,7 @@ app.post('/api/confirmer-fin-travail', requireAuth, async (req, res) => {
     const { error: updateError } = await supabase.from('missions').update({ statut: 'termine', client_a_confirme_fin: true }).eq('id', mId);
     if (updateError) return res.status(500).json({ error: updateError.message });
 
-    // const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).maybeSingle();
-    // if (presta?.email) {
-    //     safeSendEmail({ // Utilisation de l'adresse de test Resend
-    //         from: SENDER_EMAIL_NOTIF_TEST,
-    //         to: presta.email,
-    //         subject: '💰 Paiement validé',
-    //         html: `<p>Bonjour ${presta.prenom || ''}, le client a confirmé la fin de <strong>${mission.service}</strong>. Paiement de <strong>${meta.netPresta || mission.prix} FCFA</strong> (après commission 5 %).</p>`
-    //     });
-    // }
+    const meta = missionMeta.get(mId) || {};
     res.json({ ok: true, paye: true, montantPresta: meta.netPresta || mission.prix });
 });
 
