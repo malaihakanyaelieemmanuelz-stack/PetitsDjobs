@@ -169,9 +169,10 @@
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
 
-            // On affiche les missions en attente ou programmées
+            // Affichage uniquement des missions actives et non expirées
             const missionsAffichees = (missions || []).filter(m => 
-                m.statut === 'en_attente_prestataire' || m.statut === 'programmation_en_cours'
+                (m.statut === 'en_attente_prestataire' && !m.expire) || 
+                m.statut === 'programmation_en_cours'
             );
             
             if (missionsAffichees.length > 0) {
@@ -205,16 +206,16 @@
                     </div>
                 `).join('');
 
-                // 2. Marquer TOUTES les missions actives comme "vues" sur le profil
-                // Cela fait disparaître la notification flash de l'accueil immédiatement
-                missionsActives.forEach(m => {
+                // NETTOYAGE : On marque TOUTES les missions reçues (même expirées) comme vues
+                // Cela garantit que le bandeau orange de l'accueil disparaît quoi qu'il arrive
+                missions.forEach(m => {
                     if (!m.vuParPresta) {
+                        console.log("🧹 [CLEANUP] Marquage mission vue:", m.id);
                         fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
-                        // On joue le son une seule fois
                         if (lastCount === 0) document.getElementById('notif-sound').play().catch(() => {});
                     }
                 });
-                lastCount = missionsActives.length;
+                lastCount = missionsAffichees.length;
             } else {
                 zone.style.display = 'none';
                 lastCount = 0;

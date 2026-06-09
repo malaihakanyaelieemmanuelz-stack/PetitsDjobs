@@ -685,27 +685,13 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             throw error;
         }
 
+        console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
         req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = payload.statut;
         req.session.commande.delaiReponse = delaiMinutes;
-        if (req.session.commande.offreParticulierId) {
-            const offre = offresDiscuter.find(o => o.id === req.session.commande.offreParticulierId);
-            if (offre) offre.paye = true;
-        }
-
-        // --- NOTIFICATIONS DIFFÉRENCIÉES PAR EMAIL ---
-        const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le <strong>${datePrevue}</strong>`;
-        const consigneAcceptation = isToday ? "<p style='color: #b71c1c; font-weight: bold;'>⚠️ IMPORTANT : N'appuyez sur 'ACCEPTER' que lorsque vous êtes réellement prêt à partir pour la mission. L'acceptation déclenche immédiatement le suivi GPS.</p>" : "";
-        const actionButtonText = isToday ? "Accéder à mon espace" : "Voir les détails de la mission";
-        const actionButtonLink = isToday ? "https://petitsdjobs.com/prestataire-info" : `https://petitsdjobs.com/prestataire-info?missionId=${data.id}`; // Link to specific mission if scheduled
-        
-        // SENDER_EMAIL_NOTIF_TEST est déjà défini globalement.
-        // [NOTE] Les notifications par email pour les missions ont été désactivées à la demande de l'utilisateur.
-        
-        // 1. Notification du Prestataire Principal
 
         res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
     } catch (err) {
@@ -765,8 +751,9 @@ setInterval(async () => {
             console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
             const { error: refuseError } = await supabase.from('missions').update({
                 statut: 'refuse',
+                vu_par_prestataire: true // On force le "vu" pour nettoyer l'interface
                 raison_refus: 'Refus automatique : délai de réponse dépassé',
-                vu_par_prestataire: true // On marque comme vu pour être sûr
+                vu_par_prestataire: true 
             }).eq('id', mission.id);
             
             if (refuseError) {
@@ -1219,17 +1206,6 @@ app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     if (mission) {
-        // const { data: client } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.client_id).maybeSingle();
-        // if (client?.email) {
-        //     safeSendEmail({ // Utilisation de l'adresse de notification
-        //         from: SENDER_EMAIL_NOTIF_TEST, // Utilisation de l'adresse de test Resend
-        //         to: client.email,
-        //         subject: '✅ Confirmez la fin du travail',
-        //         html: `<p>Bonjour ${client.prenom || ''}, le prestataire indique avoir terminé : <strong>${mission.service}</strong>.</p>
-        //         <p>Confirmez la fin du service pour déclencher le paiement (${meta.netPresta || mission.prix} FCFA au prestataire, commission 5 %).</p>
-        //         <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
-        //     });
-        // }
         await supabase.from('messages').insert({
             sender_id: req.session.user.id,
             mission_id: mId,
