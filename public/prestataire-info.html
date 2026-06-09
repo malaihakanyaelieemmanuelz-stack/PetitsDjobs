@@ -169,13 +169,13 @@
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
 
-            // Affichage uniquement des missions actives et non expirées
+            // Affichage uniquement des missions actives et non expirées (pour le prestataire)
             const missionsAffichees = (missions || []).filter(m => 
                 (m.statut === 'en_attente_prestataire' && !m.expire) || 
                 m.statut === 'programmation_en_cours'
             );
             
-            if (missionsAffichees.length > 0) {
+            if (missionsAffichees.length > 0) { // Si des missions sont à afficher
                 zone.style.display = 'block';
                 liste.innerHTML = missionsAffichees.map(m => {
                     const dateM = new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});

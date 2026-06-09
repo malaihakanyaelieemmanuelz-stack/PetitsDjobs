@@ -113,7 +113,6 @@ const RAYON_MAX_METRES = 50000; // Limite standard à 50km
 const BUCKET_NAME = 'prestataires';
 const COMMISSION_PCT = 0.05; // 5 % prélevés sur le paiement client
 const offresDiscuter = [];
-const missionMeta = new Map();
 
 function normaliserId(id) {
     return id == null ? null : String(id);
@@ -752,8 +751,7 @@ setInterval(async () => {
             console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
             const { error: refuseError } = await supabase.from('missions').update({
                 statut: 'refuse',
-                raison_refus: 'Refus automatique : délai de réponse dépassé',
-                vu_par_prestataire: true
+                vu_par_prestataire: true // On force le "vu" pour nettoyer l'interface
             }).eq('id', mission.id);
             
             if (refuseError) {
@@ -1232,15 +1230,7 @@ app.post('/api/confirmer-fin-travail', requireAuth, async (req, res) => {
     const { error: updateError } = await supabase.from('missions').update({ statut: 'termine', client_a_confirme_fin: true }).eq('id', mId);
     if (updateError) return res.status(500).json({ error: updateError.message });
 
-    // const { data: presta } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).maybeSingle();
-    // if (presta?.email) {
-    //     safeSendEmail({ // Utilisation de l'adresse de test Resend
-    //         from: SENDER_EMAIL_NOTIF_TEST,
-    //         to: presta.email,
-    //         subject: '💰 Paiement validé',
-    //         html: `<p>Bonjour ${presta.prenom || ''}, le client a confirmé la fin de <strong>${mission.service}</strong>. Paiement de <strong>${meta.netPresta || mission.prix} FCFA</strong> (après commission 5 %).</p>`
-    //     });
-    // }
+    // Suppression des emails de mission pour préserver le quota
     const meta = missionMeta.get(mId) || {};
     res.json({ ok: true, paye: true, montantPresta: meta.netPresta || mission.prix });
 });
