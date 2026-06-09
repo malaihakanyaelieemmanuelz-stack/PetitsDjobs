@@ -70,7 +70,22 @@ try {
 // Global sender email for general notifications (client, etc.)
 const SENDER_EMAIL_NOTIF = 'PetitsDjobs <notifications@mail.petitsdjobs.com>';
 
-// --- Initialisation de Resend (Remplacement de Nodemailer pour éviter les blocages SMTP) ---
+// --- Initialisation de Resend (Remplacement de Nodept/render/project/src/server.js:1300
+                <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
+                ^
+SyntaxError: Unexpected token '<'
+    at wrapSafe (node:internal/modules/cjs/loader:1743:18)
+    at Module._compile (node:internal/modules/cjs/loader:1786:20)
+    at Object..js (node:internal/modules/cjs/loader:1943:10)
+    at Module.load (node:internal/modules/cjs/loader:1533:32)
+    at Module._load (node:internal/modules/cjs/loader:1335:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+Node.js v24.14.1
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'node server.jsmailer pour éviter les blocages SMTP) ---
 if (!process.env.RESEND_API_KEY) {
     console.error("❌ [ERREUR] RESEND_API_KEY manquante. Les mails ne partiront pas.");
 }
@@ -1297,7 +1312,7 @@ app.post('/api/terminer-tache', requireAuth, async (req, res) => {
                 subject: '✅ Confirmez la fin du travail',
                 html: `<p>Bonjour ${client.prenom || ''}, le prestataire indique avoir terminé : <strong>${mission.service}</strong>.</p>` +
                 `<p>Confirmez la fin du service pour déclencher le paiement (${mission.montant_prestataire || mission.prix} FCFA au prestataire, commission 5 %).</p>` +
-                <a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
+                `<a href="https://petitsdjobs.com/suivi?missionId=${mId}" style="display:inline-block;padding:12px 20px;background:#2e7d32;color:white;text-decoration:none;border-radius:8px;">CONFIRMER LA FIN</a>`
             });
         }
         await supabase.from('messages').insert({
