@@ -719,9 +719,12 @@ setInterval(async () => {
     if (!missionsEnAttente || missionsEnAttente.length === 0) return;
 
     const missionsExpirees = missionsEnAttente.filter(m => {
-        // Use delai_reponse_minutes from DB
-        const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
+        if (!m.created_at) return false;
+        const delaiMinutes = m.delai_reponse_minutes || 1; 
+        const delaiMs = delaiMinutes * 60 * 1000;
         const missionCreatedAt = new Date(m.created_at).getTime();
+        if (isNaN(missionCreatedAt) || missionCreatedAt <= 10000000) return false; // Sécurité : ignore les dates invalides (1970)
+
         const currentTime = Date.now();
         const tempsPasse = currentTime - missionCreatedAt;
 
