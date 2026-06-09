@@ -23,7 +23,7 @@ requiredVars.forEach(v => {
 });
 
 // Note: Si votre domaine n'est pas vérifié sur Resend, utilisez 'onboarding@resend.dev' pour tester
-const SENDER_EMAIL_NOTIF_TEST = 'PetitsDjobs <onboarding@resend.dev>'; // Utilisation de l'adresse de test Resend pour toutes les notifications
+global.SENDER_EMAIL_NOTIF_TEST = 'PetitsDjobs <onboarding@resend.dev>'; // Défini globalement pour éviter les ReferenceError
 
 
 const app = express();
@@ -685,7 +685,6 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
             throw error;
         }
 
-        console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
         req.session.commande.missionId = data.id;
@@ -735,9 +734,7 @@ setInterval(async () => {
     const missionsExpirees = missionsEnAttente.filter(m => {
         // Use delai_reponse_minutes from DB
         const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
-        const estExpire = (Date.now() - new Date(m.created_at).getTime()) >= delaiMs;
-        if (estExpire) console.log(`[RENDER-DEBUG] Mission ${m.id} détectée comme expirée. Temps écoulé > ${delaiMs}ms`);
-        return estExpire;
+        return (Date.now() - new Date(m.created_at).getTime()) >= delaiMs;
     });
 
     if (missionsExpirees.length === 0) return;
@@ -746,10 +743,11 @@ setInterval(async () => {
         const backups = mission.backup_ids || [];
         
         if (backups.length > 0) {
+            // PRENDRE LE PROCHAIN PRESTATAIRE DE SECOURS
             const nouveauPrestaId = backups[0];
             const resteBackups = backups.slice(1);
 
-            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé. Passage au prestataire de secours ${nouveauPrestaId}`);
+            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé. Passage au secours ${nouveauPrestaId}`);
 
             // Mise à jour de la mission
             const { error: updateError } = await supabase
@@ -763,7 +761,7 @@ setInterval(async () => {
                 })
                 .eq('id', mission.id);
         } else {
-            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai expiré, passage en statut 'refuse' par défaut.`);
+            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé, refus automatique.`);
             await supabase.from('missions').update({
                 statut: 'refuse',
                 raison_refus: 'Refus automatique : délai de réponse dépassé'
@@ -959,7 +957,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     
     // On récupère les missions seules d'abord pour éviter l'erreur de relation
     const { data: missions, error: mError } = await supabase.from('missions')
-        .select('*')
+        .select('*, created_at')
         .eq('prestataire_id', pId) // Filter by current prestataire
         .in('statut', ['en_attente_prestataire', 'programmation_en_cours']) // Include scheduled missions
         .order('created_at', { ascending: false });
@@ -968,8 +966,6 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         console.error(`❌ [NOTIF-ERR] Erreur Supabase pour ${pId}:`, mError.message);
         return res.status(500).json({ error: mError.message });
     }
-
-    if (missions?.length > 0) console.log(`[RENDER-DEBUG] Prestataire ${pId} récupère ${missions.length} missions actives.`);
 
     if (!missions || missions.length === 0) {
         console.log(`⚠️ [NOTIF-STEP-2] Aucune mission active trouvée en base pour ${pId}`);
@@ -998,7 +994,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
             delaiMinutes: delaiMinutes,
             vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: estExpire, // On garde l'info mais on ne filtre plus ici
+            expire: estExpire, // On ne filtre plus ici pour laisser le front gérer la disparition
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
     });
@@ -1010,8 +1006,6 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 // Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)
 app.post('/api/marquer-mission-vue/:id', requireAuth, async (req, res) => {
     const mId = parseInt(req.params.id, 10);
-    console.log(`[RENDER-DEBUG] Marquage VU pour mission ${mId} par prestataire ${req.session.user.id}`);
-
     // Update vu_par_prestataire in the database
     const { error } = await supabase.from('missions')
         .update({ vu_par_prestataire: true })
