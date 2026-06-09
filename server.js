@@ -667,6 +667,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         lat_client: parseFloat(lat),
         lon_client: parseFloat(lon),
         date_prevue: datePrevue
+        delai_reponse_minutes: delaiMinutes, // Store in DB
+        vu_par_prestataire: false // Store in DB
     };
 
     console.log("[DEBUG SIMU PAY] Payload envoyé à Supabase:", JSON.stringify(payload));
@@ -680,7 +682,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
-        missionMeta.set(data.id, {
+        missionMeta.set(data.id, { // Only store transient mission states in missionMeta, not persistent ones
             delaiMinutes: isToday ? delaiMinutes : 60,
             prestaFin: false,
             clientFin: false,
@@ -699,8 +701,10 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         }
 
         // --- NOTIFICATIONS DIFFÉRENCIÉES PAR EMAIL ---
-        const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le **${datePrevue}**`;
-        const consigneAcceptation = "<p style='color: #b71c1c; font-weight: bold;'>⚠️ IMPORTANT : N'appuyez sur 'ACCEPTER' que lorsque vous êtes réellement prêt à partir pour la mission. L'acceptation déclenche immédiatement le suivi GPS.</p>";
+        const msgDate = datePrevue === 'today' ? "immédiate" : `prévue pour le <strong>${datePrevue}</strong>`;
+        const consigneAcceptation = isToday ? "<p style='color: #b71c1c; font-weight: bold;'>⚠️ IMPORTANT : N'appuyez sur 'ACCEPTER' que lorsque vous êtes réellement prêt à partir pour la mission. L'acceptation déclenche immédiatement le suivi GPS.</p>" : "";
+        const actionButtonText = isToday ? "Accéder à mon espace" : "Voir les détails de la mission";
+        const actionButtonLink = isToday ? "https://petitsdjobs.com/prestataire-info" : `https://petitsdjobs.com/prestataire-info?missionId=${data.id}`; // Link to specific mission if scheduled
 
         // 1. Notification du Prestataire Principal
         const { data: pUser } = await supabase.from('utilisateurs').select('email, prenom').eq('id', cmd.prestataireId).single();
@@ -715,10 +719,10 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                         <h2 style="color: #FF6600;">Bonjour ${pUser.prenom}, vous êtes en 1ère position !</h2>
                         <p>Un client vous a choisi comme <strong>prestataire principal</strong> pour : <strong>${cmd.service}</strong>.</p>
                         <p>📅 Date : ${msgDate}</p>
-                        <p>⏰ Vous avez <strong>${delaiMinutes} minute(s)</strong> pour accepter cette mission, sinon elle sera refusée automatiquement.</p>
+                        ${isToday ? `<p>⏰ Vous avez <strong>${delaiMinutes} minute(s)</strong> pour accepter cette mission, sinon elle sera refusée automatiquement.</p>` : `<p>Veuillez consulter les détails de cette mission programmée.</p>`}
                         <p>💰 Commission plateforme : ${commission} FCFA (5 %). Vous recevrez ${netPresta} FCFA après validation client + prestataire.</p>
                         ${consigneAcceptation}
-                        <a href="https://petitsdjobs.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Accéder à mon espace</a>
+                        <a href="${actionButtonLink}" style="display: inline-block; padding: 12px 25px; background: #FF6600; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">${actionButtonText}</a>
                     </div>
                 `
             });
@@ -740,7 +744,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
                                 <p>📅 Date : ${msgDate}</p>
                                 <p>Si le prestataire principal se désiste ou ne répond pas, cette mission vous sera automatiquement attribuée.</p>
                                 ${consigneAcceptation}
-                                <a href="https://petitsdjobs.com/prestataire-info" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">Voir les détails</a>
+                                <a href="${actionButtonLink}" style="display: inline-block; padding: 12px 25px; background: #2e7d32; color: white; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold;">${actionButtonText}</a>
                             </div>
                         `
                     });
@@ -773,8 +777,8 @@ setInterval(async () => {
     if (!missionsEnAttente || missionsEnAttente.length === 0) return;
 
     const missionsExpirees = missionsEnAttente.filter(m => {
-        const meta = missionMeta.get(m.id) || { delaiMinutes: 1 };
-        const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
+        // Use delai_reponse_minutes from DB
+        const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
         return (Date.now() - new Date(m.created_at).getTime()) >= delaiMs;
     });
 
@@ -803,10 +807,10 @@ setInterval(async () => {
                     prestataire_id: nouveauPrestaId,
                     backup_ids: resteBackups,
                     created_at: new Date().toISOString(), // On reset le timer pour le nouveau
-                    statut: 'en_attente_prestataire'
+                    statut: 'en_attente_prestataire',
+                    vu_par_prestataire: false // Reset vu_par_prestataire for new primary
                 })
                 .eq('id', mission.id);
-
             if (!updateError) {
                 missionMeta.set(mission.id, { ...(missionMeta.get(mission.id) || {}), delaiMinutes: missionMeta.get(mission.id)?.delaiMinutes || 1 });
                 const { data: anciens } = await supabase.from('utilisateurs').select('email, prenom').eq('id', mission.prestataire_id).single();
@@ -1050,8 +1054,8 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     // On récupère les missions seules d'abord pour éviter l'erreur de relation
     const { data: missions, error: mError } = await supabase.from('missions')
         .select('*')
-        .eq('prestataire_id', pId)
-        .eq('statut', 'en_attente_prestataire')
+        .eq('prestataire_id', pId) // Filter by current prestataire
+        .in('statut', ['en_attente_prestataire', 'programmation_en_cours']) // Include scheduled missions
         .order('created_at', { ascending: false });
 
     if (mError) {
@@ -1071,18 +1075,22 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
     const result = missions.map(m => {
         // On s'assure que l'ID est traité comme un nombre pour le Map
-        const meta = missionMeta.get(Number(m.id)) || { delaiMinutes: 1, vuParPresta: false };
-        const delaiMs = (meta.delaiMinutes || 1) * 60 * 1000;
-        const expireDans = Math.max(0, delaiMs - (Date.now() - new Date(m.created_at).getTime()));
+        const delaiMinutes = m.delai_reponse_minutes || 1; // Use DB value
+        const delaiMs = delaiMinutes * 60 * 1000;
+        const expireDans = Math.max(0, delaiMs - (Date.now() - new Date(m.created_at).getTime())); // Only relevant for 'en_attente_prestataire'
         return {
             ...m,
-            delaiMinutes: meta.delaiMinutes || 1,
-            vuParPresta: meta.vuParPresta || false,
+            delaiMinutes: delaiMinutes,
+            vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: expireDans <= 0,
+            expire: m.statut === 'en_attente_prestataire' && expireDans <= 0, // Only immediate missions expire
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
-    }).filter(m => !m.expire);
+    }).filter(m => {
+        // For scheduled missions, they don't expire in the same way as 'en_attente_prestataire'
+        if (m.statut === 'programmation_en_cours') return true;
+        return !m.expire; // Filter expired 'en_attente_prestataire' missions
+    });
 
     console.log("❌ [NOTIF-DEBUG] ENVOI DE " + result.length + " MISSIONS au navigateur du prestataire.");
     console.log(`[QUERY DB RESULT] ${result.length} missions envoyées.`);
@@ -1091,11 +1099,16 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
 // Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)
 app.post('/api/marquer-mission-vue/:id', requireAuth, (req, res) => {
-    const mId = Number(req.params.id);
-    const meta = missionMeta.get(mId);
-    if (meta) {
-        meta.vuParPresta = true;
-        missionMeta.set(mId, meta);
+    const mId = parseInt(req.params.id, 10);
+    // Update vu_par_prestataire in the database
+    const { error } = await supabase.from('missions')
+        .update({ vu_par_prestataire: true })
+        .eq('id', mId)
+        .eq('prestataire_id', req.session.user.id); // Ensure only the assigned prestataire can mark as seen
+    
+    if (error) {
+        console.error(`[MARQUER VU ERR] Mission ${mId}:`, error.message);
+        return res.status(500).json({ error: error.message });
     }
     res.json({ ok: true });
 });

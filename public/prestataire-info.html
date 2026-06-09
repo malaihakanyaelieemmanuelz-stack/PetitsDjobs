@@ -133,7 +133,7 @@
             verifierMissions();
             chargerMaGalerie(data.id);
             setInterval(verifierMissions, 2000);
-        });
+        }).catch(e => console.error("Erreur chargement profil prestataire:", e));
 
         async function chargerMaGalerie(userId) {
             const galerie = document.getElementById('ma-galerie-showcase');
@@ -164,14 +164,16 @@
             console.log("❌ [FRONT-DEBUG] Vérification des missions sur le serveur...");
             const res = await fetch('/api/mes-missions-prestataire');
             const missions = await res.json();
-            
-            console.log("❌ [FRONT-DEBUG] Missions reçues par le navigateur :", missions.length);
 
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
+
+            // Filter for missions that are not yet seen by the prestataire
+            const newUnseenMissions = missions.filter(m => !m.vuParPresta);
             
-            if (missions.length > 0) {
-                if (missions.length > lastCount) {
+            if (newUnseenMissions.length > 0) {
+                // Play sound only for genuinely new, unseen missions
+                if (newUnseenMissions.length > lastCount) { // This logic needs to be more robust, maybe compare mission IDs
                     console.log("❌ [FRONT-DEBUG] Nouvelle mission ! Tentative de son.");
                     document.getElementById('notif-sound').play().catch(e => {
                         console.error("❌ [FRONT-DEBUG] Échec Son:", e.message);
@@ -179,32 +181,48 @@
                 }
                 zone.style.display = 'block';
                 const activeMissionsHtml = missions.map(m => `
+                    ${m.vuParPresta ? '' : `
                     <div class="mission-card-item" style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 5px solid #FF6600;">
-                        <div style="font-size: 0.85rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px;">OFFRE DE SERVICE</div>
+                        <div style="font-size: 0.85rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px;">
+                            ${m.statut === 'en_attente_prestataire' ? 'OFFRE DE SERVICE IMMÉDIATE' : 'MISSION PROGRAMMÉE'}
+                        </div>
                         <div style="font-weight: 800; color: #2e7d32; font-size: 1.1rem;">${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
                         <div style="font-size: 0.9rem; color: #FF6600; margin: 3px 0;">Service : <b>${m.service}</b></div>
                         <div style="font-size: 1.1rem; color: #2e7d32; font-weight: 800; margin-top: 5px;">${m.prix} FCFA</div>
-                        <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ DANS ${m.delaiMinutes || 1} MIN — sinon refus automatique</div>
-                        <div style="display:flex; gap:10px;">
-                            <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">ACCEPTER</button>
-                            <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
-                        </div>
+                        ${m.statut === 'en_attente_prestataire' ? `
+                            <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ DANS ${m.delaiMinutes || 1} MIN — sinon refus automatique</div>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">ACCEPTER</button>
+                                <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
+                            </div>
+                        ` : `
+                            <div style="color:#2e7d32; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #e8f5e9; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #2e7d32;">📅 PRÉVUE POUR : ${m.date_prevue}</div>
+                            <button onclick="repondreMission(${m.id}, 'voir_details')" style="width:100%; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">VOIR LES DÉTAILS</button>
+                        `}
                     </div>
+                    `}
                 `).join('');
                 
                 liste.innerHTML = activeMissionsHtml;
 
                 // Marquer les missions comme vues pour effacer la notif accueil
-                missions.forEach(m => {
-                    if (!m.vuParPresta) fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
+                newUnseenMissions.forEach(m => {
+                    fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
                 });
             } else {
                 zone.style.display = 'none';
             }
-            lastCount = missions.length;
+            lastCount = newUnseenMissions.length; // Update lastCount based on currently displayed missions
         }
 
         async function repondreMission(id, action) {
+            if (action === 'voir_details') {
+                // For scheduled missions, just mark as seen and redirect to a detailed view (e.g., chat or a specific mission page)
+                await fetch('/api/marquer-mission-vue/' + id, { method: 'POST' });
+                window.location.href = `/suivi?missionId=${id}`; // Or a dedicated mission detail page
+                return;
+            }
+
             const res = await fetch('/api/repondre-mission', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
