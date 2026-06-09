@@ -160,7 +160,7 @@
         }
 
         let lastCount = 0;
-        async function verifierMissions() {
+    async function verifierMissions() {
             console.log("🔍 [FRONT-PRESTA] Vérification des détails des missions...");
             const res = await fetch('/api/mes-missions-prestataire');
             const missions = await res.json();
@@ -169,20 +169,16 @@
             const zone = document.getElementById('zone-missions');
             const liste = document.getElementById('liste-missions-attente');
 
-            // Filter for missions that are not yet seen by the prestataire
-            const newUnseenMissions = missions.filter(m => !m.vuParPresta);
+            // 1. Filtrer les missions à afficher (Non expirées ou Programmées)
+            const missionsActives = (missions || []).filter(m => {
+                if (m.statut === 'en_attente_prestataire') return !m.expire;
+                if (m.statut === 'programmation_en_cours') return true;
+                return false;
+            });
             
-            if (newUnseenMissions.length > 0) {
-                // Play sound only for genuinely new, unseen missions
-                if (newUnseenMissions.length > lastCount) { // This logic needs to be more robust, maybe compare mission IDs
-                    console.log("❌ [FRONT-DEBUG] Nouvelle mission ! Tentative de son.");
-                    document.getElementById('notif-sound').play().catch(e => {
-                        console.error("❌ [FRONT-DEBUG] Échec Son:", e.message);
-                    });
-                }
+            if (missionsActives.length > 0) {
                 zone.style.display = 'block';
-                const activeMissionsHtml = missions.map(m => `
-                    ${m.vuParPresta ? '' : `
+                liste.innerHTML = missionsActives.map(m => `
                     <div class="mission-card-item" style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 5px solid #FF6600;">
                         <div style="font-size: 0.85rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px;">
                             ${m.statut === 'en_attente_prestataire' ? 'OFFRE DE SERVICE IMMÉDIATE' : 'MISSION PROGRAMMÉE'}
@@ -191,7 +187,9 @@
                         <div style="font-size: 0.9rem; color: #FF6600; margin: 3px 0;">Service : <b>${m.service}</b></div>
                         <div style="font-size: 1.1rem; color: #2e7d32; font-weight: 800; margin-top: 5px;">${m.prix} FCFA</div>
                         ${m.statut === 'en_attente_prestataire' ? `
-                            <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">⏰ RÉPONDEZ DANS ${m.delaiMinutes || 1} MIN — sinon refus automatique</div>
+                            <div style="color:#FF6600; font-weight:bold; font-size:0.8rem; margin:10px 0; background: #fff8f1; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed #FF6600;">
+                                ⏰ TEMPS RESTANT : ${Math.ceil(m.expireDansMs / 60000)} MIN
+                            </div>
                             <div style="display:flex; gap:10px;">
                                 <button onclick="repondreMission(${m.id}, 'accepter')" style="flex:1; background:#2e7d32; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">ACCEPTER</button>
                                 <button onclick="repondreMission(${m.id}, 'refuser')" style="flex:1; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">PAS DISPONIBLE</button>
@@ -201,19 +199,23 @@
                             <button onclick="repondreMission(${m.id}, 'voir_details')" style="width:100%; background:#FF6600; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">VOIR LES DÉTAILS</button>
                         `}
                     </div>
-                    `}
                 `).join('');
-                
-                liste.innerHTML = activeMissionsHtml;
 
-                // Marquer les missions comme vues pour effacer la notif accueil
-                newUnseenMissions.forEach(m => {
-                    fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' });
-                });
+                // 2. Gérer le son et marquer comme "vu" pour l'accueil
+                const nouvelles = missionsActives.filter(m => !m.vuParPresta);
+                if (nouvelles.length > 0) {
+                    if (nouvelles.length > lastCount) {
+                        console.log("🔔 [FRONT] Son de notification !");
+                        document.getElementById('notif-sound').play().catch(() => {});
+                    }
+                    // On marque comme vu immédiatement : le flash orange d'accueil disparaîtra au prochain refresh
+                    nouvelles.forEach(m => fetch('/api/marquer-mission-vue/' + m.id, { method: 'POST' }));
+                    lastCount = nouvelles.length;
+                }
             } else {
                 zone.style.display = 'none';
+                lastCount = 0;
             }
-            lastCount = newUnseenMissions.length; // Update lastCount based on currently displayed missions
         }
 
         async function repondreMission(id, action) {
