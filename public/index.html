@@ -394,6 +394,7 @@
                 let missionCount = 0;
                 setInterval(async () => {
                     const rM = await fetch('/api/mes-missions-prestataire');
+                    if (!rM.ok) return; // Arrête si l'utilisateur est déconnecté (401/302)
                     const mData = await rM.json();
                     const flash = document.getElementById('alerte-mission-flash');
                     
