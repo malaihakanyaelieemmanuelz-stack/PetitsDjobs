@@ -998,17 +998,12 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
             delaiMinutes: delaiMinutes,
             vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
-            expire: estExpire,
+            expire: estExpire, // On garde l'info mais on ne filtre plus ici
             client: clientMap[m.client_id] || { nom: 'Client', prenom: 'Inconnu', photo: 'default-profile.png' }
         };
-    }).filter(m => {
-        // For scheduled missions, they don't expire in the same way as 'en_attente_prestataire'
-        if (m.statut === 'programmation_en_cours') return true;
-        if (m.expire) console.log(`🗑️ [NOTIF-STEP-4] Mission ${m.id} masquée car expirée.`);
-        return !m.expire; // Filter expired 'en_attente_prestataire' missions
     });
 
-    console.log(`🚀 [NOTIF-STEP-5] Envoi de ${result.length} mission(s) filtrée(s) au prestataire ${pId}`);
+    console.log(`🚀 [RENDER-DEBUG] Envoi de ${result.length} mission(s) au prestataire ${pId}`);
     res.json(result);
 });
 
