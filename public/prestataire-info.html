@@ -192,8 +192,8 @@
                         </div>
                         <div style="font-weight: 800; color: #333; margin-bottom: 15px;">Client : ${m.client ? m.client.prenom + ' ' + m.client.nom : 'Inconnu'}</div>
                         ${m.statut === 'en_attente_prestataire' ? `
-                            <div style="color:white; font-weight:900; font-size:1rem; margin:15px 0; background: #FF6600; padding: 12px; border-radius: 10px; text-align: center; animation: pulse 1s infinite;">
-                                ⏳ RÉPONDRE DANS : ${Math.max(0, Math.ceil(m.expireDansMs / 1000))}s
+                            <div class="countdown-box" style="color:white; font-weight:900; font-size:1rem; margin:15px 0; background: #FF6600; padding: 12px; border-radius: 10px; text-align: center; animation: pulse 1s infinite;">
+                                ⏳ RÉPONDRE DANS : <span class="timer-val" data-ms="${m.expireDansMs}">${Math.max(0, Math.ceil(m.expireDansMs / 1000))}</span>s
                             </div>
                             <div style="display:flex; gap:10px;">
                                 <button onclick="repondreMission(${m.id}, 'accepter', this)" style="flex:1; background:#2e7d32; border:none; color:white; padding:15px; border-radius:10px; cursor:pointer; font-weight:900; font-size:1.1rem;">ACCEPTER</button>
@@ -221,6 +221,35 @@
                 lastCount = 0;
             }
         }
+
+        // Compte à rebours fluide (chaque seconde) pour masquer la mission dès qu'elle expire
+        setInterval(() => {
+            document.querySelectorAll('.timer-val').forEach(span => {
+                let ms = parseInt(span.dataset.ms);
+                if (ms > 0) {
+                    ms -= 1000;
+                    span.dataset.ms = ms;
+                    const seconds = Math.max(0, Math.ceil(ms / 1000));
+                    span.innerText = seconds;
+                    
+                    // Si le temps est fini, on masque la carte immédiatement pour le prestataire
+                    if (seconds <= 0) {
+                        const card = span.closest('.mission-card-item');
+                        if (card) {
+                            card.style.transition = 'all 0.5s ease';
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => {
+                                card.remove();
+                                if (document.querySelectorAll('.mission-card-item').length === 0) {
+                                    document.getElementById('zone-missions').style.display = 'none';
+                                }
+                            }, 500);
+                        }
+                    }
+                }
+            });
+        }, 1000);
 
         async function repondreMission(id, action, btn) {
             if (action === 'voir_details') {
