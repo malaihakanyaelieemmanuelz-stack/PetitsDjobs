@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Nouvelle Offre - PetitsDjobs</title>
+    <style>
+        body { background: #f4f4f4; padding-top: 20px; }
+        .offer-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .status-banner { padding: 12px; border-radius: 10px; font-weight: 900; margin-bottom: 20px; text-align: center; text-transform: uppercase; font-size: 0.9rem; }
+        .banner-primary { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
+        .banner-backup { background: #fff3e0; color: #e65100; border: 2px solid #e65100; }
+        .countdown-circle { width: 80px; height: 80px; border-radius: 50%; border: 5px solid #FF6600; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 900; color: #FF6600; margin: 0 auto 20px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .info-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .net-gain { font-size: 2.2rem; color: #2e7d32; font-weight: 900; margin: 10px 0; }
+        .action-btns { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-accept { flex: 2; background: #2e7d32; color: white; border: none; padding: 20px; border-radius: 15px; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(46,125,50,0.3); }
+        .btn-refuse { flex: 1; background: #999; color: white; border: none; padding: 20px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="offer-container" id="main-content" style="display:none;">
+        <div id="status-banner" class="status-banner"></div>
+        <div class="countdown-circle" id="timer">--</div>
+        <div class="info-card">
+            <div style="text-transform: uppercase; font-size: 0.75rem; font-weight: 800; color: #888;">Service demandé</div>
+            <h2 id="service-name" style="margin: 5px 0 20px; color: #333;">...</h2>
+            <div style="text-transform: uppercase; font-size: 0.75rem; font-weight: 800; color: #888;">Votre gain net</div>
+            <div class="net-gain"><span id="gain-val">0</span> FCFA</div>
+            <div style="font-size: 0.8rem; color: #666;">(Après commission de 5% déduite)</div>
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+                <div id="client-info" style="font-weight: 700; color: #333;">Client : ...</div>
+            </div>
+            <div class="action-btns">
+                <button class="btn-refuse" onclick="repondre('refuser')">REFUSER</button>
+                <button class="btn-accept" id="btn-accept" onclick="repondre('accepter')">ACCEPTER</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="msg-expired" style="display:none; text-align:center; padding:50px 20px;">
+        <h2 style="color:#FF6600;">OFFRE TERMINÉE</h2>
+        <p>Le délai est écoulé ou la mission a été attribuée.</p>
+        <button onclick="location.href='/index.html'" class="btn-placeholder" style="margin-top:20px;">RETOUR ACCUEIL</button>
+    </div>
+
+    <script>
+        const missionId = new URLSearchParams(location.search).get('missionId');
+        let timeLeftMs = 0;
+
+        async function init() {
+            if (!missionId) { location.href = '/index.html'; return; }
+
+            // Désactive la notif flash pour cette mission sur ce téléphone
+            localStorage.setItem(`vu_mission_${missionId}`, 'true');
+            fetch(`/api/marquer-mission-vue/${missionId}`, { method: 'POST' });
+
+            const res = await fetch('/api/mes-missions-prestataire');
+            const missions = await res.json();
+            const m = missions.find(x => String(x.id) === String(missionId));
+
+            if (!m || m.expire || m.statut !== 'en_attente_prestataire') {
+                document.getElementById('msg-expired').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('service-name').innerText = m.service;
+            document.getElementById('gain-val').innerText = m.montant_prestataire || Math.round(m.prix * 0.95);
+            document.getElementById('client-info').innerText = `Client : ${m.client.prenom} ${m.client.nom}`;
+            
+            const banner = document.getElementById('status-banner');
+            if (m.estSecours) {
+                banner.innerText = "📢 Vous êtes prestataire de secours";
+                banner.className = "status-banner banner-backup";
+            } else {
+                banner.innerText = "⚡ Vous êtes le prestataire principal";
+                banner.className = "status-banner banner-primary";
+            }
+
+            timeLeftMs = m.expireDansMs;
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById('timer');
+            const interval = setInterval(() => {
+                timeLeftMs -= 1000;
+                const seconds = Math.max(0, Math.ceil(timeLeftMs / 1000));
+                timerEl.innerText = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    document.getElementById('main-content').style.display = 'none';
+                    document.getElementById('msg-expired').style.display = 'block';
+                }
+            }, 1000);
+        }
+
+        async function repondre(action) {
+            const btn = document.getElementById('btn-accept');
+            btn.disabled = true;
+            btn.innerText = "PATIENTEZ...";
+
+            const res = await fetch('/api/repondre-mission', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ missionId, action })
+            });
+
+            if (res.ok) {
+                if (action === 'accepter') {
+                    await fetch('/preparer-commande', {
+                       method: 'POST',
+                       headers: {'Content-Type': 'application/json'},
+                       body: JSON.stringify({ missionId })
+                    });
+                    location.href = '/suivi';
+                } else {
+                    location.href = '/index.html';
+                }
+            } else {
+                const data = await res.json();
+                alert(data.error || "Erreur.");
+                location.href = '/index.html';
+            }
+        }
+        init();
+    </script>
+</body>
+</html>

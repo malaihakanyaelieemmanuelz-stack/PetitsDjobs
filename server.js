@@ -948,10 +948,10 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
     const pId = req.session.user.id;
 
-    // On cherche les missions où l'utilisateur est soit le prestataire principal, soit dans la liste des secours
+    // On cherche où l'utilisateur est PRO ou SECOURS
     const { data: missions, error: mError } = await supabase.from('missions')
         .select('*')
-        .or(`prestataire_id.eq.${pId},backup_ids.cs.{${pId}}`) 
+        .or(`prestataire_id.eq.${pId},backup_ids.cs.{${pId}}`)
         .in('statut', ['en_attente_prestataire', 'programmation_en_cours'])
         .order('created_at', { ascending: false });
 
@@ -976,14 +976,14 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         const dMinutes = m.delai_reponse_minutes || 1;
         const dMs = dMinutes * 60 * 1000;
         const tEcoule = Date.now() - new Date(m.created_at).getTime();
-        const expireDans = Math.max(0, dMs - tEcoule);
-        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 0);
+        const expireDans = Math.max(0, dMs - tEcoule + 5000); // +5s buffer
+        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 5000);
         const estSecours = String(m.prestataire_id) !== String(pId);
 
         return {
             ...m,
             delaiMinutes: dMinutes,
-            vuParPresta: estSecours ? false : m.vu_par_prestataire, // Pour les secours, on gère la vue localement ou via une future colonne
+            vuParPresta: m.vu_par_prestataire, // Use DB value
             expireDansMs: expireDans,
             expire: estExpire,
             estSecours: estSecours,
@@ -1160,36 +1160,31 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
 
 app.post('/api/repondre-mission', requireAuth, async (req, res) => {
     const { missionId, action } = req.body;
-    const mId = parseInt(missionId, 10);
-    const pId = req.session.user.id;
+    const mId = parseInt(missionId, 10); const pId = req.session.user.id;
 
     const { data: mission } = await supabase.from('missions').select('*').eq('id', mId).maybeSingle();
     
     if (!mission || mission.statut !== 'en_attente_prestataire') {
         return res.status(400).json({ error: 'Mission introuvable ou déjà traitée.' });
     }
-    
-    // Vérifier si l'utilisateur est bien le pro ou un secours
+
     const estPro = String(mission.prestataire_id) === String(pId);
     const estSecours = mission.backup_ids && mission.backup_ids.includes(pId);
-
     if (!estPro && !estSecours) return res.status(403).json({ error: 'Non autorisé.' });
 
     const delaiMs = (mission.delai_reponse_minutes || 1) * 60 * 1000;
     if ((Date.now() - new Date(mission.created_at).getTime()) >= delaiMs) {
-        await supabase.from('missions').update({ statut: 'refuse', raison_refus: 'Délai expiré', vu_par_prestataire: true }).eq('id', mId);
+        await supabase.from('missions').update({ statut: 'refuse', raison_refus: 'Délai expiré' }).eq('id', mId);
         return res.status(400).json({ error: 'Délai expiré. Cette offre est refusée automatiquement.' });
     }
 
-    let updatePayload = { statut: action === 'accepter' ? 'en_route' : 'refuse' };
-    
-    // Si c'est un secours qui accepte, il devient le prestataire principal
+    let payload = { statut: action === 'accepter' ? 'en_route' : 'refuse' };
     if (action === 'accepter' && estSecours) {
-        updatePayload.prestataire_id = pId;
-        updatePayload.backup_ids = mission.backup_ids.filter(id => id !== pId);
+        payload.prestataire_id = pId;
+        payload.backup_ids = (mission.backup_ids || []).filter(id => id !== pId);
     }
 
-    const { error } = await supabase.from('missions').update(updatePayload).eq('id', mId);
+    const { error } = await supabase.from('missions').update(payload).eq('id', mId);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
 });
