@@ -509,7 +509,7 @@ app.get('/suivi', requireAuth, async (req, res) => {
 app.get('/attente-prestataire', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'attente-prestataire.html')));
 app.get('/reinitialiser-mdp', (req, res) => res.sendFile(path.join(publicDir, 'reinitialiser-mdp.html')));
 app.get('/recuperation-mdp', (req, res) => res.sendFile(path.join(publicDir, 'recuperation-mdp.html')));
-app.get('/mes-commandes', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'mes-commandes.html')));
+app.get('/suivi-de-commande', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'suivi-de-commande.html')));
 app.get('/appele', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'appele.html')));
 
 app.post('/deconnexion', async (req, res) => {
@@ -721,7 +721,16 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         req.session.commande.statut = payload.statut;
         req.session.commande.delaiReponse = delaiMinutes;
 
-        res.json({ ok: true, message: "Paiement simulé. En attente du prestataire." });
+        let redirectUrl = '/index.html';
+        if (isToday) {
+            if (payload.orientation_mode === 'gps') redirectUrl = '/suivi?missionId=' + data.id;
+            else if (payload.orientation_mode === 'appele') redirectUrl = '/appele';
+            else if (payload.orientation_mode === 'chat') redirectUrl = '/chat.html?missionId=' + data.id;
+        } else {
+            redirectUrl = '/suivi-de-commande';
+        }
+
+        res.json({ ok: true, redirectUrl, message: "Paiement simulé. Redirection en cours..." });
     } catch (err) {
         console.error("❌ ERREUR CRITIQUE simuler-paiement:", err.message || err);
         if (err.code === 'PGRST204') {
@@ -1032,16 +1041,30 @@ app.get('/api/mes-demandes-client', requireAuth, async (req, res) => {
         .order('created_at', { ascending: false });
 
     if (error) return res.status(500).json({ error: error.message });
-    
-    // Récupérer les noms des prestataires pour l'affichage
-    const pIds = missions.map(m => m.prestataire_id);
-    const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', pIds);
+
+    // Récupérer tous les IDs de prestataires (principaux et backups)
+    const allPIds = missions.reduce((acc, m) => {
+        if (m.prestataire_id) acc.push(parseInt(m.prestataire_id));
+        if (m.backup_ids) m.backup_ids.forEach(id => acc.push(parseInt(id)));
+        return acc;
+    }, []);
+
+    const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', [...new Set(allPIds)]);
     const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
 
     res.json(missions.map(m => ({
         ...m,
-        prestataire: userMap[m.prestataire_id] || { nom: 'Inconnu', prenom: 'Pro' }
+        prestataire: userMap[m.prestataire_id] || { nom: 'Inconnu', prenom: 'Pro' },
+        backups: (m.backup_ids || []).map(id => userMap[id]).filter(Boolean)
     })));
+});
+
+// Nouvelle route pour mettre à jour l'heure d'arrivée prévue par le client
+app.post('/api/update-mission-time', requireAuth, async (req, res) => {
+    const { missionId, heure_arrivee } = req.body;
+    const { error } = await supabase.from('missions').update({ heure_arrivee_prevue: heure_arrivee }).eq('id', missionId).eq('client_id', req.session.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
 });
 
 // Route pour marquer une mission comme vue par le prestataire (efface la notif accueil)

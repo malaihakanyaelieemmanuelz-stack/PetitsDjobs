@@ -4,54 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="shortcut icon" type="image/png" href="/favicon.png">
-    <title>Appel Prestataire - PETITSDJOBS</title>
+    <title>Contact Prestataire - PETITSDJOBS</title>
 </head>
-<body class="auth-page">
-        <div class="login-card" style="max-width: 420px; border-top: 6px solid #FF6600;">
-        <h1 style="font-size: 1.6rem; color: #FF6600; font-weight: 900;">CONTACT PRESTATAIRE</h1>
-        
-        <div style="background: #fff8f1; color: #FF6600; padding: 15px; border-radius: 12px; border: 2px solid #FF6600; font-size: 0.85rem; margin-bottom: 20px; font-weight: bold; text-align: left; line-height: 1.4;">
-            ⚠️ ATTENTION : Tout paiement effectué en dehors de la plateforme est passible de poursuites judiciaires contre les deux parties (Client et Prestataire). Amende minimale : 10.000.000 FCFA. Votre sécurité n'est plus garantie en dehors du site.
+<body>
+    <header class="home-header">
+        <div class="header-content"><a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a></div>
+    </header>
+    <div class="app-wrap" style="text-align: center; margin-top: 50px;">
+        <h2 style="color: #FF6600;">Contactez votre prestataire</h2>
+        <div class="card" style="width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;">
+            <h3>Appel via Connexion (Gratuit)</h3>
+            <p style="font-size: 0.9rem; color: #666;">Passez un appel 100% gratuit via internet.</p>
+            <button class="btn-primary-sm" onclick="alert('Lancement de l\'appel internet...')">APPELER GRATUITEMENT</button>
         </div>
-
-        <p style="color: #555; font-size: 0.95rem; margin-bottom: 20px;">Appelez ce prestataire pour vérifier sa disponibilité immédiate.</p>
-        
-        <div id="info-presta" class="provider-pick" style="justify-content: center; margin: 20px 0;">
-             <img id="call-photo" src="default-profile.png" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #FF6600; object-fit: cover;">
-             <div style="text-align: left;">
-                 <strong id="call-nom">Chargement...</strong><br>
-                 <small id="call-tel" style="font-size: 1.15rem; color: #FF6600; font-weight: 900;">-- -- -- --</small>
-             </div>
-        </div>
-
-        <a id="link-appel" href="#" class="btn-primary-sm" style="display:flex; text-decoration:none; background:#2e7d32; padding:15px; margin-bottom:25px; border-radius: 50px;">
-            📞 APPELER MAINTENANT
-        </a>
-
-        <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 10px;">
-            <p style="font-size:1rem; margin-bottom: 15px; font-weight: bold; color: #333;">Le prestataire a-t-il accepté ?</p>
-            <div style="display:flex; flex-direction: column; gap:12px;">
-                <button onclick="location.href='/commande'" class="btn-primary-sm" style="width:100%; background:#FF6600; border: none;">OUI, IL A ACCEPTÉ</button>
-                <button onclick="location.href='/index.html?erreur=refus_appel'" class="btn-danger" style="width:100%; border: none;">NON, IL A REFUSÉ</button>
+        <div class="card" style="width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;">
+            <h3>Appel Direct</h3>
+            <p style="font-size: 0.9rem; color: #666;">Appel classique via votre opérateur.</p>
+            <div id="direct-call-input">
+                <input type="tel" id="client-phone" placeholder="Saisissez votre numéro" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+                <button class="btn-secondary-green" onclick="revelerNumero()">VOIR LE NUMÉRO DU PRO</button>
             </div>
+            <div id="result-numero" style="display:none; margin-top:15px; font-weight:bold; font-size:1.1rem;"></div>
         </div>
     </div>
-
     <script>
-        fetch('/get-session-commande').then(r => r.json()).then(cmd => {
-            if (cmd.telephone) {
-                const nom = [cmd.prestatairePrenom, cmd.prestataireNom].filter(Boolean).join(' ');
-                document.getElementById('call-nom').innerText = nom || "Prestataire";
-                document.getElementById('call-tel').innerText = cmd.telephone;
-                document.getElementById('link-appel').href = "tel:" + cmd.telephone;
-                if (cmd.prestatairePhoto) document.getElementById('call-photo').src = cmd.prestatairePhoto;
+        async function revelerNumero() {
+            if (!document.getElementById('client-phone').value) return alert("Saisissez votre numéro d'abord.");
+            const resStatus = await fetch('/get-session-commande');
+            const cmd = await resStatus.json();
+            const res = await fetch('/get-prestataire-contact/' + cmd.prestataireId);
+            const resultDiv = document.getElementById('result-numero');
+            if (res.ok) {
+                const data = await res.json();
+                resultDiv.innerHTML = `<span style="color:#2e7d32;">Numéro : ${data.telephone}</span><br><a href="tel:${data.telephone}" class="btn-primary-sm" style="display:block; margin-top:10px; text-decoration:none;">APPELER</a>`;
             } else {
-                alert("Erreur: Numéro du prestataire introuvable.");
-                window.location.href = "/commande";
+                resultDiv.innerHTML = `<span style="color:#FF6600;">Le prestataire ne souhaite pas que son numéro soit divulgué.</span>`;
             }
-        });
+            document.getElementById('direct-call-input').style.display = 'none';
+            resultDiv.style.display = 'block';
+        }
     </script>
 </body>
 </html>

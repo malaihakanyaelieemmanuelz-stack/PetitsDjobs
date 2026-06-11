@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Suivi de Commande - PETITSDJOBS</title>
+    <style>
+        .backup-list { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #eee; font-size: 0.8rem; }
+        .backup-item { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; opacity: 0.7; }
+        .backup-img { width: 25px; height: 25px; border-radius: 50%; object-fit: cover; }
+        .time-picker { margin-top: 15px; background: #fff8f5; padding: 10px; border-radius: 10px; border: 1px solid #FF6600; }
+    </style>
+</head>
+<body>
+    <header class="home-header"><div class="header-content"><a href="index.html" style="text-decoration:none;"><h1>PETITSDJOBS</h1></a></div></header>
+    <div class="app-wrap">
+        <h2 style="color:#2e7d32; text-align: center; margin: 20px 0;">Suivi de Commande</h2>
+        <div id="orders-list"></div>
+    </div>
+    <script>
+        async function chargerCommandes() {
+            const res = await fetch('/api/mes-demandes-client');
+            const missions = await res.json();
+            const container = document.getElementById('orders-list');
+            if (!missions.length) return container.innerHTML = "<p style='text-align:center;'>Aucune commande.</p>";
+
+            container.innerHTML = missions.map(m => {
+                const isFuture = m.statut === 'programmation_en_cours';
+                const canTrack = ['en_route', 'travail_en_cours', 'attente_confirmation_client'].includes(m.statut);
+                return `
+                    <div class="order-card" style="background:white; padding:20px; border-radius:15px; margin-bottom:15px; border-left:5px solid #FF6600; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#999; margin-bottom:10px;">
+                            <span>#${m.id}</span> <span class="status-badge">${m.statut}</span>
+                        </div>
+                        <div style="display:flex; gap:15px; align-items:center;">
+                            <img src="${m.prestataire?.photo_url || 'default-profile.png'}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+                            <div style="flex:1;">
+                                <h3 style="margin:0; font-size:1rem; color:#2e7d32;">${m.service}</h3>
+                                <p style="margin:3px 0; font-size:0.85rem; color:#666;">Avec ${m.prestataire?.prenom || 'un Pro'}</p>
+                            </div>
+                            <div style="font-weight:bold; color:#FF6600;">${m.prix} FCFA</div>
+                        </div>
+                        ${isFuture && m.backups.length ? `
+                            <div class="backup-list">
+                                <strong>Secours :</strong> ${m.backups.map(b => `<div class="backup-item"><img src="${b.photo_url || 'default-profile.png'}" class="backup-img"> ${b.prenom}</div>`).join('')}
+                            </div>
+                        ` : ''}
+                        ${isFuture ? `
+                            <div class="time-picker">
+                                <label style="font-size:0.75rem; color:#FF6600; font-weight:bold;">HEURE D'ARRIVÉE SOUHAITÉE :</label>
+                                <input type="time" value="${m.heure_arrivee_prevue || ''}" onchange="updateTime(${m.id}, this.value)" style="width:100%; border:none; background:transparent; font-size:1.1rem; color:#2e7d32; font-weight:bold; outline:none;">
+                            </div>
+                        ` : ''}
+                        ${canTrack ? `<button onclick="location.href='/suivi?missionId=${m.id}'" class="btn-primary-sm" style="width:100%; margin-top:15px; padding:10px;">SUIVRE SUR LA CARTE</button>` : ''}
+                    </div>`;
+            }).join('');
+        }
+        async function updateTime(id, time) {
+            await fetch('/api/update-mission-time', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({missionId: id, heure_arrivee: time}) });
+            alert("Heure mise à jour.");
+        }
+        chargerCommandes();
+    </script>
+</body>
+</html>
