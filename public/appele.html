@@ -15,16 +15,12 @@
         <div class="card" style="width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;">
             <h3>Appel via Connexion (Gratuit)</h3>
             <p style="font-size: 0.9rem; color: #666;">Passez un appel 100% gratuit via internet.</p>
-            <button class="btn-primary-sm" onclick="alert('Lancement de l\'appel internet...')">APPELER GRATUITEMENT</button>
+            <button class="btn-primary-sm" onclick="location.href='/appele-en-ligne.html'">APPELER GRATUITEMENT</button>
         </div>
         <div class="card" style="width: 100%; max-width: 400px; margin: 20px auto; padding: 20px;">
             <h3>Appel Direct</h3>
             <p style="font-size: 0.9rem; color: #666;">Appel classique via votre opérateur.</p>
-            <div id="direct-call-input">
-                <input type="tel" id="client-phone" placeholder="Saisissez votre numéro" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-                <button class="btn-secondary-green" onclick="revelerNumero()">VOIR LE NUMÉRO DU PRO</button>
-            </div>
-            <div id="result-numero" style="display:none; margin-top:15px; font-weight:bold; font-size:1.1rem;"></div>
+            <button class="btn-secondary-green" onclick="location.href='/appele-direct.html'">CHOISIR APPEL DIRECT</button>
         </div>
     </div>
     <script>

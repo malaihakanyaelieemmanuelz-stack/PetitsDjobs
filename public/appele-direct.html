@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Appel Direct - PETITSDJOBS</title>
+</head>
+<body>
+    <header class="home-header"><div class="header-content"><a href="index.html"><h1>PETITSDJOBS</h1></a></div></header>
+    <div class="app-wrap" style="text-align: center; margin-top: 50px;">
+        <div class="login-card" style="margin: auto;">
+            <h2 style="color: #FF6600;">Appel Direct</h2>
+            <p style="font-size: 0.9rem; color: #666;">Pour voir le numéro du pro, veuillez saisir le vôtre.</p>
+            
+            <div id="input-zone">
+                <input type="tel" id="client-phone" placeholder="VOTRE NUMÉRO (ex: 07...)" class="pd-field" style="text-align: center; font-size: 1.2rem;">
+                <button class="btn-primary-sm" onclick="validerEtVoirPro()" style="width:100%; margin-top:15px; padding:15px;">VOIR LE NUMÉRO DU PRO</button>
+            </div>
+
+            <div id="result-zone" style="display:none; margin-top:20px; padding:20px; background:#e8f5e9; border-radius:12px;">
+                <p style="color:#2e7d32; font-weight:bold;">Numéro du prestataire :</p>
+                <div id="pro-num" style="font-size:1.8rem; font-weight:900; color:#2e7d32; margin:10px 0;"></div>
+                <a id="call-link" href="#" class="btn-primary-sm" style="display:block; text-decoration:none; padding:15px;">APPELER MAINTENANT</a>
+            </div>
+            <p id="error-msg" style="display:none; color:#FF6600; font-weight:bold; margin-top:15px;"></p>
+        </div>
+    </div>
+    <script>
+        async function validerEtVoirPro() {
+            const phone = document.getElementById('client-phone').value;
+            if (!phone) return alert("Saisissez votre numéro.");
+
+            const session = await fetch('/get-session-commande').then(r => r.json());
+            const missionId = session.missionId;
+            const prestaId = session.prestataireId;
+
+            // 1. Enregistrement du numéro client
+            await fetch('/api/update-mission-phone', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ missionId, telephone: phone })
+            });
+
+            // 2. Récupération du numéro prestataire
+            const res = await fetch('/get-prestataire-contact/' + prestaId);
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('pro-num').innerText = data.telephone;
+                document.getElementById('call-link').href = "tel:" + data.telephone;
+                document.getElementById('input-zone').style.display = 'none';
+                document.getElementById('result-zone').style.display = 'block';
+            } else {
+                document.getElementById('input-zone').style.display = 'none';
+                document.getElementById('error-msg').innerText = "Le prestataire ne souhaite pas divulguer son numéro.";
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

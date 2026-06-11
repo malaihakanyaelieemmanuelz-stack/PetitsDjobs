@@ -38,6 +38,10 @@
             <i id="tip-text">Conseil : Vérifiez toujours le profil du prestataire avant son arrivée.</i>
         </div>
 
+        <div id="action-requise-message" style="display:none; background: #fff3e0; padding: 15px; border-radius: 12px; margin-top: 20px; border: 1px solid #FF6600; color: #FF6600; font-size: 0.9rem; text-align: left;">
+            <strong>Action requise :</strong> Pour garantir la disponibilité du prestataire et le prévenir à l'avance, nous vous recommandons de le contacter directement.
+        </div>
+
         <button onclick="if(confirm('Annuler la recherche ?')) window.location.href='/choisir-prestataire'" class="btn-outline" style="width: 100%; margin-top: 30px; border-color: #eee; color: #999; font-size: 0.9rem; min-height: 45px;">ANNULER LA DEMANDE</button>
     </div>
 
@@ -72,6 +76,14 @@
                 document.getElementById('wait-prenom').innerText = cmd.prestatairePrenom || 'votre prestataire';
                 document.getElementById('wait-service').innerText = cmd.service || 'Service';
                 if (cmd.prestatairePhoto) document.getElementById('wait-photo').src = cmd.prestatairePhoto;
+
+                // Afficher le message "action requise" si le prestataire est hors ligne et la date est future
+                const actionMessageDiv = document.getElementById('action-requise-message');
+                if (!cmd.disponible && cmd.datePrevue !== 'today') {
+                    actionMessageDiv.style.display = 'block';
+                } else {
+                    actionMessageDiv.style.display = 'none';
+                }
             }
         });
 

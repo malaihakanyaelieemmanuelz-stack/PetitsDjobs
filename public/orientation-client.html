@@ -34,18 +34,9 @@
             <p>Vous donnerez les instructions par message écrit (nom du bâtiment, étage, etc.).</p>
         </div>
 
-        <div class="choice-card" onclick="selectMode('appel', this)">
+        <div class="choice-card" onclick="selectMode('appele', this)">
             <h3>📞 Guidage par Appel</h3>
             <p>Le prestataire vous appellera directement pour trouver l'entrée.</p>
-        </div>
-
-        <div id="phone-section" class="phone-input-box">
-            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #2e7d32;">VOTRE NUMÉRO MOBILE</label>
-            <input type="tel" id="client-phone" placeholder="Ex: 07 00 00 00 00" class="pd-field" style="margin-bottom: 10px;">
-            <label style="font-size: 0.75rem; color: #2e7d32; display: flex; align-items: flex-start; gap: 8px; text-align: left;">
-                <input type="checkbox" id="auth-phone" style="width: auto; height: auto; margin-top: 3px;">
-                <span>J'autorise PetitsDjobs à transmettre ce numéro au prestataire <strong>uniquement s'il est perdu</strong>. Ce numéro ne sera pas enregistré dans mon profil.</span>
-            </label>
         </div>
 
         <button onclick="validerOrientation()" class="btn-primary-sm" style="width: 100%; margin-top: 20px; padding: 18px;">

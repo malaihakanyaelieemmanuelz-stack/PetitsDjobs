@@ -27,11 +27,22 @@
 
             container.innerHTML = missions.map(m => {
                 const isFuture = m.statut === 'programmation_en_cours';
-                const canTrack = ['en_route', 'travail_en_cours', 'attente_confirmation_client'].includes(m.statut);
+                const canTrack = ['en_route', 'travail_en_cours', 'attente_confirmation_client', 'attente_securite'].includes(m.statut);
+                
+                // Libellés plus clairs pour éviter l'impression de disparition
+                const statusLabels = {
+                    'en_attente_prestataire': 'Recherche d\'un Pro...',
+                    'programmation_en_cours': 'Plannifié',
+                    'en_route': 'Le Pro arrive',
+                    'travail_en_cours': 'Travail en cours',
+                    'attente_confirmation_client': 'Tâche finie - Validez',
+                    'attente_securite': 'Départ sécurisé'
+                };
+
                 return `
                     <div class="order-card" style="background:white; padding:20px; border-radius:15px; margin-bottom:15px; border-left:5px solid #FF6600; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
                         <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#999; margin-bottom:10px;">
-                            <span>#${m.id}</span> <span class="status-badge">${m.statut}</span>
+                            <span>N° ${m.id}</span> <span class="status-badge" style="background:var(--pd-green-light); color:var(--pd-green); padding:2px 8px; border-radius:10px;">${statusLabels[m.statut] || m.statut}</span>
                         </div>
                         <div style="display:flex; gap:15px; align-items:center;">
                             <img src="${m.prestataire?.photo_url || 'default-profile.png'}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">

@@ -724,7 +724,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         let redirectUrl = '/index.html';
         if (isToday) {
             if (payload.orientation_mode === 'gps') redirectUrl = '/suivi?missionId=' + data.id;
-            else if (payload.orientation_mode === 'appele') redirectUrl = '/appele';
+            else if (payload.orientation_mode === 'appele') redirectUrl = '/appele.html';
             else if (payload.orientation_mode === 'chat') redirectUrl = '/chat.html?missionId=' + data.id;
         } else {
             redirectUrl = '/suivi-de-commande';
@@ -741,6 +741,19 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         }
         res.status(500).json({ error: "Erreur technique : " + (err.message || "Problème de base de données") });
     }
+
+// Nouvelle route pour enregistrer le numéro du client pour l'appel direct après paiement
+app.post('/api/update-mission-phone', requireAuth, async (req, res) => {
+    const { missionId, telephone } = req.body;
+    if (!missionId || !telephone) return res.status(400).json({ error: "Données manquantes" });
+
+    const { error } = await supabase.from('missions')
+        .update({ telephone_client_mission: telephone })
+        .eq('id', missionId)
+        .eq('client_id', req.session.user.id);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
 });
 
 // --- LOGIQUE DE BASCULEMENT AUTOMATIQUE (GOUVERNANCE DES MISSIONS) ---
@@ -758,7 +771,7 @@ setInterval(async () => {
         // Use delai_reponse_minutes from DB
         const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
         const tempsPasse = Date.now() - new Date(m.created_at).getTime();
-        return tempsPasse >= (delaiMs + 10000); // Marge de 10s pour éviter les bugs
+        return tempsPasse >= delaiMs; // On compare directement au délai
     });
 
     if (missionsExpirees.length === 0) return;
@@ -1013,8 +1026,8 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         const dMinutes = m.delai_reponse_minutes || 1;
         const dMs = dMinutes * 60 * 1000;
         const tEcoule = Date.now() - new Date(m.created_at).getTime();
-        const expireDans = Math.max(0, dMs - tEcoule + 5000); // +5s buffer
-        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 5000);
+        const expireDans = Math.max(0, dMs - tEcoule); 
+        const estExpire = m.statut === 'en_attente_prestataire' && (expireDans <= 0);
         const estSecours = String(m.prestataire_id) !== String(pId);
 
         return {
