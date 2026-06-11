@@ -16,6 +16,18 @@
     <div class="loader-gps" id="main-loader"><p id="loader-msg">Recherche du GPS…</p></div>
     <div id="map"></div>
 
+    <!-- Bandeau Chat Global -->
+    <div id="global-chat-notif" style="display:none; position:fixed; top:max(160px, env(safe-area-inset-top, 160px)); left:10px; right:10px; background:white; border:2px solid #FF6600; border-radius:15px; padding:12px; z-index:11000; box-shadow:0 10px 30px rgba(0,0,0,0.2); animation: slideDownNotif 0.4s ease; cursor:pointer;" onclick="openChatFromNotif()">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:#FF6600; color:white; width:35px; height:35px; border-radius:50%; display:flex; align-items:center; justify-content:center;">💬</div>
+            <div style="flex:1;">
+                <div style="font-weight:900; color:#FF6600; font-size:0.7rem;">NOUVEAU MESSAGE</div>
+                <div id="notif-chat-sender" style="font-size:0.85rem; font-weight:bold;">...</div>
+            </div>
+            <button onclick="event.stopPropagation(); document.getElementById('global-chat-notif').style.display='none'" style="background:#eee; border:none; width:25px; height:25px; border-radius:50%;">✕</button>
+        </div>
+    </div>
+
     <div class="tracking-legend">
         <span class="leg-me">● Vous (vert)</span>
         <span class="leg-client">● Client (orange)</span>
@@ -30,6 +42,7 @@
             <div class="tracking-nav-text">
                 <div id="navigation-hint" class="tracking-nav-hint">Initialisation du GPS…</div>
                 <div id="nav-bearing-label" class="tracking-nav-bearing">Orientation en cours…</div>
+                <div id="orientation-choice" style="font-size: 0.7rem; color: #fff; font-weight: bold; margin-top: 4px; text-transform: uppercase; opacity: 0.9;"></div>
             </div>
         </div>
 
@@ -350,6 +363,38 @@
                 });
             }, { enableHighAccuracy: true, timeout: 8000 });
         }
+
+        // --- SURVEILLANCE CHAT GLOBAL ---
+        let chatNotifData = null;
+        let chatNotifTimeout = null;
+        window.openChatFromNotif = () => {
+            if (!chatNotifData) return;
+            location.href = chatNotifData.missionId ? `/chat.html?missionId=${chatNotifData.missionId}` : `/chat.html?amiId=${chatNotifData.amiId}`;
+        };
+
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/unread-messages-status');
+                const data = await res.json();
+                if (data.count > 0) {
+                    const lastId = localStorage.getItem('last_chat_msg_id');
+                    if (data.msgId != lastId) {
+                        chatNotifData = data;
+                        document.getElementById('notif-chat-sender').innerText = data.lastSender;
+                        document.getElementById('global-chat-notif').style.display = 'block';
+                        localStorage.setItem('last_chat_msg_id', data.msgId);
+                        
+                        // Disparaît automatiquement après 8 secondes
+                        if (chatNotifTimeout) clearTimeout(chatNotifTimeout);
+                        chatNotifTimeout = setTimeout(() => {
+                            document.getElementById('global-chat-notif').style.display = 'none';
+                        }, 8000);
+                    }
+                } else {
+                    document.getElementById('global-chat-notif').style.display = 'none';
+                }
+            } catch(e){}
+        }, 4000);
 
         function pollClient() {
             if (!missionId) return;

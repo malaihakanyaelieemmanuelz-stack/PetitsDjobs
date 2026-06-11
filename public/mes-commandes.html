@@ -3,69 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes commandes - PETITSDJOBS</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <title>Mes Commandes - PETITSDJOBS</title>
+    <style>
+        .orders-container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .order-card { 
+            background: white; 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-left: 5px solid #FF6600;
+        }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .order-status { 
+            font-size: 0.7rem; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+        }
+        .status-active { background: #e8f5e9; color: #2e7d32; }
+        .status-done { background: #f5f5f5; color: #666; }
+        .status-alert { background: #ffebee; color: #c62828; }
+        
+        .order-body { display: flex; gap: 15px; align-items: center; }
+        .presta-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #FF6600; }
+        .order-details h3 { margin: 0; font-size: 1rem; color: #2e7d32; }
+        .order-details p { margin: 3px 0; font-size: 0.85rem; color: #666; }
+        .order-price { font-weight: bold; color: #FF6600; font-size: 1.1rem; }
+        
+        .empty-state { text-align: center; padding: 50px 20px; color: #999; }
+    </style>
 </head>
 <body>
     <header class="home-header">
         <div class="header-content">
-            <a href="/profil" style="text-decoration:none; color:#FF6600; font-weight:bold;">← RETOUR PROFIL</a>
-            <h1>MES COMMANDES</h1>
+            <a href="index.html" style="text-decoration:none;">
+                <h1 style="margin:0; font-size: 1.2rem;">PETITSDJOBS</h1>
+            </a>
+            <nav class="nav-compact">
+                <a href="/profil">RETOUR PROFIL</a>
+            </nav>
         </div>
     </header>
 
-    <main class="app-wrap">
-        <h2 class="page-title">Suivi de vos services</h2>
-        <p class="page-sub">Retrouvez ici vos prestations en cours ou prévues.</p>
-
-        <div id="liste-commandes">
-            <div style="text-align:center; padding:50px;">
-                <p>Chargement de vos commandes...</p>
-            </div>
+    <div class="app-wrap">
+        <h2 style="color:#2e7d32; margin: 20px 0 10px; text-align: center;">Historique de mes services</h2>
+        <div id="orders-list" class="orders-container">
+            <p style="text-align:center;">Chargement de vos commandes...</p>
         </div>
-    </main>
+    </div>
 
     <script>
         const statusLabels = {
-            'en_attente_prestataire': '⏳ En attente du prestataire',
-            'en_route': '🚗 Prestataire en route',
-            'travail_en_cours': '🛠️ Travail en cours',
-            'attente_securite': '🛡️ Vérification sécurité'
+            'en_attente_prestataire': { text: 'En attente', class: 'status-active' },
+            'en_route': { text: 'En route', class: 'status-active' },
+            'travail_en_cours': { text: 'En cours', class: 'status-active' },
+            'attente_confirmation_client': { text: 'À confirmer', class: 'status-active' },
+            'attente_securite': { text: 'Terminé (Départ)', class: 'status-active' },
+            'termine': { text: 'Terminé', class: 'status-done' },
+            'refuse': { text: 'Refusé', class: 'status-done' },
+            'annule': { text: 'Annulé', class: 'status-done' },
+            'alerte_police': { text: 'Alerte SOS', class: 'status-alert' }
         };
 
         async function chargerCommandes() {
-            const res = await fetch('/api/mes-commandes-futures');
-            const missions = await res.json();
-            const container = document.getElementById('liste-commandes');
+            try {
+                const res = await fetch('/api/mes-demandes-client');
+                const missions = await res.json();
+                const container = document.getElementById('orders-list');
 
-            if (!missions || missions.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align:center; padding:40px; background:white; border-radius:15px;">
-                        <p style="font-size:1.2rem; color:#888;">Vous n'avez aucune commande prévue pour le moment.</p>
-                        <a href="/index.html" class="btn-primary-sm" style="display:inline-flex; margin-top:20px;">Réserver un service</a>
-                    </div>`;
-                return;
+                if (!missions || missions.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">📦</div>
+                            <p>Vous n'avez pas encore passé de commande.</p>
+                            <a href="index.html" class="btn-primary-sm" style="display:inline-block; text-decoration:none; margin-top:15px; padding: 10px 20px;">Commander un service</a>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = missions.map(m => {
+                    const status = statusLabels[m.statut] || { text: m.statut, class: 'status-done' };
+                    const date = new Date(m.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                    const canTrack = ['en_route', 'travail_en_cours', 'attente_securite', 'attente_confirmation_client'].includes(m.statut);
+
+                    return `
+                        <div class="order-card" onclick="${canTrack ? `location.href='/suivi?missionId=${m.id}'` : ''}" style="${canTrack ? 'cursor:pointer; border-color: #2e7d32;' : ''}">
+                            <div class="order-header">
+                                <span style="font-size: 0.75rem; color: #999;">#${m.id} • ${date}</span>
+                                <span class="order-status ${status.class}">${status.text}</span>
+                            </div>
+                            <div class="order-body">
+                                <img src="${m.prestataire?.photo_url || 'default-profile.png'}" class="presta-img">
+                                <div class="order-details" style="flex:1;">
+                                    <h3>${m.service}</h3>
+                                    <p>Avec ${m.prestataire?.prenom || 'un Pro'}</p>
+                                    <span class="order-price">${m.prix} FCFA</span>
+                                </div>
+                                ${canTrack ? '<div style="color:#2e7d32; font-weight:bold;">➔</div>' : ''}
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (e) {
+                document.getElementById('orders-list').innerHTML = "<p>Erreur lors du chargement.</p>";
             }
-
-            container.innerHTML = missions.map(m => `
-                <div class="mission-future-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                        <span class="status-badge">${statusLabels[m.statut] || m.statut}</span>
-                        <small style="color:#999;">Commandé le ${new Date(m.created_at).toLocaleDateString('fr-FR')}</small>
-                    </div>
-                    <h3 style="margin:5px 0; color:#333;">${m.service}</h3>
-                    <p style="margin:5px 0; color:#FF6600; font-weight:bold;">Prestataire : ${m.prestataire.prenom} ${m.prestataire.nom}</p>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-                        <span style="font-weight:bold; font-size:1.1rem;">${m.prix} FCFA</span>
-                        ${m.statut === 'en_attente_prestataire' ? 
-                            `<button onclick="location.href='/attente-prestataire?missionId=${m.id}'" class="btn-primary-sm" style="min-height:35px; padding:5px 15px; font-size:0.8rem;">VOIR LE SUIVI</button>` : 
-                            `<button onclick="location.href='/suivi?missionId=${m.id}'" class="btn-primary-sm" style="min-height:35px; padding:5px 15px; font-size:0.8rem;">SUIVRE LE GPS</button>`
-                        }
-                    </div>
-                </div>
-            `).join('');
         }
-
         chargerCommandes();
     </script>
 </body>

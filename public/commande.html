@@ -247,6 +247,14 @@
 
         document.getElementById('btn-payer').onclick = async () => {
             const btn = document.getElementById('btn-payer');
+            const params = new URLSearchParams(window.location.search);
+            
+            // Si on ne vient pas de la page d'orientation, on y va d'abord
+            if (params.get('readyToPay') !== '1') {
+                window.location.href = '/orientation-client.html?' + params.toString();
+                return;
+            }
+
             const dateMode = document.getElementById('select-date-mode').value;
 
             // Intercepte le paiement si le prestataire est toujours hors ligne dans le système

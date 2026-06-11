@@ -127,6 +127,19 @@
                 setTimeout(() => { box.scrollTop = box.scrollHeight; }, 100);
                 lastCount = messages.length;
             }
+            
+            // Consultation : On marque comme lu dès que c'est affiché
+            if (messages.length > 0) {
+                marquerMessagesLus();
+            }
+        }
+
+        async function marquerMessagesLus() {
+            await fetch('/api/mark-messages-read', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ missionId, amiId })
+            });
         }
 
         function escapeHtml(str) {

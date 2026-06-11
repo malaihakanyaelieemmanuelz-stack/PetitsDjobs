@@ -70,6 +70,12 @@ body {
     flex-direction: column;
     background-color: transparent !important; /* Laisse passer le logo du HTML */
 }
+
+@keyframes slideDownNotif {
+    from { transform: translateY(-120%); }
+    to { transform: translateY(0); }
+}
+
 .auth-page { 
     display: flex; 
     justify-content: center; 
@@ -1175,6 +1181,24 @@ body {
     font-weight: bold;
     background: #eee;
     color: #000000;
+}
+
+/* Styles spécifiques pour les statuts de mission */
+.status-badge.en-attente-prestataire, .status-badge.programmation-en-cours {
+    background: #ffecb3; /* Jaune pâle */
+    color: #ff8f00; /* Orange */
+}
+.status-badge.en-route {
+    background: #c8e6c9; /* Vert pâle */
+    color: #2e7d32; /* Vert PetitsDjobs */
+}
+.status-badge.travail-en-cours, .status-badge.attente-securite {
+    background: #bbdefb; /* Bleu pâle */
+    color: #1976d2; /* Bleu foncé */
+}
+.status-badge.attente-confirmation-client {
+    background: #ffe0b2; /* Orange très pâle */
+    color: #e65100; /* Orange foncé */
 }
 .provider-pick img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
 .steps-bar {

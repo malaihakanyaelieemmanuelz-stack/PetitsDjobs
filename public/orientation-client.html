@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Orientation du prestataire - PETITSDJOBS</title>
+    <style>
+        .choice-card {
+            background: white; padding: 20px; border-radius: 15px; margin-bottom: 15px;
+            border: 2px solid #eee; cursor: pointer; transition: all 0.2s; text-align: left;
+        }
+        .choice-card.active { border-color: #FF6600; background: #fff8f1; }
+        .choice-card h3 { margin: 0 0 5px; color: #2e7d32; font-size: 1.1rem; }
+        .choice-card p { margin: 0; font-size: 0.85rem; color: #666; }
+        .phone-input-box {
+            background: #e8f5e9; padding: 20px; border-radius: 15px; margin-top: 20px;
+            display: none; border: 1px solid #2e7d32;
+        }
+    </style>
+</head>
+<body class="auth-page">
+    <div class="login-card" style="max-width: 450px;">
+        <h2 style="color: #FF6600; margin-top: 0;">GUIDAGE DU PRO</h2>
+        <p style="font-size: 0.9rem; color: #666; margin-bottom: 25px;">Comment souhaitez-vous orienter le prestataire vers votre domicile ?</p>
+
+        <div class="choice-card active" onclick="selectMode('gps', this)">
+            <h3>📍 Localisation GPS (Maison)</h3>
+            <p>Le pro utilise la position actuelle de votre maison comme point d'arrivée fixe.</p>
+        </div>
+
+        <div class="choice-card" onclick="selectMode('chat', this)">
+            <h3>💬 Guidage par Chat</h3>
+            <p>Vous donnerez les instructions par message écrit (nom du bâtiment, étage, etc.).</p>
+        </div>
+
+        <div class="choice-card" onclick="selectMode('appel', this)">
+            <h3>📞 Guidage par Appel</h3>
+            <p>Le prestataire vous appellera directement pour trouver l'entrée.</p>
+        </div>
+
+        <div id="phone-section" class="phone-input-box">
+            <label style="display: block; font-weight: bold; margin-bottom: 10px; color: #2e7d32;">VOTRE NUMÉRO MOBILE</label>
+            <input type="tel" id="client-phone" placeholder="Ex: 07 00 00 00 00" class="pd-field" style="margin-bottom: 10px;">
+            <label style="font-size: 0.75rem; color: #2e7d32; display: flex; align-items: flex-start; gap: 8px; text-align: left;">
+                <input type="checkbox" id="auth-phone" style="width: auto; height: auto; margin-top: 3px;">
+                <span>J'autorise PetitsDjobs à transmettre ce numéro au prestataire <strong>uniquement s'il est perdu</strong>. Ce numéro ne sera pas enregistré dans mon profil.</span>
+            </label>
+        </div>
+
+        <button onclick="validerOrientation()" class="btn-primary-sm" style="width: 100%; margin-top: 20px; padding: 18px;">
+            VALIDER ET PAYER
+        </button>
+    </div>
+
+    <script>
+        let selectedMode = 'gps';
+        let latDest = null, lonDest = null;
+
+        function selectMode(mode, el) {
+            selectedMode = mode;
+            document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('phone-section').style.display = (mode === 'appel' || mode === 'gps') ? 'block' : 'none';
+            
+            if (mode === 'gps') {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    latDest = pos.coords.latitude;
+                    lonDest = pos.coords.longitude;
+                    console.log("📍 Position maison capturée :", latDest, lonDest);
+                });
+            }
+        }
+        
+        // Initialisation du mode GPS par défaut
+        selectMode('gps', document.querySelector('.choice-card'));
+
+        async function validerOrientation() {
+            const phone = document.getElementById('client-phone').value;
+            const auth = document.getElementById('auth-phone').checked;
+
+            if ((selectedMode === 'appel' || selectedMode === 'gps') && !phone) {
+                alert("Veuillez saisir votre numéro pour faciliter l'arrivée du pro.");
+                return;
+            }
+
+            const data = {
+                orientation_mode: selectedMode,
+                lat_destination: latDest,
+                lon_destination: lonDest,
+                telephone_ephemere: auth ? phone : null
+            };
+
+            // Mise à jour de la session avant le paiement
+            await fetch('/api/sauvegarder-orientation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            // On redirige vers la page de commande pour le paiement Wave
+            const params = new URLSearchParams(window.location.search);
+            window.location.href = '/commande?' + params.toString() + "&readyToPay=1";
+        }
+    </script>
+</body>
+</html>

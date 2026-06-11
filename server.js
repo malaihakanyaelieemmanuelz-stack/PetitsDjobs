@@ -113,6 +113,7 @@ const RAYON_MAX_METRES = 50000; // Limite standard à 50km
 const BUCKET_NAME = 'prestataires';
 const COMMISSION_PCT = 0.05; // 5 % prélevés sur le paiement client
 const offresDiscuter = [];
+const missionMeta = new Map(); // Stockage temporaire pour la validation des fins de tâches
 
 function normaliserId(id) {
     return id == null ? null : String(id);
@@ -556,6 +557,21 @@ app.get('/get-session-commande', async (req, res) => {
     res.json(req.session.commande || {});
 });
 
+app.post('/api/sauvegarder-orientation', (req, res) => {
+    const { orientation_mode, lat_destination, lon_destination, telephone_ephemere } = req.body;
+    if (!req.session.commande) req.session.commande = {};
+    
+    req.session.commande.orientation_mode = orientation_mode;
+    req.session.commande.telephone_ephemere = telephone_ephemere;
+    
+    // Si le mode GPS est choisi, on fixe la destination
+    if (lat_destination && lon_destination) {
+        req.session.commande.lat_destination = lat_destination;
+        req.session.commande.lon_destination = lon_destination;
+    }
+    res.json({ ok: true });
+});
+
 // Route pour obtenir le nombre total de prestataires inscrits
 app.get('/api/total-prestataires', async (req, res) => {
     const { count } = await supabase.from('infos_prestataires').select('*', { count: 'exact', head: true });
@@ -675,13 +691,15 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         service: cmd.service,
         prix: prixClient,
         statut: isToday ? 'en_attente_prestataire' : 'programmation_en_cours',
-        lat_client: parseFloat(lat),
-        lon_client: parseFloat(lon),
+        lat_client: cmd.lat_destination ? parseFloat(cmd.lat_destination) : parseFloat(lat),
+        lon_client: cmd.lon_destination ? parseFloat(cmd.lon_destination) : parseFloat(lon),
         date_prevue: datePrevue || 'today', // Assure une valeur par défaut
         commission_plateforme: commission, // Nouvelle colonne
         montant_prestataire: netPresta,   // Nouvelle colonne
         delai_reponse_minutes: delaiMinutes, // Store in DB
-        vu_par_prestataire: false // Store in DB
+        vu_par_prestataire: false, // Store in DB
+        orientation_mode: cmd.orientation_mode || 'gps',
+        telephone_client_mission: cmd.telephone_ephemere || null
     };
 
     console.log("[DEBUG SIMU PAY] Payload envoyé à Supabase:", JSON.stringify(payload));
@@ -954,7 +972,7 @@ app.get('/api/suivi-prestataire-gps', requireAuth, async (req, res) => {
 
 // Nouvelles routes pour la gestion des missions par le prestataire
 app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
-    const pId = req.session.user.id;
+    const pId = parseInt(req.session.user.id, 10);
 
     // On récupère d'abord les missions où l'utilisateur est le prestataire principal
     const { data: mPrimary, error: err1 } = await supabase.from('missions').select('*').eq('prestataire_id', pId).in('statut', ['en_attente_prestataire', 'programmation_en_cours']);
@@ -1007,7 +1025,7 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
 
 // Route pour le gestionnaire de demandes du client
 app.get('/api/mes-demandes-client', requireAuth, async (req, res) => {
-    const cId = req.session.user.id;
+    const cId = parseInt(req.session.user.id, 10);
     const { data: missions, error } = await supabase.from('missions')
         .select('*')
         .eq('client_id', cId)
@@ -1112,15 +1130,59 @@ app.post('/api/send-message', requireAuth, async (req, res) => {
 
 // Route pour marquer les messages comme vus
 app.post('/api/mark-messages-read', requireAuth, async (req, res) => {
-    const { missionId } = req.body;
-    if (!missionId) return res.json({ ok: false });
+    const { missionId, amiId } = req.body;
+    let query = supabase.from('messages').update({ lu: true }).neq('sender_id', req.session.user.id);
+    
+    if (missionId && missionId !== 'null' && missionId !== 'undefined') {
+        query = query.eq('mission_id', parseInt(missionId));
+    } else if (amiId && amiId !== 'null' && amiId !== 'undefined') {
+        query = query.eq('sender_id', parseInt(amiId)).eq('ami_id', req.session.user.id);
+    } else {
+        return res.json({ ok: false });
+    }
 
-    const { error } = await supabase.from('messages')
-        .update({ lu: true })
-        .eq('mission_id', parseInt(missionId))
-        .neq('sender_id', req.session.user.id); // On marque comme lus les messages que JE n'ai pas envoyés
+    const { error } = await query;
     
     res.json({ ok: !error });
+});
+
+// Route globale pour vérifier les messages non lus (pour notifications toutes pages)
+app.get('/api/unread-messages-status', requireAuth, async (req, res) => {
+    const userId = req.session.user.id;
+    try {
+        // Trouver les missions où l'utilisateur participe
+        const { data: myMissions } = await supabase
+            .from('missions')
+            .select('id')
+            .or(`client_id.eq.${userId},prestataire_id.eq.${userId}`);
+        
+        const missionIds = (myMissions || []).map(m => m.id);
+        
+        // Chercher les messages non lus (Directs ou Missions)
+        // Condition : (ami_id == moi) OU (mission_id dans mes missions ET sender != moi)
+        let filterStr = `and(ami_id.eq.${userId},lu.eq.false)`;
+        if (missionIds.length > 0) {
+            filterStr += `,and(mission_id.in.(${missionIds.join(',')}),sender_id.neq.${userId},lu.eq.false)`;
+        }
+        
+        const { data: unread, error } = await supabase.from('messages')
+            .select('*').or(filterStr).order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (!unread || unread.length === 0) return res.json({ count: 0 });
+
+        const last = unread[0];
+        const { data: sender } = await supabase.from('utilisateurs').select('prenom, nom').eq('id', last.sender_id).maybeSingle();
+
+        res.json({
+            count: unread.length,
+            lastSender: sender ? `${sender.prenom} ${sender.nom}` : 'Quelqu\'un',
+            text: last.text.includes('<audio') ? '🎤 Message vocal' : last.text,
+            missionId: last.mission_id,
+            amiId: last.ami_id,
+            msgId: last.id
+        });
+    } catch (e) { res.json({ count: 0 }); }
 });
 
 // Nouvelle route pour obtenir les infos de n'importe quel partenaire (Client ou Pro)
@@ -1159,7 +1221,7 @@ app.get('/api/partner-info/:id', requireAuth, async (req, res) => {
 
 app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        const userId = parseInt(req.session.user.id, 10);
         
         // Récupérer les missions du client qui ne sont pas encore terminées ou annulées
         const { data: missions, error: mError } = await supabase
@@ -1173,14 +1235,24 @@ app.get('/api/mes-commandes-futures', requireAuth, async (req, res) => {
         if (!missions || missions.length === 0) return res.json([]);
 
         // Récupérer les noms des prestataires manuellement pour éviter l'erreur de jointure
-        const prestataireIds = missions.map(m => m.prestataire_id);
-        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom').in('id', prestataireIds);
-        const userMap = Object.fromEntries((users || []).map(u => [u.id, u]));
+        const prestataireIds = [...new Set(missions.map(m => m.prestataire_id).filter(Boolean))]; // Unique IDs
+        
+        const { data: users } = await supabase.from('utilisateurs').select('id, nom, prenom, photo_url').in('id', prestataireIds);
+        const userMap = new Map((users || []).map(u => [u.id, u]));
+
+        const { data: prestaInfos } = await supabase.from('infos_prestataires').select('user_id, photo_profil_url').in('user_id', prestataireIds);
+        const prestaInfoMap = new Map((prestaInfos || []).map(p => [p.user_id, p]));
 
         const result = missions.map(m => ({
             ...m,
-            prestataire: userMap[m.prestataire_id] || { nom: 'Prestataire', prenom: '' }
+            prestataire: {
+                nom: userMap.get(m.prestataire_id)?.nom || 'Prestataire',
+                prenom: userMap.get(m.prestataire_id)?.prenom || '',
+                // Priorité à la photo de profil prestataire, sinon photo utilisateur, sinon défaut
+                photo: prestaInfoMap.get(m.prestataire_id)?.photo_profil_url || userMap.get(m.prestataire_id)?.photo_url || 'default-profile.png'
+            }
         }));
+
 
         res.json(result);
     } catch (err) {
@@ -1243,7 +1315,7 @@ app.post('/api/terminer-tache', requireAuth, async (req, res) => {
     missionMeta.set(mId, meta);
 
     const { data: mission } = await supabase.from('missions').select('client_id, service, prix').eq('id', mId).maybeSingle();
-    const { error } = await supabase.from('missions').update({ statut: 'attente_confirmation_client' }).eq('id', mId).eq('prestataire_id', req.session.user.id);
+    const { error } = await supabase.from('missions').update({ statut: 'attente_confirmation_client', prestataire_a_termine: true }).eq('id', mId).eq('prestataire_id', req.session.user.id);
     if (error) return res.status(500).json({ error: error.message });
 
     if (mission) {

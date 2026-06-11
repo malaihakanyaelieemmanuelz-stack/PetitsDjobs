@@ -16,6 +16,19 @@
     <!-- Élément fixe pour le logo de fond -->
     <div id="bg-logo-fixed" style="position: fixed !important;"></div>
 
+    <!-- Bandeau de Notification Chat Global -->
+    <div id="global-chat-notif" style="display:none; position:fixed; top:10px; left:10px; right:10px; background:white; border:2px solid #FF6600; border-radius:15px; padding:12px; z-index:11000; box-shadow:0 10px 30px rgba(0,0,0,0.2); animation: slideDownNotif 0.4s ease; cursor:pointer;" onclick="openChatFromNotif()">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:#FF6600; color:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">💬</div>
+            <div style="flex:1;">
+                <div style="font-weight:900; color:#FF6600; font-size:0.75rem; text-transform:uppercase;">Nouveau Message</div>
+                <div style="font-size:0.9rem; color:#333; font-weight:bold;"><span id="notif-chat-sender">...</span></div>
+                <div id="notif-chat-msg" style="font-size:0.8rem; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px;">...</div>
+            </div>
+            <button onclick="event.stopPropagation(); document.getElementById('global-chat-notif').style.display='none'" style="background:#eee; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; color:#666; cursor:pointer;">✕</button>
+        </div>
+    </div>
+
     <header class="home-header">
         <div class="header-content">
             <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
@@ -440,6 +453,43 @@
                     offerNotifCount = 0;
                 }
             }, 2000); // Notifs client plus rapides (2s au lieu de 4s)
+
+            // Surveillance Globale du CHAT
+            let chatNotifData = null;
+            let chatNotifTimeout = null;
+            setInterval(async () => {
+                if (!connecte) return;
+                try {
+                    const res = await fetch('/api/unread-messages-status');
+                    const data = await res.json();
+                    if (data.count > 0) {
+                        const lastId = localStorage.getItem('last_chat_msg_id');
+                        if (data.msgId != lastId) {
+                            chatNotifData = data;
+                            document.getElementById('notif-chat-sender').innerText = data.lastSender;
+                            document.getElementById('notif-chat-msg').innerText = data.text;
+                            document.getElementById('global-chat-notif').style.display = 'block';
+                            localStorage.setItem('last_chat_msg_id', data.msgId);
+                            const snd = document.getElementById('notif-sound');
+                            if (snd) snd.play().catch(()=>{});
+
+                            // Disparaît automatiquement après 8 secondes si non consultée
+                            if (chatNotifTimeout) clearTimeout(chatNotifTimeout);
+                            chatNotifTimeout = setTimeout(() => {
+                                document.getElementById('global-chat-notif').style.display = 'none';
+                            }, 8000);
+                        }
+                    } else {
+                        document.getElementById('global-chat-notif').style.display = 'none';
+                    }
+                } catch(e){}
+            }, 3500);
+
+            window.openChatFromNotif = () => {
+                if (!chatNotifData) return;
+                location.href = chatNotifData.missionId ? `/chat.html?missionId=${chatNotifData.missionId}` : `/chat.html?amiId=${chatNotifData.amiId}`;
+            };
+
         }).catch(() => {});
         
         async function allerCommander(service, prix) {
