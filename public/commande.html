@@ -113,8 +113,8 @@
             <button id="btn-choisir" class="btn-primary-sm" style="width:100%; padding:14px; margin-top:12px;">
                 Choisir un autre prestataire
             </button>
-            <button id="btn-payer" disabled class="btn-primary-sm" style="width:100%; padding:16px; margin-top:10px; background:#2e7d32; opacity:0.5;">
-                Payer avec Wave
+            <button id="btn-payer" disabled class="btn-primary-sm" style="width:100%; padding:16px; margin-top:10px; background:#FF6600; opacity:0.5;">
+                CHOISIR LE MODE DE GUIDAGE
             </button>
             <p style="text-align:center; margin-top:14px;"><a href="index.html">Retour accueil</a></p>
         </div>
@@ -247,86 +247,24 @@
 
         document.getElementById('btn-payer').onclick = async () => {
             const btn = document.getElementById('btn-payer');
-            const params = new URLSearchParams(window.location.search);
-            
-            // Si on ne vient pas de la page d'orientation, on y va d'abord
-            if (params.get('readyToPay') !== '1') {
-                window.location.href = '/orientation-client.html?' + params.toString();
-                return;
-            }
-
-            const dateMode = document.getElementById('select-date-mode').value;
-
-            // Intercepte le paiement si le prestataire est toujours hors ligne dans le système
-            // Mais SEULEMENT si c'est pour un service "Maintenant" (Today)
-            if (dateMode === 'today' && currentCmdData && currentCmdData.disponible === false) {
-                alert("Ce prestataire est actuellement hors ligne. Pour un service immédiat, vous devez obligatoirement l'appeler pour confirmer sa présence avant de payer.");
-                window.location.href = '/appele.html';
-                return;
-            }
-
-            btn.innerText = "VÉRIFICATION GPS...";
-            btn.disabled = true;
-            
-            // Force une mise à jour GPS avant de payer (Crucial pour Android)
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(async pos => {
-                    const { latitude: lat, longitude: lon } = pos.coords;
-                    console.log("[DEBUG] GPS rafraîchi avant paiement:", lat, lon);
-                    
-                    await fetch('/sauvegarder-position', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ lat, lon })
-                    });
-
-                    procederAuPaiement();
-                }, () => procederAuPaiement()); // On tente quand même si échec
-            } else {
-                procederAuPaiement();
-            }
-        };
-
-        async function procederAuPaiement() {
-            const btn = document.getElementById('btn-payer');
-            btn.innerText = "CONNEXION À WAVE...";
-            
             const dateMode = document.getElementById('select-date-mode').value;
             let datePrevue = 'today';
             if (dateMode === 'scheduled') {
                 const d = document.getElementById('input-date-custom').value;
                 const t = document.getElementById('input-time-custom').value;
-                if (!d || !t) {
-                    alert("Veuillez choisir une date et une heure précises pour la prestation.");
-                    btn.innerText = "Payer avec Wave";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                    return;
-                }
+                if (!d || !t) return alert("Veuillez choisir une date et une heure.");
                 datePrevue = `${d} à ${t}`;
             }
+            const delaiReponse = document.getElementById('select-delai-reponse').value;
 
-            setTimeout(async () => {
-                const delaiReponse = document.getElementById('select-delai-reponse').value;
-                const res = await fetch('/api/simuler-paiement', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ datePrevue, delaiReponse })
-                });
-                
-                const result = await res.json();
-                console.log("[DEBUG] Réponse serveur simuler-paiement:", result);
+            // Enregistrement des préférences temporelles avant redirection
+            await fetch('/preparer-commande', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ datePrevue, delaiReponse })
+            });
 
-                if (res.ok && result.ok) {
-                    window.location.href = '/attente-prestataire';
-                } else {
-                    console.error("[DEBUG] Erreur paiement:", result.error);
-                    alert("Erreur : " + (result.error || "Problème de connexion. Vérifiez votre GPS."));
-                    btn.innerText = "Payer avec Wave";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                }
-            }, 1500);
+            window.location.href = '/orientation-client.html';
         };
 
         init();

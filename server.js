@@ -638,7 +638,7 @@ app.get('/session-status', (req, res) => {
 });
 
 app.post('/preparer-commande', (req, res) => {
-    const { service, prix, prixLibre, missionId, offreParticulierId } = req.body;
+    const { service, prix, prixLibre, missionId, offreParticulierId, datePrevue, delaiReponse } = req.body;
     // FIX: Fusionner avec la session existante pour ne pas perdre le prestataireId
     req.session.commande = req.session.commande || {};
     if (service) req.session.commande.service = service;
@@ -646,6 +646,8 @@ app.post('/preparer-commande', (req, res) => {
     if (prixLibre !== undefined) req.session.commande.prixLibre = !!prixLibre;
     if (missionId) req.session.commande.missionId = missionId;
     if (offreParticulierId) req.session.commande.offreParticulierId = parseInt(offreParticulierId, 10);
+    if (datePrevue) req.session.commande.datePrevue = datePrevue;
+    if (delaiReponse) req.session.commande.delaiReponse = delaiReponse;
 
     req.session.save((err) => {
         if (err) console.error("Erreur sauvegarde session preparer-commande:", err);
@@ -724,7 +726,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         let redirectUrl = '/index.html';
         if (isToday) {
             if (payload.orientation_mode === 'gps') redirectUrl = '/suivi?missionId=' + data.id;
-            else if (payload.orientation_mode === 'appele') redirectUrl = '/appele.html';
+            else if (payload.orientation_mode === 'appele') redirectUrl = '/appele';
             else if (payload.orientation_mode === 'chat') redirectUrl = '/chat.html?missionId=' + data.id;
         } else {
             redirectUrl = '/suivi-de-commande';
@@ -745,12 +747,13 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
 
 // Nouvelle route pour enregistrer le numéro du client pour l'appel direct après paiement
 app.post('/api/update-mission-phone', requireAuth, async (req, res) => {
-    const { missionId, telephone } = req.body;
-    if (!missionId || !telephone) return res.status(400).json({ error: "Données manquantes" });
+    const mId = parseInt(req.body.missionId, 10);
+    const tel = req.body.telephone;
+    if (!mId || !tel) return res.status(400).json({ error: "Données manquantes" });
 
     const { error } = await supabase.from('missions')
-        .update({ telephone_client_mission: telephone })
-        .eq('id', missionId)
+        .update({ telephone_client_mission: tel })
+        .eq('id', mId)
         .eq('client_id', req.session.user.id);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -1059,7 +1062,7 @@ app.get('/api/mes-demandes-client', requireAuth, async (req, res) => {
     // Récupérer tous les IDs de prestataires (principaux et backups)
     const allPIds = missions.reduce((acc, m) => {
         if (m.prestataire_id) acc.push(parseInt(m.prestataire_id));
-        if (m.backup_ids) m.backup_ids.forEach(id => acc.push(parseInt(id)));
+        if (Array.isArray(m.backup_ids)) m.backup_ids.forEach(id => acc.push(parseInt(id)));
         return acc;
     }, []);
 

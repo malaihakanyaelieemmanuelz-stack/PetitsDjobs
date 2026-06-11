@@ -412,7 +412,7 @@
                     const flash = document.getElementById('alerte-mission-flash');
                     
                     // Alerte uniquement si la mission est ACTIVE, NON VUE et NON EXPIRÉE
-                    const nouvellesMissions = (mData || []).filter(m => !m.vuParPresta && !m.expire && m.statut === 'en_attente_prestataire');
+                    const nouvellesMissions = (mData || []).filter(m => !m.vuParPresta && !m.expire && ['en_attente_prestataire', 'programmation_en_cours'].includes(m.statut));
                     if (nouvellesMissions.length > 0) {
                         if (mData.length > missionCount) {
                             document.getElementById('notif-sound').play().catch(e => console.warn("Sons désactivés"));

@@ -20,6 +20,7 @@
     </style>
 </head>
 <body class="auth-page">
+    <div class="loader-gps" id="main-loader" style="display:none;"><p style="margin-top:50px; color:#2e7d32; font-weight:bold;">Connexion à Wave...</p></div>
     <div class="login-card" style="max-width: 450px;">
         <h2 style="color: #FF6600; margin-top: 0;">GUIDAGE DU PRO</h2>
         <p style="font-size: 0.9rem; color: #666; margin-bottom: 25px;">Comment souhaitez-vous orienter le prestataire vers votre domicile ?</p>
@@ -39,8 +40,8 @@
             <p>Le prestataire vous appellera directement pour trouver l'entrée.</p>
         </div>
 
-        <button onclick="validerOrientation()" class="btn-primary-sm" style="width: 100%; margin-top: 20px; padding: 18px;">
-            VALIDER ET PAYER
+        <button id="btn-final" onclick="validerOrientation()" class="btn-primary-sm" style="width: 100%; margin-top: 20px; padding: 20px; background:#2e7d32; font-size:1.1rem;">
+            VALIDER ET PAYER AVEC WAVE
         </button>
     </div>
 
@@ -66,6 +67,23 @@
         selectMode('gps', document.querySelector('.choice-card'));
 
         async function validerOrientation() {
+            const btn = document.getElementById('btn-final');
+            const loader = document.getElementById('main-loader');
+            
+            // Récupération des infos de session
+            const cmd = await fetch('/get-session-commande').then(r => r.json());
+            
+            // Sécurité : Si appel choisi mais pro hors ligne pour un service immédiat
+            if (selectedMode === 'appele' && cmd.datePrevue === 'today' && cmd.disponible === false) {
+                alert("Ce prestataire est hors ligne. Vous allez être dirigé vers la page d'appel pour le prévenir avant le paiement.");
+                window.location.href = '/appele.html';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "PATIENTEZ...";
+            loader.style.display = 'flex';
+
             const data = {
                 orientation_mode: selectedMode,
                 lat_destination: latDest,
@@ -73,16 +91,29 @@
                 telephone_ephemere: null
             };
 
-            // Mise à jour de la session avant le paiement
+            // 1. Sauvegarde du mode choisi
             await fetch('/api/sauvegarder-orientation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
-            // On redirige vers la page de commande pour le paiement Wave
-            const params = new URLSearchParams(window.location.search);
-            window.location.href = '/commande?' + params.toString() + "&readyToPay=1";
+            // 2. Lancement du paiement simulé
+            setTimeout(async () => {
+                const resPay = await fetch('/api/simuler-paiement', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ datePrevue: cmd.datePrevue, delaiReponse: cmd.delaiReponse })
+                });
+                const result = await resPay.json();
+
+                if (resPay.ok && result.ok) {
+                    window.location.href = result.redirectUrl || '/attente-prestataire';
+                } else {
+                    alert("Erreur de paiement : " + (result.error || "Réessayez."));
+                    location.reload();
+                }
+            }, 1500);
         }
     </script>
 </body>
