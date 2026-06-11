@@ -445,7 +445,7 @@ function requireAuth(req, res, next) {
 }
 
 function redirectSiConnecte(req, res, next) {
-    if (req && req.session && estConnecte(req)) return res.redirect('/index.html');
+    if (req && req.session && estConnecte(req)) return res.redirect('/');
     next();
 }
 
@@ -454,7 +454,10 @@ const publicDir = path.join(__dirname, 'public');
 // --- Routes ---
 function pageConnexion(req, res) { res.sendFile(path.join(publicDir, 'connexion.html')); }
 function pageInscription(req, res) { res.sendFile(path.join(publicDir, 'inscription.html')); }
-function pageAccueil(req, res) { res.sendFile(path.join(publicDir, 'index.html')); }
+function pageVortexHub(req, res) { res.sendFile(path.join(publicDir, 'vortex.html')); }
+function pagePetitsDjobs(req, res) { res.sendFile(path.join(publicDir, 'index.html')); }
+function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia.html')); }
+function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -462,8 +465,12 @@ app.get('/inscription', redirectSiConnecte, pageInscription);
 app.get('/inscription.html', redirectSiConnecte, pageInscription);
 app.get('/politique', (req, res) => res.sendFile(path.join(publicDir, 'pollitique.html')));
 
-app.get('/', pageAccueil);
-app.get('/index.html', pageAccueil);
+app.get('/', pageVortexHub);
+app.get('/index.html', pageVortexHub);
+app.get('/jobs', pagePetitsDjobs);
+app.get('/vendia', pageVendia);
+app.get('/profilio', pageProfilio);
+
 app.get('/profil', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'profil.html')));
 app.get('/prestataire', requireAuth, (req, res) => {
     if (req.session.user.isPrestataire && req.query.modifier !== '1') {
@@ -518,7 +525,7 @@ app.post('/deconnexion', async (req, res) => {
         const horsLigneDate = new Date(Date.now() - 10 * 60 * 1000).toISOString();
         await supabase.from('utilisateurs').update({ dernier_acces: horsLigneDate }).eq('id', req.session.user.id);
     }
-    req.session.destroy(() => res.redirect('/index.html'));
+    req.session.destroy(() => res.redirect('/'));
 });
 
 // --- API ---
@@ -1621,7 +1628,7 @@ app.post('/connexion', async (req, res) => {
 
     console.log("[DIAGNOSTIC] Sauvegarde session et redirection...");
     req.session.save(() => {
-        res.redirect('/index.html');
+        res.redirect('/');
     });
 });
 
@@ -1680,7 +1687,7 @@ app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
         req.session.remember = !!req.body.remember;
         req.session.localisationAutorisee = locOk;
         req.session.save(() => {
-            res.redirect('/index.html?connecte=1');
+            res.redirect('/?connecte=1');
         });
     } catch (err) {
         console.error("Erreur d'inscription :", err);
