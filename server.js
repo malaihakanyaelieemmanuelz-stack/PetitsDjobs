@@ -741,6 +741,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         }
         res.status(500).json({ error: "Erreur technique : " + (err.message || "Problème de base de données") });
     }
+});
 
 // Nouvelle route pour enregistrer le numéro du client pour l'appel direct après paiement
 app.post('/api/update-mission-phone', requireAuth, async (req, res) => {

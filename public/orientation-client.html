@@ -52,7 +52,6 @@
             selectedMode = mode;
             document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-            document.getElementById('phone-section').style.display = (mode === 'appel' || mode === 'gps') ? 'block' : 'none';
             
             if (mode === 'gps') {
                 navigator.geolocation.getCurrentPosition(pos => {
@@ -67,19 +66,11 @@
         selectMode('gps', document.querySelector('.choice-card'));
 
         async function validerOrientation() {
-            const phone = document.getElementById('client-phone').value;
-            const auth = document.getElementById('auth-phone').checked;
-
-            if ((selectedMode === 'appel' || selectedMode === 'gps') && !phone) {
-                alert("Veuillez saisir votre numéro pour faciliter l'arrivée du pro.");
-                return;
-            }
-
             const data = {
                 orientation_mode: selectedMode,
                 lat_destination: latDest,
                 lon_destination: lonDest,
-                telephone_ephemere: auth ? phone : null
+                telephone_ephemere: null
             };
 
             // Mise à jour de la session avant le paiement
