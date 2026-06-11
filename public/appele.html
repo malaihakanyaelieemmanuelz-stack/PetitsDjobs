@@ -23,22 +23,5 @@
             <button class="btn-secondary-green" onclick="location.href='/appele-direct.html'">CHOISIR APPEL DIRECT</button>
         </div>
     </div>
-    <script>
-        async function revelerNumero() {
-            if (!document.getElementById('client-phone').value) return alert("Saisissez votre numéro d'abord.");
-            const resStatus = await fetch('/get-session-commande');
-            const cmd = await resStatus.json();
-            const res = await fetch('/get-prestataire-contact/' + cmd.prestataireId);
-            const resultDiv = document.getElementById('result-numero');
-            if (res.ok) {
-                const data = await res.json();
-                resultDiv.innerHTML = `<span style="color:#2e7d32;">Numéro : ${data.telephone}</span><br><a href="tel:${data.telephone}" class="btn-primary-sm" style="display:block; margin-top:10px; text-decoration:none;">APPELER</a>`;
-            } else {
-                resultDiv.innerHTML = `<span style="color:#FF6600;">Le prestataire ne souhaite pas que son numéro soit divulgué.</span>`;
-            }
-            document.getElementById('direct-call-input').style.display = 'none';
-            resultDiv.style.display = 'block';
-        }
-    </script>
 </body>
 </html>
