@@ -74,22 +74,22 @@ html {
 
 /* PetitsDjobs : Logo Orange (Outils/Services) */
 #bg-logo-fixed.jobs-bg::after {
-    background-image: url("logo-petitsdjobs.jpeg");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23FF6600' d='M35 45a8 8 0 100-16 8 8 0 000 16zm30 20a8 8 0 100-16 8 8 0 000 16z'/%3E%3Cpath fill='none' stroke='%23FF6600' stroke-width='6' stroke-linecap='round' stroke-linejoin='round' d='M20 75l20-20 15 15 25-35M80 35h-10M80 35v10'/%3E%3C/svg%3E");
 }
 
 /* Vendia : Logo Blanc (Supermarché / Panier) */
 #bg-logo-fixed.vendia-bg::after {
-    background-image: url("logo-vendia.jpeg");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='white' d='M25 35h50l5 10H20z'/%3E%3Cpath fill='none' stroke='white' stroke-width='4' d='M30 45l5 25h30l5-25'/%3E%3Ccircle fill='white' cx='40' cy='78' r='4'/%3E%3Ccircle fill='white' cx='60' cy='78' r='4'/%3E%3C/svg%3E");
 }
 
 /* Profilio : Logo Vert (Mains qui se saluent) */
 #bg-logo-fixed.profilio-bg::after {
-    background-image: url("logo-profilio.jpeg");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='15' y='15' width='70' height='70' fill='none' stroke='%232e7d32' stroke-width='6'/%3E%3Cpath fill='%232e7d32' d='M35 50q5-5 15 0t15 0q-5 5-15 0t-15 0z'/%3E%3C/svg%3E");
 }
 
 /* Vortex : Logo Hub (Tricolore) */
 #bg-logo-fixed.vortex-bg::after {
-    background-image: url("logo-vortex.jpeg");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23FF6600' d='M50 50L20 35v30l30 15z'/%3E%3Cpath fill='%232e7d32' d='M50 50l30-15v30l-30 15z'/%3E%3Cpath fill='white' d='M50 50L20 35l30-15 30 15z'/%3E%3C/svg%3E");
 }
 
 body { 
