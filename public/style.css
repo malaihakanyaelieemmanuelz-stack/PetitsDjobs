@@ -74,22 +74,22 @@ html {
 
 /* PetitsDjobs : Logo Orange (Outils/Services) */
 #bg-logo-fixed.jobs-bg::after {
-    background-image: url("jobs.png");
+    background-image: url("logo-petitsdjobs.jpeg");
 }
 
 /* Vendia : Logo Blanc (Supermarché / Panier) */
 #bg-logo-fixed.vendia-bg::after {
-    background-image: url("vendia.png");
+    background-image: url("logo-vendia.jpeg");
 }
 
 /* Profilio : Logo Vert (Mains qui se saluent) */
 #bg-logo-fixed.profilio-bg::after {
-    background-image: url("profilio.png");
+    background-image: url("logo-profilio.jpeg");
 }
 
 /* Vortex : Logo Hub (Tricolore) */
 #bg-logo-fixed.vortex-bg::after {
-    background-image: url("vortex.png");
+    background-image: url("logo-vortex.jpeg");
 }
 
 body { 
