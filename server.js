@@ -725,7 +725,7 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
-        req.session.commande.missionId = data.id;
+        req.scession.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = payload.statut;
         req.session.commande.delaiReponse = delaiMinutes;
