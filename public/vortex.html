@@ -13,7 +13,7 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background: #ffffff;
+            background: transparent;
         }
         .vortex-header {
             text-align: center;
@@ -46,7 +46,9 @@
             width: 100%;
         }
         .module-card {
-            background: white;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 2px solid #e8f5e9;
             border-radius: 30px;
             padding: 40px 20px;
@@ -62,6 +64,17 @@
             transform: translateY(-15px);
             border-color: #FF6600;
             box-shadow: 0 20px 40px rgba(255,102,0,0.1);
+        }
+        /* Style spécifique pour la carte Vendia sur le Hub */
+        .module-card.vendia-card-hub {
+            background: #FF8200 !important;
+            border-color: #FF8200;
+        }
+        .module-card.vendia-card-hub .module-name {
+            color: white;
+        }
+        .module-card.vendia-card-hub .module-desc {
+            color: rgba(255, 255, 255, 0.9);
         }
         .module-logo {
             width: 80px;
@@ -99,10 +112,10 @@
 
     <div class="vortex-container">
         <div class="vortex-header">
-            <svg class="vortex-logo-main" viewBox="0 0 100 100">
-                <path fill="#FF6600" d="M50 50L20 35v30l30 15z"/>
-                <path fill="#2e7d32" d="M50 50l30-15v30l-30 15z"/>
-                <path fill="white" d="M50 50L20 35l30-15 30 15z"/>
+            <svg class="vortex-logo-main" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
+                <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
+                <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
             </svg>
             <h1 class="vortex-title">VORTEX</h1>
             <div class="vortex-subtitle">L'Écosystème Unifié</div>
@@ -111,9 +124,9 @@
         <div class="vortex-grid">
             <!-- Module PetitsDjobs -->
             <div class="module-card" onclick="location.href='/jobs'">
-                <svg class="module-logo" viewBox="0 0 100 100">
-                    <path fill="#FF6600" d="M35 45a8 8 0 100-16 8 8 0 000 16zm30 20a8 8 0 100-16 8 8 0 000 16z"/>
-                    <path fill="none" stroke="#FF6600" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M20 75l20-20 15 15 25-35M80 35h-10M80 35v10"/>
+                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100" fill="none" stroke="#009E60" stroke-width="20" stroke-dasharray="100 20"/>
+                    <path d="M100 60 L140 100 L100 140" fill="none" stroke="#009E60" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <h2 class="module-name">PetitsDjobs</h2>
                 <p class="module-desc">Services de proximité et dépannage immédiat entre particuliers.</p>
@@ -121,12 +134,10 @@
             </div>
             
             <!-- Module Vendia -->
-            <div class="module-card" onclick="location.href='/vendia'">
-                <svg class="module-logo" viewBox="0 0 100 100">
-                    <path fill="#2e7d32" d="M25 35h50l5 10H20z"/>
-                    <path fill="none" stroke="#2e7d32" stroke-width="4" d="M30 45l5 25h30l5-25"/>
-                    <circle fill="#2e7d32" cx="40" cy="78" r="4"/>
-                    <circle fill="#2e7d32" cx="60" cy="78" r="4"/>
+            <div class="module-card vendia-card-hub" onclick="location.href='/vendia'">
+                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="white"/>
+                    <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="white" stroke-width="12"/>
                 </svg>
                 <h2 class="module-name">Vendia</h2>
                 <p class="module-desc">Le supermarché local en ligne. Vos commerçants à portée de clic.</p>
@@ -135,9 +146,9 @@
             
             <!-- Module Profilio -->
             <div class="module-card" onclick="location.href='/profilio'">
-                <svg class="module-logo" viewBox="0 0 100 100">
-                    <rect x="15" y="15" width="70" height="70" fill="none" stroke="#2e7d32" stroke-width="6"/>
-                    <path fill="#2e7d32" d="M35 50q5-5 15 0t15 0q-5 5-15 0t-15 0z"/>
+                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M160 100 C 160 55, 120 20, 70 20 C 30 20, 30 100, 70 100 L 70 140 L 110 100 Z" fill="#FF8200"/>
+                    <circle cx="95" cy="65" r="8" fill="#FFFFFF"/>
                 </svg>
                 <h2 class="module-name">Profilio</h2>
                 <p class="module-desc">Réseau de recrutement. Valorisez votre profil et trouvez un emploi.</p>
