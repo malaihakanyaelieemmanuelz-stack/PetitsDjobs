@@ -21,6 +21,7 @@ html, body {
     min-height: 100%;
     overflow-x: hidden !important;
     background-color: var(--pd-bg);
+    scrollbar-gutter: stable;
 }
 
 html {
@@ -48,7 +49,6 @@ html {
     border: none !important;
     background: transparent !important;
     overflow: hidden !important;
-    transform: none !important;
 }
 
 /* Animation et base du logo en filigrane (Engrenage / Paramètres) */
