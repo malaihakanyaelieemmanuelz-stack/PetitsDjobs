@@ -703,13 +703,47 @@
     </div>
 
     <!-- Bouton flottant pour revenir au Vortex Hub -->
-    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9000; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-        <div style="background: white; padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 0.75rem; font-weight: bold; color: #333; white-space: nowrap; animation: fadeIn 0.5s ease;">← Vortex Hub</div>
-        <a href="/" style="position: relative; background: linear-gradient(135deg, #FF8200, #FF6600); color: white; width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 6px 20px rgba(255, 102, 0, 0.5); text-decoration: none; transition: all 0.3s ease; border: 4px solid white; font-weight: bold;" title="Retour au Vortex Hub" onmouseover="this.style.transform='scale(1.15)'; this.style.boxShadow='0 8px 25px rgba(255, 102, 0, 0.7)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 6px 20px rgba(255, 102, 0, 0.5)';">🌐</a>
-    </div>
-    <style>
-        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
-    </style>
+    <a href="/" style="position: fixed; bottom: 20px; right: 20px; z-index: 9000; background: #FF8200; color: white; padding: 12px 20px; border-radius: 8px; border: 2px solid white; box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4); text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;" title="Retour au Vortex Hub" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 18px rgba(255, 102, 0, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(255, 102, 0, 0.4)';">← Vortex Hub</a>
+
+    <!-- Script de DEBUG pour le logo -->
+    <script>
+        // DEBUG: Logging de la position du logo
+        function debugLogoBG() {
+            const bgLogo = document.getElementById('bg-logo-fixed');
+            if (!bgLogo) {
+                console.log('[LOGO-DEBUG] bg-logo-fixed NOT FOUND!');
+                return;
+            }
+            
+            const rect = bgLogo.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(bgLogo);
+            
+            console.log('[LOGO-DEBUG] ========== STATE AT', new Date().toISOString(), '==========');
+            console.log('[LOGO-DEBUG] Element rect:', {top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom});
+            console.log('[LOGO-DEBUG] Position CSS:', computedStyle.position);
+            console.log('[LOGO-DEBUG] Transform CSS:', computedStyle.transform);
+            console.log('[LOGO-DEBUG] Top/Left CSS:', {top: computedStyle.top, left: computedStyle.left});
+            console.log('[LOGO-DEBUG] Window scroll:', {scrollX: window.scrollX, scrollY: window.scrollY});
+            console.log('[LOGO-DEBUG] =========================================');
+        }
+        
+        // Log initial
+        window.addEventListener('load', () => {
+            setTimeout(debugLogoBG, 500);
+        });
+        
+        // Log au scroll
+        let scrollCount = 0;
+        window.addEventListener('scroll', () => {
+            scrollCount++;
+            if (scrollCount % 5 === 0) { // Log tous les 5 scroll events
+                debugLogoBG();
+            }
+        });
+        
+        // Log toutes les 2 secondes
+        setInterval(debugLogoBG, 2000);
+    </script>
 
 </body>
 </html>
