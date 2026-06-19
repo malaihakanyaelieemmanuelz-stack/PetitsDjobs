@@ -53,21 +53,22 @@ html {
 
 /* Animation et base du logo en filigrane (Engrenage / Paramètres) */
 #bg-logo-fixed::after {
-    content: "";
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 75vmin;
-    height: 75vmin;
-    max-width: 420px;
-    max-height: 420px;
-    transform: translate(-50%, -50%);
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: contain;
-    opacity: 0.25;
-    pointer-events: none;
-    z-index: -1;
+    content: "" !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 75vmin !important;
+    height: 75vmin !important;
+    max-width: 420px !important;
+    max-height: 420px !important;
+    transform: translate(-50%, -50%) !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: contain !important;
+    opacity: 0.25 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    will-change: auto !important;
 }
 
 /* --- Vortex Hub Styles --- */
