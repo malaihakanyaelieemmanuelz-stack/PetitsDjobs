@@ -3,169 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vortex - Bienvenue sur votre Hub</title>
     <link rel="stylesheet" href="style.css">
-    <title>Vortex - Portail Unifié</title>
-    <style>
-        .vortex-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: transparent;
-        }
-        .vortex-header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-        .vortex-logo-main {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 15px;
-        }
-        .vortex-title {
-            font-size: 3.5rem;
-            font-weight: 900;
-            color: #FF6600;
-            letter-spacing: -2px;
-            margin: 0;
-        }
-        .vortex-subtitle {
-            color: #2e7d32;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            font-size: 0.9rem;
-        }
-        .vortex-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            max-width: 1200px;
-            width: 100%;
-        }
-        .module-card {
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 2px solid #e8f5e9;
-            border-radius: 30px;
-            padding: 40px 20px;
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .module-card:hover {
-            transform: translateY(-15px);
-            border-color: #FF6600;
-            box-shadow: 0 20px 40px rgba(255,102,0,0.1);
-        }
-        /* Style spécifique pour la carte Vendia sur le Hub */
-        .module-card.vendia-card-hub {
-            background: #FF8200 !important;
-            border-color: #FF8200;
-        }
-        .module-card.vendia-card-hub .module-name {
-            color: white;
-        }
-        .module-card.vendia-card-hub .module-desc {
-            color: rgba(255, 255, 255, 0.9);
-        }
-        /* Style spécifique pour la carte Profilio sur le Hub */
-        .module-card.profilio-card-hub {
-            background: #2e7d32 !important; /* Vert */
-            border-color: #2e7d32;
-        }
-        .module-card.profilio-card-hub .module-name {
-            color: #FF8200; /* Texte Orange */
-        }
-        .module-card.profilio-card-hub .module-desc {
-            color: rgba(255, 255, 255, 0.9); /* Texte blanc/transparent pour la lisibilité */
-        }
-        .module-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 20px;
-        }
-        .module-name {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #2e7d32;
-            margin: 0 0 10px;
-        }
-        .module-desc {
-            font-size: 0.95rem;
-            color: #666;
-            line-height: 1.5;
-            margin-bottom: 25px;
-        }
-        .btn-vortex-enter {
-            background: #FF6600;
-            color: white;
-            padding: 14px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            transition: background 0.3s;
-        }
-        .btn-vortex-enter:hover { background: #E65100; }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
-<body>
+<body class="vortex-hub-page">
+    <!-- Élément fixe pour le logo de fond -->
     <div id="bg-logo-fixed" class="vortex-bg"></div>
 
     <div class="vortex-container">
-        <div class="vortex-header">
-            <svg class="vortex-logo-main" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
-                <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
-                <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
-            </svg>
-            <h1 class="vortex-title">VORTEX</h1>
-            <div class="vortex-subtitle">L'Écosystème Unifié</div>
+        <header class="vortex-header">
+            <div class="vortex-main-logo">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
+                    <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
+                    <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
+                </svg>
+            </div>
+            <h1>VORTEX</h1>
+            <p>Choisissez votre destination</p>
+        </header>
+
+        <div class="hub-grid">
+            <!-- Petits Djobs -->
+            <a href="/jobs" class="hub-card jobs">
+                <div class="hub-icon-wrap">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100" fill="none" stroke="#009E60" stroke-width="20" stroke-dasharray="100 20"/>
+                        <path d="M100 60 L140 100 L100 140" fill="none" stroke="#009E60" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h3>PETITS DJOBS</h3>
+                <p>Trouvez un prestataire ou proposez vos services à proximité.</p>
+            </a>
+
+            <!-- Vendia -->
+            <a href="/vendia" class="hub-card vendia">
+                <div class="hub-icon-wrap">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="#FFFFFF"/>
+                        <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="#FFFFFF" stroke-width="12"/>
+                    </svg>
+                </div>
+                <h3>VENDIA</h3>
+                <p>Faites vos courses en ligne simplement et rapidement.</p>
+            </a>
+
+            <!-- Profilio -->
+            <a href="/profilio" class="hub-card profilio">
+                <div class="hub-icon-wrap">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M160 100 C 160 55, 120 20, 70 20 C 30 20, 30 100, 70 100 L 70 140 L 110 100 Z" fill="#FF8200"/>
+                        <circle cx="95" cy="65" r="8" fill="#FFFFFF"/>
+                    </svg>
+                </div>
+                <h3>PROFILIO</h3>
+                <p>Gérez votre profil et développez votre réseau professionnel.</p>
+            </a>
         </div>
-        
-        <div class="vortex-grid">
-            <!-- Module PetitsDjobs -->
-            <div class="module-card" onclick="location.href='/jobs'">
-                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100" fill="none" stroke="#009E60" stroke-width="20" stroke-dasharray="100 20"/>
-                    <path d="M100 60 L140 100 L100 140" fill="none" stroke="#009E60" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <h2 class="module-name">PetitsDjobs</h2>
-                <p class="module-desc">Services de proximité et dépannage immédiat entre particuliers.</p>
-                <span class="btn-vortex-enter">Entrer</span>
-            </div>
-            
-            <!-- Module Vendia -->
-            <div class="module-card vendia-card-hub" onclick="location.href='/vendia'">
-                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="white"/>
-                    <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="white" stroke-width="12"/>
-                </svg>
-                <h2 class="module-name">Vendia</h2>
-                <p class="module-desc">Le supermarché local en ligne. Vos commerçants à portée de clic.</p>
-                <span class="btn-vortex-enter">Entrer</span>
-            </div>
-            
-            <!-- Module Profilio -->
-            <div class="module-card profilio-card-hub" onclick="location.href='/profilio'">
-                <svg class="module-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M160 100 C 160 55, 120 20, 70 20 C 30 20, 30 100, 70 100 L 70 140 L 110 100 Z" fill="#FF8200"/>
-                    <circle cx="95" cy="65" r="8" fill="#FFFFFF"/>
-                </svg>
-                <h2 class="module-name">Profilio</h2>
-                <p class="module-desc">Réseau de recrutement. Valorisez votre profil et trouvez un emploi.</p>
-                <span class="btn-vortex-enter">Entrer</span>
-            </div>
-        </div>
+
+        <footer style="margin-top: 60px; opacity: 0.6; font-weight: bold; font-size: 0.8rem;">
+            © 2026 VORTEX ECOSYSTEM. TOUS DROITS RÉSERVÉS.
+        </footer>
     </div>
+
+    <script>
+        // Vérification session rapide pour adapter l'accueil si besoin
+        fetch('/session-status').then(r => r.json()).then(s => {
+            if (s.loggedIn) {
+                console.log("Utilisateur connecté au Vortex Hub");
+            }
+        });
+    </script>
 </body>
 </html>
