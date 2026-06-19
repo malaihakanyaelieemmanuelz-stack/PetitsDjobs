@@ -22,6 +22,10 @@ html, body {
     overflow-x: hidden !important;
     background-color: var(--pd-bg);
     scrollbar-gutter: stable;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: contain;
 }
 
 html {
@@ -33,11 +37,43 @@ html {
     background-color: #FF8200 !important; /* Orange vif pour le contraste avec le blanc */
 }
 
-/* Logo filigrane FIXE - Wrapper conteneur */
-#bg-logo-wrapper {
-    will-change: auto !important;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+/* Logo filigrane FIXE - Background attachment */
+body.home-page::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 75vmin;
+    height: 75vmin;
+    max-width: 420px;
+    max-height: 420px;
+    transform: translate(-50%, -50%);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100' fill='none' stroke='%23009E60' stroke-width='20' stroke-dasharray='100 20'/%3E%3Cpath d='M100 60 L140 100 L100 140' fill='none' stroke='%23009E60' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body.vortex-hub-page::before {
+    content: "";
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 75vmin;
+    height: 75vmin;
+    max-width: 420px;
+    max-height: 420px;
+    transform: translate(-50%, -50%);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z' fill='none' stroke='%23FF8200' stroke-width='12'/%3E%3Cpath d='M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z' fill='%23009E60'/%3E%3Ccircle cx='100' cy='100' r='15' fill='white'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* --- Vortex Hub Styles --- */
@@ -2056,3 +2092,16 @@ body {
 }
 .btn-mic.recording { background: var(--pd-orange-dark); animation: pulse 1s infinite; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+/* --- Styles spécifiques pour appele-direct optimisés --- */
+.centered-app-wrap { text-align: center; margin-top: 50px; }
+.centered-login-card { margin: 0 auto; }
+.accent-h2 { color: var(--pd-orange); }
+.muted-small { font-size: 0.9rem; color: #666; }
+.pd-btn-full { width: 100%; margin-top: 15px; padding: 15px; }
+.pd-field-centered { text-align: center; font-size: 1.2rem; }
+.result-zone { display: none; margin-top: 20px; padding: 20px; background: var(--pd-green-light); border-radius: 12px; }
+.result-label { color: var(--pd-green); font-weight: bold; }
+.pro-num { font-size: 1.8rem; font-weight: 900; color: var(--pd-green); margin: 10px 0; }
+.error-msg { display: none; color: var(--pd-orange); font-weight: bold; margin-top: 15px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

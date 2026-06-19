@@ -566,16 +566,19 @@ app.get('/get-user-data', async (req, res) => {
 app.get('/get-session-commande', async (req, res) => {
     const cmd = req.session.commande;
     console.log(`🌐 [API] /get-session-commande - MissionId: ${cmd?.missionId || 'Aucun'}`);
-    if (cmd && cmd.prestataireId) {
-        // Rafraîchir dynamiquement le statut de disponibilité du prestataire choisi
-        const { data: user } = await supabase.from('utilisateurs')
-            .select('dernier_acces')
-            .eq('id', cmd.prestataireId)
-            .maybeSingle();
-        if (user) {
-            const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
-            const enLigne = (Date.now() - new Date(user.dernier_acces).getTime()) < SEUIL_EN_LIGNE_MS;
-            req.session.commande.disponible = enLigne;
+    if (supabase && cmd && cmd.prestataireId) {
+        try {
+            const { data: user } = await supabase.from('utilisateurs')
+                .select('dernier_acces')
+                .eq('id', cmd.prestataireId)
+                .maybeSingle();
+            if (user) {
+                const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+                const enLigne = (Date.now() - new Date(user.dernier_acces).getTime()) < SEUIL_EN_LIGNE_MS;
+                req.session.commande.disponible = enLigne;
+            }
+        } catch (err) {
+            console.warn('[API] /get-session-commande: impossible de vérifier l’état en ligne du prestataire', err.message);
         }
     }
     res.json(req.session.commande || {});
@@ -775,6 +778,7 @@ app.post('/api/update-mission-phone', requireAuth, async (req, res) => {
     const mId = parseInt(req.body.missionId, 10);
     const tel = req.body.telephone;
     if (!mId || !tel) return res.status(400).json({ error: "Données manquantes" });
+    if (!supabase) return res.status(503).json({ error: "Service temporairement indisponible" });
 
     const { error } = await supabase.from('missions')
         .update({ telephone_client_mission: tel })
@@ -786,61 +790,62 @@ app.post('/api/update-mission-phone', requireAuth, async (req, res) => {
 });
 
 // --- LOGIQUE DE BASCULEMENT AUTOMATIQUE (GOUVERNANCE DES MISSIONS) ---
-setInterval(async () => {
-    const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
+if (supabase) {
+    setInterval(async () => {
+        const SEUIL_EN_LIGNE_MS = 5 * 60 * 1000;
 
-    const { data: missionsEnAttente } = await supabase
-        .from('missions')
-        .select('*')
-        .eq('statut', 'en_attente_prestataire');
+        const { data: missionsEnAttente } = await supabase
+            .from('missions')
+            .select('*')
+            .eq('statut', 'en_attente_prestataire');
 
-    if (!missionsEnAttente || missionsEnAttente.length === 0) return;
+        if (!missionsEnAttente || missionsEnAttente.length === 0) return;
 
-    const missionsExpirees = missionsEnAttente.filter(m => {
-        // Use delai_reponse_minutes from DB
-        const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
-        const tempsPasse = Date.now() - new Date(m.created_at).getTime();
-        return tempsPasse >= delaiMs; // On compare directement au délai
-    });
+        const missionsExpirees = missionsEnAttente.filter(m => {
+            // Use delai_reponse_minutes from DB
+            const delaiMs = (m.delai_reponse_minutes || 1) * 60 * 1000;
+            const tempsPasse = Date.now() - new Date(m.created_at).getTime();
+            return tempsPasse >= delaiMs; // On compare directement au délai
+        });
 
-    if (missionsExpirees.length === 0) return;
+        if (missionsExpirees.length === 0) return;
 
-    for (const mission of missionsExpirees) {
-        const backups = mission.backup_ids || [];
-        
-        if (backups.length > 0) {
-            // PRENDRE LE PROCHAIN PRESTATAIRE DE SECOURS
-            const nouveauPrestaId = backups[0];
-            const resteBackups = backups.slice(1);
-
-            console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé. Passage au secours ${nouveauPrestaId}`);
-
-            // Mise à jour de la mission
-            const { error: updateError } = await supabase
-                .from('missions')
-                .update({
-                    prestataire_id: nouveauPrestaId,
-                    backup_ids: resteBackups,
-                    created_at: new Date().toISOString(), // On reset le timer pour le nouveau
-                    statut: 'en_attente_prestataire',
-                    vu_par_prestataire: false // Reset vu_par_prestataire for new primary
-                })
-                .eq('id', mission.id);
-        } else {
-            console.log(`[ANNULATION] Mission ${mission.id} : Délai expiré.`);
-            const { error: refuseError } = await supabase.from('missions').update({
-                statut: 'refuse',
-                raison_refus: 'Délai dépassé',
-                vu_par_prestataire: true // On marque comme vu pour nettoyer l'interface
-            }).eq('id', mission.id);
+        for (const mission of missionsExpirees) {
+            const backups = mission.backup_ids || [];
             
-            if (refuseError) {
-                console.error(`❌ [RENDER-DEBUG ERR] Échec refus mission ${mission.id}:`, refuseError.message);
+            if (backups.length > 0) {
+                // PRENDRE LE PROCHAIN PRESTATAIRE DE SECOURS
+                const nouveauPrestaId = backups[0];
+                const resteBackups = backups.slice(1);
+
+                console.log(`[RENDER-DEBUG] Mission ${mission.id} : Délai dépassé. Passage au secours ${nouveauPrestaId}`);
+
+                // Mise à jour de la mission
+                const { error: updateError } = await supabase
+                    .from('missions')
+                    .update({
+                        prestataire_id: nouveauPrestaId,
+                        backup_ids: resteBackups,
+                        created_at: new Date().toISOString(), // On reset le timer pour le nouveau
+                        statut: 'en_attente_prestataire',
+                        vu_par_prestataire: false // Reset vu_par_prestataire for new primary
+                    })
+                    .eq('id', mission.id);
+            } else {
+                console.log(`[ANNULATION] Mission ${mission.id} : Délai expiré.`);
+                const { error: refuseError } = await supabase.from('missions').update({
+                    statut: 'refuse',
+                    raison_refus: 'Délai dépassé',
+                    vu_par_prestataire: true // On marque comme vu pour nettoyer l'interface
+                }).eq('id', mission.id);
+                
+                if (refuseError) {
+                    console.error(`❌ [RENDER-DEBUG ERR] Échec refus mission ${mission.id}:`, refuseError.message);
+                }
             }
         }
-    }
-}, 15000); // Vérification toutes les 15 secondes
-
+    }, 15000); // Vérification toutes les 15 secondes
+}
 
 app.post('/sauvegarder-position', async (req, res) => {
     const { lat, lon } = req.body;
@@ -2389,6 +2394,24 @@ const optionsCache = {
         }
     }
 };
+
+// Middleware: si le client accepte WebP et qu'une version optimisée existe, servir la WebP
+app.use('/uploads/:file', (req, res, next) => {
+    try {
+        const accept = req.headers['accept'] || '';
+        if (!accept.includes('image/webp')) return next();
+        const file = req.params.file || '';
+        const optimizedPath = path.join(__dirname, 'public', 'uploads', 'optimized', file + '.webp');
+        if (fs.existsSync(optimizedPath)) {
+            res.setHeader('Content-Type', 'image/webp');
+            res.setHeader('Cache-Control', 'public, max-age=2592000, immutable');
+            return res.sendFile(optimizedPath);
+        }
+    } catch (e) {
+        console.error('WebP middleware error:', e.message);
+    }
+    next();
+});
 
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads'), optionsCache));
 app.use(express.static(publicDir, optionsCache));

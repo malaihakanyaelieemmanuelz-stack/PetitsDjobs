@@ -4,7 +4,9 @@
   "description": "Plateforme de petits services",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "optimize-images": "node tools/optimize-images.js",
+    "minify-assets": "node tools/minify-assets.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
