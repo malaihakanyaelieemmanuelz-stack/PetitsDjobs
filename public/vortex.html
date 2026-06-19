@@ -8,8 +8,12 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body class="vortex-hub-page">
-    <!-- Élément fixe pour le logo de fond -->
-    <div id="bg-logo-fixed" class="vortex-bg" style="position: fixed !important;"></div>
+    <!-- Logo de fond FIXE - SVG direct -->
+    <svg id="bg-logo-fixed" class="vortex-bg" style="position: fixed; top: 50%; left: 50%; width: 75vmin; height: 75vmin; max-width: 420px; max-height: 420px; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; opacity: 0.25;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
+        <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
+        <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
+    </svg>
 
     <div class="vortex-container">
         <header class="vortex-header">
@@ -74,46 +78,6 @@
                 console.log("Utilisateur connecté au Vortex Hub");
             }
         });
-    </script>
-
-    <!-- Script de DEBUG pour le logo -->
-    <script>
-        // DEBUG: Logging de la position du logo
-        function debugLogoBG() {
-            const bgLogo = document.getElementById('bg-logo-fixed');
-            if (!bgLogo) {
-                console.log('[LOGO-DEBUG] bg-logo-fixed NOT FOUND!');
-                return;
-            }
-            
-            const rect = bgLogo.getBoundingClientRect();
-            const computedStyle = window.getComputedStyle(bgLogo);
-            
-            console.log('[LOGO-DEBUG] ========== STATE AT', new Date().toISOString(), '==========');
-            console.log('[LOGO-DEBUG] Element rect:', {top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom});
-            console.log('[LOGO-DEBUG] Position CSS:', computedStyle.position);
-            console.log('[LOGO-DEBUG] Transform CSS:', computedStyle.transform);
-            console.log('[LOGO-DEBUG] Top/Left CSS:', {top: computedStyle.top, left: computedStyle.left});
-            console.log('[LOGO-DEBUG] Window scroll:', {scrollX: window.scrollX, scrollY: window.scrollY});
-            console.log('[LOGO-DEBUG] =========================================');
-        }
-        
-        // Log initial
-        window.addEventListener('load', () => {
-            setTimeout(debugLogoBG, 500);
-        });
-        
-        // Log au scroll
-        let scrollCount = 0;
-        window.addEventListener('scroll', () => {
-            scrollCount++;
-            if (scrollCount % 5 === 0) { // Log tous les 5 scroll events
-                debugLogoBG();
-            }
-        });
-        
-        // Log toutes les 2 secondes
-        setInterval(debugLogoBG, 2000);
     </script>
 </body>
 </html>
