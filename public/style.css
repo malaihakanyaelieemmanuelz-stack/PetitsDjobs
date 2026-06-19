@@ -33,14 +33,11 @@ html {
     background-color: #FF8200 !important; /* Orange vif pour le contraste avec le blanc */
 }
 
-/* Logo filigrane FIXE (ne bouge pas au scroll) */
-#bg-logo-fixed {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: -1 !important;
-    pointer-events: none !important;
+/* Logo filigrane FIXE - Wrapper conteneur */
+#bg-logo-wrapper {
+    will-change: auto !important;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 /* --- Vortex Hub Styles --- */

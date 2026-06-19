@@ -8,12 +8,14 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body class="vortex-hub-page">
-    <!-- Logo de fond FIXE - SVG direct -->
-    <svg id="bg-logo-fixed" class="vortex-bg" style="position: fixed; top: 50%; left: 50%; width: 75vmin; height: 75vmin; max-width: 420px; max-height: 420px; transform: translate(-50%, -50%); z-index: -1; pointer-events: none; opacity: 0.25;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
-        <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
-        <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
-    </svg>
+    <!-- Logo de fond FIXE - Conteneur wrapper -->
+    <div id="bg-logo-wrapper" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <svg class="vortex-bg" style="width: 75vmin; height: 75vmin; max-width: 420px; max-height: 420px; opacity: 0.25; flex-shrink: 0;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path d="M100 20 C 140 20, 180 60, 180 100 C 180 140, 140 180, 100 180 C 60 180, 20 140, 20 100 C 20 60, 60 20, 100 20 Z" fill="none" stroke="#FF8200" stroke-width="12"/>
+            <path d="M100 50 C 125 50, 150 75, 150 100 C 150 125, 125 150, 100 150 C 75 150, 50 125, 50 100 C 50 75, 75 50, 100 50 Z" fill="#009E60"/>
+            <circle cx="100" cy="100" r="15" fill="#FFFFFF"/>
+        </svg>
+    </div>
 
     <div class="vortex-container">
         <header class="vortex-header">
