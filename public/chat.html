@@ -114,7 +114,7 @@
                     const isPresta = isMe ? userIsPrestataire : partnerIsPrestataire;
                     const styleClass = isPresta ? 'presta-style' : 'client-style';
                     const dateObj = new Date(m.created_at);
-                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
                     const date = dateObj.toLocaleDateString([], {day: '2-digit', month: '2-digit'});
                     const body = (m.text && m.text.includes('<audio')) ? m.text : escapeHtml(m.text || '');
                     return `

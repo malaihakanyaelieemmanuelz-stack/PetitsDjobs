@@ -78,6 +78,8 @@
             <h2 class="showcase-title">En direct des prestataires</h2>
         </div>
         <div class="showcase-scroll-wrap">
+            <button type="button" class="showcase-control left" id="showcase-prev">‹</button>
+            <button type="button" class="showcase-control right" id="showcase-next">›</button>
             <div id="container-showcase" class="showcase-track"></div>
         </div>
     </div>
@@ -265,13 +267,71 @@
             }
 
             section.style.display = 'block';
-            const displayItems = [...avecPub, ...avecPub];
+            const displayItems = avecPub;
             container.innerHTML = displayItems.map(p => `
                 <div class="showcase-card" onclick="location.href='/voir-prestataire?id=${p.id}'">
                     ${rendreMediaShowcase(p.showcaseUrl, p.showcaseType)}
                     <div class="showcase-badge">PRO</div>
                 </div>
             `).join('');
+
+            initShowcaseControls();
+        }
+
+        function initShowcaseControls() {
+            if (showcaseControlsInitialized) return;
+            const showcase = document.getElementById('container-showcase');
+            const prev = document.getElementById('showcase-prev');
+            const next = document.getElementById('showcase-next');
+            if (!showcase || !prev || !next) return;
+
+            showcaseControlsInitialized = true;
+            let autoScrollTimer = null;
+            let isPaused = false;
+            const speed = 1.2;
+
+            const startAutoScroll = () => {
+                if (autoScrollTimer) return;
+                autoScrollTimer = setInterval(() => {
+                    if (isPaused) return;
+                    showcase.scrollBy({ left: speed, behavior: 'smooth' });
+                    if (showcase.scrollLeft + showcase.clientWidth >= showcase.scrollWidth - 10) {
+                        showcase.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
+                }, 40);
+            };
+
+            const stopAutoScroll = () => {
+                if (autoScrollTimer) {
+                    clearInterval(autoScrollTimer);
+                    autoScrollTimer = null;
+                }
+            };
+
+            const pauseAutoScroll = () => {
+                isPaused = true;
+                stopAutoScroll();
+                setTimeout(() => {
+                    isPaused = false;
+                    startAutoScroll();
+                }, 5000);
+            };
+
+            prev.onclick = () => {
+                showcase.scrollBy({ left: -240, behavior: 'smooth' });
+                pauseAutoScroll();
+            };
+            next.onclick = () => {
+                showcase.scrollBy({ left: 240, behavior: 'smooth' });
+                pauseAutoScroll();
+            };
+
+            showcase.addEventListener('mouseenter', () => { isPaused = true; stopAutoScroll(); });
+            showcase.addEventListener('mouseleave', () => { isPaused = false; startAutoScroll(); });
+            showcase.addEventListener('touchstart', () => { isPaused = true; stopAutoScroll(); });
+            showcase.addEventListener('touchend', () => { isPaused = false; startAutoScroll(); });
+
+            startAutoScroll();
         }
 
         function miniCard(p) {
@@ -552,6 +612,7 @@
 
         let lastCarrouselHtml = "";
         let carrouselInitialise = false;
+        let showcaseControlsInitialized = false;
 
         function rafraichirCarrousel() {
             // On force l'envoi de 'undefined' si vide pour que le serveur sache qu'il n'y a pas de GPS
