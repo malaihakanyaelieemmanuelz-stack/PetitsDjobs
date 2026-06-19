@@ -28,6 +28,9 @@
     </div>
 
     <script>
+        let countdownIntervalId;
+        let refreshTimeoutId;
+
         async function chargerTaches() {
             const res = await fetch('/api/mes-missions-prestataire');
             const container = document.getElementById('container-taches');
@@ -43,6 +46,15 @@
                 return;
             }
 
+            if (countdownIntervalId) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+            }
+            if (refreshTimeoutId) {
+                clearTimeout(refreshTimeoutId);
+                refreshTimeoutId = null;
+            }
+
             container.innerHTML = missions.map(m => {
                 // On marque automatiquement comme "Vu" quand on liste sur cette page
                 localStorage.setItem(`vue_mission_${m.id}`, 'true');
@@ -54,7 +66,7 @@
                     <div class="status-banner ${m.estSecours ? 'banner-backup' : 'banner-primary'}">
                         ${m.estSecours ? '📢 Prestataire de secours' : '⚡ Prestataire Principal'}
                     </div>
-                    <div class="timer-badge">⏳ <span class="timer-val" data-ms="${m.expireDansMs}">${Math.ceil(m.expireDansMs/1000)}</span>s</div>
+                    <div class="timer-badge">⏳ <span class="timer-val" data-ms="${m.expireDansMs}">${Math.max(0, Math.ceil(m.expireDansMs/1000))}</span>s</div>
                     <div style="font-size: 0.75rem; font-weight: 800; color: #888; text-transform:uppercase;">Service</div>
                     <h2 style="margin: 5px 0 15px; color: #333; font-size:1.4rem;">${m.service}</h2>
                     <div style="font-size: 0.75rem; font-weight: 800; color: #888; text-transform:uppercase;">Votre gain net</div>
@@ -71,14 +83,25 @@
         }
 
         function startCountdown() {
-            setInterval(() => {
+            countdownIntervalId = setInterval(() => {
+                let refreshNeeded = false;
                 document.querySelectorAll('.timer-val').forEach(span => {
-                    let ms = parseInt(span.dataset.ms) - 1000;
+                    let ms = Math.max(0, parseInt(span.dataset.ms) - 1000);
                     span.dataset.ms = ms;
                     const secs = Math.max(0, Math.ceil(ms / 1000));
                     span.innerText = secs;
-                    if (secs <= 0) span.closest('.info-card').remove();
+                    if (ms <= 0) {
+                        const badge = span.closest('.timer-badge');
+                        if (badge) badge.innerHTML = '⏳ Délai expiré. Actualisation...';
+                        refreshNeeded = true;
+                    }
                 });
+
+                if (refreshNeeded && !refreshTimeoutId) {
+                    refreshTimeoutId = setTimeout(() => {
+                        chargerTaches();
+                    }, 1200);
+                }
             }, 1000);
         }
 

@@ -107,7 +107,7 @@
                         
                         <div class="stats-pill">
                             <span>⭐ ${data.etoiles ?? 0}</span>
-                            <span>📍 ${data.ville || '-'}</span>
+                            <span>📍 ${data.commune || data.ville || '-'}${data.quartier ? ' • ' + data.quartier : ''}</span>
                         </div>
 
                         <div style="text-align: left; background: #fdfaf9; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px solid #f2ece9; font-size: 1.2rem;">

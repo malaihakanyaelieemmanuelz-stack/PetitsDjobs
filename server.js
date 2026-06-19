@@ -533,15 +533,31 @@ app.get('/get-user-data', async (req, res) => {
     console.log(`🌐 [API] /get-user-data - User: ${req.session.user?.id || 'Invité'}, Photo: ${req.session.user?.photo ? 'OK' : 'Manquante'}`);
     if (!req.session.user) return res.json({});
     const user = { ...req.session.user };
+    if (!user.isPrestataire && user.ville) {
+        user.commune = user.ville;
+        user.ville = '';
+    }
+    if (!user.commune && user.ville) {
+        user.commune = user.ville;
+    }
     if (supabase) {
-        const { data: profil } = await supabase.from('infos_prestataires')
-            .select('commentaires, etoiles')
+        const { data: profil, error: profilError } = await supabase.from('infos_prestataires')
+            .select('*')
             .eq('user_id', user.id)
             .maybeSingle();
-        if (profil) {
+        if (profil && !profilError) {
             user.isPrestataire = true;
             user.commentaires = profil.commentaires || [];
             user.etoiles = profil.etoiles ?? user.etoiles;
+            user.profession = profil.profession || user.profession;
+            user.bio = profil.bio || user.bio;
+            user.ville = profil.ville || user.ville;
+            user.commune = profil.commune || user.commune;
+            user.quartier = profil.quartier || user.quartier;
+            user.services = profil.services || user.services;
+            user.telephone = profil.telephone || user.telephone;
+            user.photo = profil.photo_profil_url || user.photo;
+            user.autorise_numero_deconnexion = profil.autorise_numero_deconnexion || false;
         }
     }
     res.json(user);
@@ -1755,7 +1771,9 @@ app.post('/devenir-prestataire', upload.fields([
             user_id: user.id,
             profession: (req.body.profession || '').trim(),
             bio: (req.body.bio || '').trim(),
+            commune: (req.body.commune || '').trim(),
             ville: (req.body.ville || '').trim(),
+            quartier: (req.body.quartier || '').trim(),
             services: servicesEnTexte,
             telephone: (req.body.telephone || '').trim(),
             autorise_numero_deconnexion: req.body.autorise_numero === 'on',
@@ -1798,6 +1816,8 @@ app.post('/devenir-prestataire', upload.fields([
         req.session.user.profession = profileData.profession;
         req.session.user.services = profileData.services;
         req.session.user.ville = profileData.ville;
+        req.session.user.commune = profileData.commune;
+        req.session.user.quartier = profileData.quartier;
         req.session.user.bio = profileData.bio;
         req.session.user.telephone = profileData.telephone;
         
@@ -1827,6 +1847,8 @@ app.get('/prestataire-public/:id', async (req, res) => {
         profession: p.profession,
         bio: p.bio,
         ville: p.ville,
+        commune: p.commune,
+        quartier: p.quartier,
         services: p.services,
         photo: p.photo_profil_url,
         etoiles: p.etoiles || 0,
@@ -2210,7 +2232,22 @@ app.post('/supprimer-compte', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.id;
 
-        // On supprime d'abord les infos prestataires puis l'utilisateur
+        // Supprimer d'abord les références de backup dans les missions existantes
+        const { data: missionsWithBackup } = await supabase.from('missions').select('id, backup_ids').contains('backup_ids', [userId]);
+        if (missionsWithBackup && missionsWithBackup.length > 0) {
+            for (const mission of missionsWithBackup) {
+                const filteredBackups = (mission.backup_ids || []).filter(id => String(id) !== String(userId));
+                await supabase.from('missions').update({ backup_ids: filteredBackups }).eq('id', mission.id);
+            }
+        }
+
+        // Supprimer les données associées de façon sûre
+        await supabase.from('showcase').delete().eq('user_id', userId);
+        await supabase.from('messages').delete().or(`sender_id.eq.${userId},ami_id.eq.${userId}`);
+        await supabase.from('amis').delete().or(`user_id1.eq.${userId},user_id2.eq.${userId}`);
+        await supabase.from('invitations').delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
+        await supabase.from('missions').delete().or(`client_id.eq.${userId},prestataire_id.eq.${userId}`);
+
         await supabase.from('infos_prestataires').delete().eq('user_id', userId);
         const { error } = await supabase.from('utilisateurs').delete().eq('id', userId);
 
