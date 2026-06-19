@@ -182,6 +182,36 @@ html {
 
 .hub-card.vendia:hover h3, .hub-card.vendia:hover p { color: white !important; }
 
+/* === PROFILIO : Texte orange + Fond vert === */
+.hub-card.profilio {
+    background: #008000;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.hub-card.profilio h3 {
+    color: #FF8C00 !important;
+}
+
+.hub-card.profilio p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* === VENDIA : Texte blanc + Fond orange === */
+.hub-card.vendia {
+    background: #FF8C00;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.hub-card.vendia h3 {
+    color: #FFFFFF !important;
+}
+
+.hub-card.vendia p {
+    color: rgba(255, 255, 255, 0.95);
+}
+
 .hub-icon-wrap {
     width: 100px;
     height: 100px;
