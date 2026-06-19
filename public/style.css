@@ -54,18 +54,18 @@ html {
 /* Animation et base du logo en filigrane (Engrenage / Paramètres) */
 #bg-logo-fixed::after {
     content: "";
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    width: 75vmin !important;
-    height: 75vmin !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 75vmin;
+    height: 75vmin;
     max-width: 420px;
     max-height: 420px;
-    transform: translate(-50%, -50%) !important;
+    transform: translate(-50%, -50%);
     background-repeat: no-repeat;
     background-position: center center;
     background-size: contain;
-    opacity: 0.25; /* Opacité légère pour le filigrane */
+    opacity: 0.25;
     pointer-events: none;
     z-index: -1;
 }
