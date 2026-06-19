@@ -77,8 +77,6 @@
             <h2 class="showcase-title">En direct des prestataires</h2>
         </div>
         <div class="showcase-scroll-wrap">
-            <button type="button" class="showcase-control left" id="showcase-prev">‹</button>
-            <button type="button" class="showcase-control right" id="showcase-next">›</button>
             <div id="container-showcase" class="showcase-track"></div>
         </div>
     </div>
@@ -280,19 +278,20 @@
         function initShowcaseControls() {
             if (showcaseControlsInitialized) return;
             const showcase = document.getElementById('container-showcase');
-            const prev = document.getElementById('showcase-prev');
-            const next = document.getElementById('showcase-next');
-            if (!showcase || !prev || !next) return;
+            if (!showcase) return;
 
             showcaseControlsInitialized = true;
             let autoScrollTimer = null;
             let isPaused = false;
+            let isDragging = false;
+            let startX = 0;
+            let scrollStart = 0;
             const speed = 1.2;
 
             const startAutoScroll = () => {
                 if (autoScrollTimer) return;
                 autoScrollTimer = setInterval(() => {
-                    if (isPaused) return;
+                    if (isPaused || isDragging) return;
                     showcase.scrollBy({ left: speed, behavior: 'smooth' });
                     if (showcase.scrollLeft + showcase.clientWidth >= showcase.scrollWidth - 10) {
                         showcase.scrollTo({ left: 0, behavior: 'smooth' });
@@ -316,20 +315,54 @@
                 }, 5000);
             };
 
-            prev.onclick = () => {
-                showcase.scrollBy({ left: -240, behavior: 'smooth' });
+            const beginDrag = (clientX) => {
+                isDragging = true;
+                startX = clientX;
+                scrollStart = showcase.scrollLeft;
                 pauseAutoScroll();
+                showcase.style.cursor = 'grabbing';
             };
-            next.onclick = () => {
-                showcase.scrollBy({ left: 240, behavior: 'smooth' });
-                pauseAutoScroll();
+
+            const moveDrag = (clientX) => {
+                if (!isDragging) return;
+                const deltaX = clientX - startX;
+                showcase.scrollLeft = scrollStart - deltaX;
+            };
+
+            const endDrag = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                showcase.style.cursor = 'grab';
             };
 
             showcase.addEventListener('mouseenter', () => { isPaused = true; stopAutoScroll(); });
             showcase.addEventListener('mouseleave', () => { isPaused = false; startAutoScroll(); });
-            showcase.addEventListener('touchstart', () => { isPaused = true; stopAutoScroll(); });
-            showcase.addEventListener('touchend', () => { isPaused = false; startAutoScroll(); });
 
+            showcase.addEventListener('touchstart', (event) => {
+                const touch = event.touches[0];
+                beginDrag(touch.clientX);
+            }, { passive: true });
+            showcase.addEventListener('touchmove', (event) => {
+                const touch = event.touches[0];
+                moveDrag(touch.clientX);
+            }, { passive: true });
+            showcase.addEventListener('touchend', () => {
+                endDrag();
+            });
+
+            showcase.addEventListener('pointerdown', (event) => {
+                beginDrag(event.clientX);
+                event.preventDefault();
+            });
+            window.addEventListener('pointermove', (event) => {
+                if (!isDragging) return;
+                moveDrag(event.clientX);
+            });
+            window.addEventListener('pointerup', () => {
+                endDrag();
+            });
+
+            showcase.style.cursor = 'grab';
             startAutoScroll();
         }
 

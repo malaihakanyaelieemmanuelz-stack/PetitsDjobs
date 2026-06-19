@@ -30,8 +30,13 @@
     <script>
         async function chargerTaches() {
             const res = await fetch('/api/mes-missions-prestataire');
-            const missions = await res.json();
             const container = document.getElementById('container-taches');
+            if (!res.ok) {
+                container.innerHTML = "<p style='text-align:center; padding:40px; color:#c62828;'>Impossible de charger vos tâches. Vérifiez que vous êtes connecté et que vous êtes bien prestataire.</p>";
+                console.error('Erreur chargement tâches', res.status, res.statusText);
+                return;
+            }
+            const missions = await res.json();
 
             if (!missions || missions.length === 0) {
                 container.innerHTML = "<p style='text-align:center; padding:40px; color:#666;'>Aucune tâche en attente de réponse.</p>";

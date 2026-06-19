@@ -445,7 +445,7 @@ function requireAuth(req, res, next) {
 }
 
 function redirectSiConnecte(req, res, next) {
-    if (req && req.session && estConnecte(req)) return res.redirect('/');
+    if (req && req.session && estConnecte(req)) return res.redirect('/jobs');
     next();
 }
 
@@ -533,12 +533,13 @@ app.get('/get-user-data', async (req, res) => {
     console.log(`🌐 [API] /get-user-data - User: ${req.session.user?.id || 'Invité'}, Photo: ${req.session.user?.photo ? 'OK' : 'Manquante'}`);
     if (!req.session.user) return res.json({});
     const user = { ...req.session.user };
-    if (user.isPrestataire && supabase) {
+    if (supabase) {
         const { data: profil } = await supabase.from('infos_prestataires')
             .select('commentaires, etoiles')
             .eq('user_id', user.id)
             .maybeSingle();
         if (profil) {
+            user.isPrestataire = true;
             user.commentaires = profil.commentaires || [];
             user.etoiles = profil.etoiles ?? user.etoiles;
         }
@@ -725,7 +726,8 @@ app.post('/api/simuler-paiement', requireAuth, async (req, res) => {
         console.log(`[RENDER-DEBUG] Mission ${data.id} créée. Délai: ${delaiMinutes} min. Presta: ${payload.prestataire_id}`);
         console.log("❌ [NOTIF-DEBUG] MISSION CRÉÉE EN BASE. ID:", data.id, "pour Presta:", payload.prestataire_id);
         console.log("✅ MISSION CRÉÉE AVEC SUCCÈS. ID:", data.id);
-        req.scession.commande.missionId = data.id;
+        req.session.commande = req.session.commande || {};
+        req.session.commande.missionId = data.id;
         req.session.commande.paye = true;
         req.session.commande.statut = payload.statut;
         req.session.commande.delaiReponse = delaiMinutes;
@@ -1628,7 +1630,7 @@ app.post('/connexion', async (req, res) => {
 
     console.log("[DIAGNOSTIC] Sauvegarde session et redirection...");
     req.session.save(() => {
-        res.redirect('/');
+        res.redirect('/jobs');
     });
 });
 
@@ -1687,7 +1689,7 @@ app.post('/inscription', upload.single('photo_profil'), async (req, res) => {
         req.session.remember = !!req.body.remember;
         req.session.localisationAutorisee = locOk;
         req.session.save(() => {
-            res.redirect('/?connecte=1');
+            res.redirect('/jobs?connecte=1');
         });
     } catch (err) {
         console.error("Erreur d'inscription :", err);

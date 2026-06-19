@@ -36,8 +36,8 @@
         </div>
 
         <div class="choice-card" onclick="selectMode('appele', this)">
-            <h3>📞 Guidage par Appel</h3>
-            <p>Le prestataire vous appellera directement pour trouver l'entrée.</p>
+            <h3>📞 Appel par Connexion</h3>
+            <p>Accès à un appel via l'application PetitsDjobs. Disponible uniquement sur mobile.</p>
         </div>
 
         <button id="btn-final" onclick="validerOrientation()" class="btn-primary-sm" style="width: 100%; margin-top: 20px; padding: 20px; background:#2e7d32; font-size:1.1rem;">
@@ -73,10 +73,18 @@
             // Récupération des infos de session
             const cmd = await fetch('/get-session-commande').then(r => r.json());
             
-            // Sécurité : Si appel choisi mais pro hors ligne pour un service immédiat
-            if (selectedMode === 'appele' && cmd.datePrevue === 'today' && cmd.disponible === false) {
-                alert("Ce prestataire est hors ligne. Vous allez être dirigé vers la page d'appel pour le prévenir avant le paiement.");
-                window.location.href = '/appele.html';
+            if (selectedMode === 'appele') {
+                await fetch('/api/sauvegarder-orientation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orientation_mode: selectedMode,
+                        lat_destination: latDest,
+                        lon_destination: lonDest,
+                        telephone_ephemere: null
+                    })
+                });
+                window.location.href = '/appele-en-ligne.html';
                 return;
             }
 

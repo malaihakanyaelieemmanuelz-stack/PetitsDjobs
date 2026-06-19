@@ -150,7 +150,7 @@ html {
 
 /* Logos spécifiques par module */
 
-/* PetitsDjobs : Logo vert (Outils/Services) */
+/* PetitsDjobs : Logo vert de connexion */
 #bg-logo-fixed.jobs-bg::after {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100' fill='none' stroke='%23009E60' stroke-width='20' stroke-dasharray='100 20'/%3E%3Cpath d='M100 60 L140 100 L100 140' fill='none' stroke='%23009E60' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
@@ -1894,6 +1894,8 @@ body {
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    cursor: grab;
 }
 
 .showcase-track {

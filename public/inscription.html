@@ -10,7 +10,7 @@
 <body>
     <header class="home-header">
         <div class="header-content">
-            <a href="index.html" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+            <a href="/jobs" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
                 <h1 style="margin:0; display:flex; align-items:center; gap:10px;">
                     <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                         <path d="M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100" fill="none" stroke="#009E60" stroke-width="20" stroke-dasharray="100 20"/>
@@ -20,7 +20,7 @@
                 </h1>
             </a>
             <nav class="nav-compact">
-                <a href="index.html">ACCUEIL</a>
+                <a href="/jobs">ACCUEIL</a>
                 <a href="connexion.html">CONNEXION</a>
             </nav>
         </div>
@@ -28,7 +28,7 @@
     <div class="auth-page">
     <div class="login-card signup-card">
         <h1>INSCRIPTION</h1>
-        <p style="font-size:0.9rem; color:#666;">Après inscription → <a href="index.html">accueil</a>. Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>.</p>
+        <p style="font-size:0.9rem; color:#666;">Après inscription → <a href="/jobs">accueil</a>. Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>.</p>
         <p id="erreur-msg" style="color:#c62828; font-size:0.9rem; display:none;"></p>
         <form id="regForm" action="/inscription" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="locAccepted" id="locAccepted" value="0">
@@ -69,7 +69,7 @@
         <p style="margin-top: 15px; font-size: 0.9rem;">
             Déjà inscrit ? <a href="connexion.html">Connectez-vous</a>
         </p>
-        <a href="index.html" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
+        <a href="/jobs" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
     </div>
     </div>
 
@@ -159,7 +159,7 @@
         }
 
         fetch('/session-status').then(r => r.json()).then(s => {
-            if (s.loggedIn) window.location.href = 'index.html';
+            if (s.loggedIn) window.location.href = '/jobs';
         });
 
         document.getElementById('regForm').onsubmit = function(e) {

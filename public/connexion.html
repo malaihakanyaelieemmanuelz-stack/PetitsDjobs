@@ -10,7 +10,7 @@
 <body>
     <header class="home-header">
         <div class="header-content">
-            <a href="index.html?v=2" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+            <a href="/jobs" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
                 <h1 style="margin:0; display:flex; align-items:center; gap:10px;">
                     <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                         <path d="M40 100 C 40 40, 160 40, 160 100 C 160 160, 40 160, 40 100" fill="none" stroke="#009E60" stroke-width="20" stroke-dasharray="100 20"/>
@@ -20,7 +20,7 @@
                 </h1>
             </a>
             <nav class="nav-compact">
-                <a href="index.html">ACCUEIL</a>
+                <a href="/jobs">ACCUEIL</a>
                 <a href="inscription.html">INSCRIPTION</a>
             </nav>
         </div>
@@ -66,7 +66,7 @@
             <p style="margin-top: 15px; font-size: 0.9rem;">
                 Pas de compte ? <a href="inscription.html">Inscrivez-vous</a>
             </p>
-            <a href="index.html?v=2" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
+            <a href="/jobs" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À L'ACCUEIL</a>
         </div>
     </div>
 
@@ -94,7 +94,7 @@
         if (err) msg.style.display = 'block';
 
         fetch('/session-status').then(r => r.json()).then(s => {
-            if (s.loggedIn) window.location.href = 'index.html?v=2';
+            if (s.loggedIn) window.location.href = '/jobs';
         }).catch(() => {});
 
         // Déclenchement du GPS lors du cochage de la case

@@ -47,9 +47,11 @@
             if (res.ok) {
                 const data = await res.json();
                 document.getElementById('pro-num').innerText = data.telephone;
-                document.getElementById('call-link').href = "tel:" + data.telephone;
+                const phoneUrl = "tel:" + data.telephone;
+                document.getElementById('call-link').href = phoneUrl;
                 document.getElementById('input-zone').style.display = 'none';
                 document.getElementById('result-zone').style.display = 'block';
+                setTimeout(() => { window.location.href = phoneUrl; }, 200);
             } else {
                 document.getElementById('input-zone').style.display = 'none';
                 document.getElementById('error-msg').innerText = "Le prestataire ne souhaite pas divulguer son numéro.";
