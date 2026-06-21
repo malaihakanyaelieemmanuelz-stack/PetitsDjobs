@@ -2,45 +2,14 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="0; url=/vendia">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.min.css">
-    <title>Vendia - Supermarché Vortex</title>
+    <title>Redirection Vendia</title>
 </head>
 <body class="vendia-page">
-    <!-- Filigrane blanc sur fond vert -->
     <div id="bg-logo-fixed" class="vendia-bg"></div>
-
-    <header class="home-header">
-        <div class="header-content">
-            <a href="/" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
-                <h1 style="margin:0; color: white;">
-                    <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="#FFFFFF"/>
-                        <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="#FFFFFF" stroke-width="12"/>
-                    </svg>
-                    VENDIA
-                </h1>
-            </a>
-            <nav class="nav-compact">
-                <a href="/">VORTEX</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="app-wrap">
-        <div style="text-align: center; color: white; margin-top: 50px;">
-            <h2 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px;">VOTRE MARCHÉ LOCAL</h2>
-            <p style="font-weight: bold; opacity: 0.9;">Les meilleurs prix, livrés au plus vite.</p>
-        </div>
-
-        <!-- Zone pour les futurs produits -->
-        <div id="promotions-container" style="margin-top: 40px;">
-            <h3 style="color: #FF6600; background: white; display: inline-block; padding: 5px 15px; border-radius: 10px;">🔥 PROMOTIONS DU MOMENT</h3>
-            <div class="service-grid" id="vendia-grid">
-                <!-- Les produits seront injectés ici par JS -->
-                <p style="color: white; grid-column: 1/-1; text-align: center;">Recherche des meilleures offres à proximité...</p>
-            </div>
-        </div>
-    </main>
+    <p style="text-align:center; padding:80px 20px; color:white; font-weight:900;">Redirection vers la nouvelle version de Vendia...</p>
+    <script>window.location.replace('/vendia');</script>
 </body>
 </html>

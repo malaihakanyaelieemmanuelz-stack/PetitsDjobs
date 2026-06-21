@@ -28,98 +28,176 @@
     </div>
 
     <script>
-        let countdownIntervalId;
-        let refreshTimeoutId;
+        let countdownIntervalId = null;
+        let pollingIntervalId = null;
+        let refreshInFlight = false;
+        let lastRenderedSignature = '';
+        const missionsMarqueesVues = new Set();
 
-        async function chargerTaches() {
-            const res = await fetch('/api/mes-missions-prestataire');
-            const container = document.getElementById('container-taches');
-            if (!res.ok) {
-                container.innerHTML = "<p style='text-align:center; padding:40px; color:#c62828;'>Impossible de charger vos tâches. Vérifiez que vous êtes connecté et que vous êtes bien prestataire.</p>";
-                console.error('Erreur chargement tâches', res.status, res.statusText);
-                return;
+        function normaliserMissions(missions) {
+            return (missions || [])
+                .filter(m => ['en_attente_prestataire', 'programmation_en_cours'].includes(m.statut))
+                .filter(m => m.statut === 'programmation_en_cours' || !m.expire)
+                .sort((a, b) => {
+                    const priorite = statut => statut === 'en_attente_prestataire' ? 0 : 1;
+                    const diffStatut = priorite(a.statut) - priorite(b.statut);
+                    if (diffStatut !== 0) return diffStatut;
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
+        }
+
+        function construireSignature(missions) {
+            return missions.map(m => [
+                m.id,
+                m.statut,
+                m.estSecours ? 'backup' : 'primary',
+                m.client?.prenom || '',
+                m.client?.nom || '',
+                m.prix,
+                Math.max(0, Math.ceil((m.expireDansMs || 0) / 1000))
+            ].join(':')).join('|');
+        }
+
+        async function marquerMissionsCommeVues(missions) {
+            for (const mission of missions) {
+                if (!mission?.id || mission.vuParPresta || missionsMarqueesVues.has(mission.id)) continue;
+                missionsMarqueesVues.add(mission.id);
+                fetch(`/api/marquer-mission-vue/${mission.id}`, { method: 'POST' }).catch(() => {
+                    missionsMarqueesVues.delete(mission.id);
+                });
             }
-            const missions = await res.json();
+        }
 
-            if (!missions || missions.length === 0) {
+        function renderMissions(missions) {
+            const container = document.getElementById('container-taches');
+
+            if (!missions.length) {
                 container.innerHTML = "<p style='text-align:center; padding:40px; color:#666;'>Aucune tâche en attente de réponse.</p>";
                 return;
             }
 
-            if (countdownIntervalId) {
-                clearInterval(countdownIntervalId);
-                countdownIntervalId = null;
-            }
-            if (refreshTimeoutId) {
-                clearTimeout(refreshTimeoutId);
-                refreshTimeoutId = null;
-            }
-
             container.innerHTML = missions.map(m => {
-                // On marque automatiquement comme "Vu" quand on liste sur cette page
-                localStorage.setItem(`vue_mission_${m.id}`, 'true');
-                fetch(`/api/marquer-mission-vue/${m.id}`, { method: 'POST' });
-
                 const gain = m.montant_prestataire || Math.round(m.prix * 0.95);
+                const isProgramme = m.statut === 'programmation_en_cours';
+                const clientNom = [m.client?.prenom, m.client?.nom].filter(Boolean).join(' ') || 'Client';
+
                 return `
-                <div class="info-card" id="task-${m.id}">
+                <div class="info-card mission-card-item" id="task-${m.id}">
                     <div class="status-banner ${m.estSecours ? 'banner-backup' : 'banner-primary'}">
-                        ${m.estSecours ? '📢 Prestataire de secours' : '⚡ Prestataire Principal'}
+                        ${m.estSecours ? '📢 Prestataire de secours' : '⚡ Prestataire principal'}
                     </div>
-                    <div class="timer-badge">⏳ <span class="timer-val" data-ms="${m.expireDansMs}">${Math.max(0, Math.ceil(m.expireDansMs/1000))}</span>s</div>
+                    ${isProgramme
+                        ? `<div class="timer-badge" style="background:#2e7d32;">📅 Programmée</div>`
+                        : `<div class="timer-badge">⏳ <span class="timer-val" data-ms="${m.expireDansMs}">${Math.max(0, Math.ceil(m.expireDansMs / 1000))}</span>s</div>`
+                    }
                     <div style="font-size: 0.75rem; font-weight: 800; color: #888; text-transform:uppercase;">Service</div>
                     <h2 style="margin: 5px 0 15px; color: #333; font-size:1.4rem;">${m.service}</h2>
                     <div style="font-size: 0.75rem; font-weight: 800; color: #888; text-transform:uppercase;">Votre gain net</div>
                     <div class="net-gain">${gain} FCFA</div>
-                    <div style="margin-top: 15px; font-weight: 700; color: #333;">Client : ${m.client.prenom} ${m.client.nom}</div>
+                    <div style="margin-top: 15px; font-weight: 700; color: #333;">Client : ${clientNom}</div>
+                    ${isProgramme ? `<div style="margin-top:10px; color:#2e7d32; font-weight:700;">Prévue pour : ${m.date_prevue || 'À venir'}</div>` : ''}
                     <div class="action-btns">
-                        <button class="btn-refuse" onclick="repondre(${m.id}, 'refuser')">REFUSER</button>
-                        <button class="btn-accept" onclick="repondre(${m.id}, 'accepter')">ACCEPTER</button>
+                        <button class="btn-refuse" onclick="repondre(${m.id}, 'refuser', this)">REFUSER</button>
+                        <button class="btn-accept" onclick="repondre(${m.id}, 'accepter', this)">ACCEPTER</button>
                     </div>
                 </div>
                 `;
             }).join('');
-            startCountdown();
         }
 
         function startCountdown() {
+            if (countdownIntervalId) clearInterval(countdownIntervalId);
+
             countdownIntervalId = setInterval(() => {
                 let refreshNeeded = false;
+
                 document.querySelectorAll('.timer-val').forEach(span => {
-                    let ms = Math.max(0, parseInt(span.dataset.ms) - 1000);
+                    let ms = Math.max(0, (parseInt(span.dataset.ms, 10) || 0) - 1000);
                     span.dataset.ms = ms;
-                    const secs = Math.max(0, Math.ceil(ms / 1000));
-                    span.innerText = secs;
+                    span.innerText = Math.max(0, Math.ceil(ms / 1000));
+
                     if (ms <= 0) {
-                        const badge = span.closest('.timer-badge');
-                        if (badge) badge.innerHTML = '⏳ Délai expiré. Actualisation...';
+                        const card = span.closest('.mission-card-item');
+                        if (card) card.remove();
                         refreshNeeded = true;
                     }
                 });
 
-                if (refreshNeeded && !refreshTimeoutId) {
-                    refreshTimeoutId = setTimeout(() => {
-                        chargerTaches();
-                    }, 1200);
+                if (refreshNeeded) {
+                    lastRenderedSignature = '';
+                    chargerTaches(true);
                 }
             }, 1000);
         }
 
-        async function repondre(id, action) {
+        async function chargerTaches(force = false) {
+            if (refreshInFlight) return;
+            refreshInFlight = true;
+
+            const container = document.getElementById('container-taches');
+            try {
+                const res = await fetch('/api/mes-missions-prestataire', { cache: 'no-store' });
+                if (!res.ok) {
+                    container.innerHTML = "<p style='text-align:center; padding:40px; color:#c62828;'>Impossible de charger vos tâches. Vérifiez que vous êtes connecté et que vous êtes bien prestataire.</p>";
+                    console.error('Erreur chargement tâches', res.status, res.statusText);
+                    return;
+                }
+
+                const missions = normaliserMissions(await res.json());
+                await marquerMissionsCommeVues(missions);
+
+                const signature = construireSignature(missions);
+                if (!force && signature === lastRenderedSignature) return;
+
+                renderMissions(missions);
+                lastRenderedSignature = signature;
+                startCountdown();
+            } catch (error) {
+                container.innerHTML = "<p style='text-align:center; padding:40px; color:#c62828;'>Erreur réseau pendant le chargement des tâches.</p>";
+                console.error('Erreur critique gestionnaire de tâches', error);
+            } finally {
+                refreshInFlight = false;
+            }
+        }
+
+        async function repondre(id, action, bouton) {
+            if (bouton) {
+                bouton.disabled = true;
+                bouton.style.opacity = '0.7';
+            }
+
             const res = await fetch('/api/repondre-mission', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ missionId: id, action })
             });
+
             if (res.ok) {
                 if (action === 'accepter') {
                     location.href = `/suivi?missionId=${id}`;
-                } else {
-                    location.reload();
+                    return;
                 }
+
+                lastRenderedSignature = '';
+                chargerTaches(true);
+                return;
+            }
+
+            if (bouton) {
+                bouton.disabled = false;
+                bouton.style.opacity = '1';
             }
         }
-        chargerTaches();
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                lastRenderedSignature = '';
+                chargerTaches(true);
+            }
+        });
+
+        chargerTaches(true);
+        pollingIntervalId = setInterval(() => chargerTaches(false), 5000);
     </script>
 </body>
 </html>

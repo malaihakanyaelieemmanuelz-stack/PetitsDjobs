@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.min.css">
+    <title>Vendia - Marketplace Vortex</title>
+    <style>
+        body.vendia-page { color: #ffffff; }
+        .vendia-page .home-header { background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+        .vendia-page .nav-compact a { color: #fff; border-color: rgba(255,255,255,0.45); }
+        .vendia-page .nav-compact a:hover { background: rgba(255,255,255,0.18); }
+        .market-search-row { display:flex; flex-direction:column; gap:10px; }
+        .market-search-inline { display:flex; gap:8px; }
+        .market-search-inline input, .market-search-row select, #particular-sale-input {
+            width:100%;
+            padding:16px;
+            border-radius:15px;
+            border:2px solid #fff;
+            background:#fff;
+            color:#2e7d32;
+            font-size:1rem;
+            font-weight:700;
+        }
+        .market-banner-card {
+            min-width:260px;
+            max-width:260px;
+            background: rgba(255,255,255,0.18);
+            border:1px solid rgba(255,255,255,0.25);
+            color:#fff;
+            border-radius:18px;
+            overflow:hidden;
+            flex:0 0 auto;
+            box-shadow:0 8px 18px rgba(0,0,0,0.12);
+        }
+        .market-banner-media {
+            height:150px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(0,158,96,0.45));
+            color:#FF8200;
+            font-weight:900;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.2rem;
+        }
+        .market-banner-body { padding:14px; }
+        .market-banner-body h3 { margin:0 0 8px; color:#fff; font-size:1rem; }
+        .market-banner-body p { margin:0; color:rgba(255,255,255,0.88); font-size:0.9rem; }
+        .market-product-card .module-thumb {
+            height:180px;
+            background: linear-gradient(135deg, #fff 0%, #ffe0b2 55%, #2e7d32 100%);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#FF8200;
+            font-size:1.1rem;
+            font-weight:900;
+        }
+        .market-product-card .card-info { text-align:left; }
+        .market-product-card .card-info p { color:#666; margin:6px 0; }
+        .market-role-box {
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.25);
+            padding:16px;
+            border-radius:16px;
+            color:#fff;
+            margin-bottom:12px;
+        }
+        .market-role-box label { display:flex; align-items:center; gap:10px; font-weight:900; margin-top:10px; }
+        .market-list-card {
+            background:white;
+            color:#2e7d32;
+            border-radius:18px;
+            padding:16px;
+            min-width:280px;
+            max-width:280px;
+            flex:0 0 auto;
+            box-shadow:0 8px 18px rgba(0,0,0,0.12);
+            border:1px solid #eee;
+        }
+        .market-list-card strong { display:block; color:#2e7d32; margin-bottom:6px; }
+        .market-list-card p { margin:0 0 8px; color:#666; }
+        .market-list-card span { color:#FF8200; font-weight:900; }
+        .vendia-page h2.section-title { color:#fff; text-align:center; margin-top:12px; }
+        .empty-state { color:#fff; text-align:center; font-weight:700; }
+        @media (max-width: 900px) {
+            .market-search-inline { flex-direction:column; }
+        }
+    </style>
+</head>
+<body class="vendia-page">
+    <div id="bg-logo-fixed" class="vendia-bg"></div>
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/vendia" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+                <h1 style="margin:0; display:flex; align-items:center; gap:10px; color:#fff;">
+                    <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="#FFFFFF"/>
+                        <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="#FFFFFF" stroke-width="12"/>
+                    </svg>
+                    VENDIA
+                </h1>
+            </a>
+            <div class="nav-compact">
+                <a href="/">VORTEX HUB</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-wrap" style="margin-bottom: 20px;">
+        <div class="market-search-row">
+            <div class="market-role-box">
+                <strong id="vendia-role-badge">Inscription client par défaut</strong>
+                <p style="margin:8px 0 0; color:rgba(255,255,255,0.88);">Le client entre d’abord comme acheteur, puis peut activer le mode vendeur.</p>
+                <label>
+                    <input type="checkbox" id="become-seller">
+                    <span>Basculer en vendeur</span>
+                </label>
+            </div>
+            <select id="vendia-category"></select>
+            <div class="market-search-inline">
+                <input id="vendia-search" type="search" placeholder="Rechercher un produit ou un vendeur">
+                <button id="vendia-search-btn" class="btn-primary-sm" style="width: 70px; height: 58px; margin: 0; padding: 0; border-radius: 15px; background:#2e7d32;">🔍</button>
+            </div>
+            <input id="particular-sale-input" type="text" placeholder="Vente particulière : catégorie manquante" style="display:none;">
+        </div>
+    </div>
+
+    <div id="vendia-showcase" class="showcase-header-band">
+        <div class="app-wrap" style="padding: 8px 15px 0;">
+            <h2 class="showcase-title" style="color:#fff;">En direct des vendeurs</h2>
+        </div>
+        <div class="showcase-scroll-wrap">
+            <div id="vendia-carousel" class="showcase-track"></div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Nos catégories produits</h2>
+    <div class="service-grid" id="vendia-products"></div>
+
+    <section class="app-wrap" style="padding: 20px; display:block;">
+        <h2 style="font-size:1.2rem; color:#fff; border-left:4px solid #fff; padding-left:10px; text-align:left;">Produits proposés à proximité</h2>
+        <div id="vendia-nearby" style="display:flex; gap:15px; overflow-x:auto; padding:10px 0;"></div>
+    </section>
+
+    <script src="/vendia/js/app.js"></script>
+</body>
+</html>

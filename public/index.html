@@ -181,6 +181,8 @@
         let currentUserId = null; // Pour stocker l'ID de l'utilisateur connecté
         let userLat = null;
         let userLon = null;
+        let jobsPollingEnCours = false;
+        let lastJobsSignature = "";
 
         // --- GESTION GPS IMMÉDIATE ---
         function obtenirLocalisation() {
@@ -367,6 +369,8 @@
 
         function miniCard(p) {
             const nomComplet = [p.prenom, p.nom].filter(Boolean).join(' ') || p.nom || 'Prestataire';
+            const disponible = typeof p.disponible === 'boolean' ? p.disponible : !!p.enLigne;
+            const dernierAcces = p.dernierAcces || p.dernier_acces || (disponible ? 'En ligne' : 'Hors ligne');
             
             let servicesAffiche = 'Services divers';
             if (p.services && typeof p.services === 'string') {
@@ -376,7 +380,7 @@
             
             const cardAction = `location.href='/voir-prestataire?id=${p.id}'`;
             
-            const statusTxt = formatDerniereConnexion(p.dernierAcces, p.disponible);
+            const statusTxt = formatDerniereConnexion(dernierAcces, disponible);
 
             const inviteBtn = `<button onclick="event.stopPropagation(); inviterAmi('${p.id}')" style="position:absolute; top:8px; right:8px; background:rgba(255,255,255,0.9); color:#FF6600; border:none; padding:4px 10px; border-radius:15px; font-size:0.6rem; font-weight:900; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.15);">INVITATION</button>`;
             const banniere = p.showcaseUrl ? `
@@ -394,7 +398,7 @@
                     ${banniere}
                     <div class="card-avatar-wrapper">
                         <img src="${p.photo || 'default-profile.png'}" alt="${nomComplet}" onerror="this.src='default-profile.png'">
-                        <div class="card-status-dot ${p.disponible ? 'online' : 'offline'}"></div>
+                        <div class="card-status-dot ${disponible ? 'online' : 'offline'}"></div>
                     </div>
                     <div class="card-body-content">
                         <p style="font-size:0.7rem; color:#2e7d32; margin-bottom:5px; opacity:0.85;">${statusTxt}</p>
@@ -435,14 +439,18 @@
             executerChargementJobs(url);
         }
 
-        function executerChargementJobs(fetchUrl) {
-            fetch(fetchUrl)
-                .then(r => r.json())
-                .then(jobs => {
-                    const container = document.getElementById('container-jobs');
-                    if (jobs && jobs.length > 0) {
-                        document.getElementById('section-jobs').style.display = 'block';
-                        container.innerHTML = jobs.map(j => `
+        async function executerChargementJobs(fetchUrl) {
+            if (jobsPollingEnCours) return;
+            jobsPollingEnCours = true;
+
+            try {
+                const response = await fetch(fetchUrl, { cache: 'no-store' });
+                const jobs = await response.json();
+                const container = document.getElementById('container-jobs');
+
+                if (jobs && jobs.length > 0) {
+                    document.getElementById('section-jobs').style.display = 'block';
+                    const newHtml = jobs.map(j => `
                             <div class="job-card-particulier">
                         <div style="width:85px; height:80px; margin: 0 auto 15px; border-radius:50%; overflow:hidden; border:3px solid #FF6600; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                     <img src="${j.photo || 'default-profile.png'}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='default-profile.png'">
@@ -460,10 +468,21 @@
                                 </div>
                             </div>
                         `).join('');
-                    } else {
-                        document.getElementById('section-jobs').style.display = 'none';
+                    const signature = jobs.map(j => `${j.id}:${j.prix}:${j.statut}:${j.acceptations?.length || 0}:${currentUserId || 'guest'}`).join('|');
+
+                    if (signature !== lastJobsSignature) {
+                        container.innerHTML = newHtml;
+                        lastJobsSignature = signature;
                     }
-                });
+                } else {
+                    document.getElementById('section-jobs').style.display = 'none';
+                    lastJobsSignature = '';
+                }
+            } catch (error) {
+                console.error('Erreur chargement jobs publics', error);
+            } finally {
+                jobsPollingEnCours = false;
+            }
         }
         
         async function accepterJobPublic(id) {
@@ -484,7 +503,6 @@
         }
 
         rafraichirCarrousel();
-        chargerJobsPublics();
 
         fetch('/session-status').then(r => r.json()).then(s => {
             connecte = s.loggedIn;
@@ -680,7 +698,7 @@
 
         // Polling des données (3 s : pubs supprimées disparaissent vite de l'accueil)
         setInterval(rafraichirCarrousel, 3000);
-        setInterval(chargerJobsPublics, 2000); // Liste des jobs rafraîchie toutes les 2s
+        setInterval(chargerJobsPublics, 5000); // Rafraîchissement plus stable pour éviter le clignotement
     </script>
 
     <!-- Éléments invisibles déplacés en bas pour ne pas pousser le contenu -->

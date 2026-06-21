@@ -243,6 +243,7 @@ function formaterDernierAcces(dateIso, enLigne) {
 async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, excludeUserId, type = 'service') {
     try {
         const timestamp = new Date().toLocaleTimeString();
+        const hasValidGps = !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lon));
         
         // Nettoyage pour les logs Render
         const dLat = (lat && lat !== 'undefined') ? lat : '?';
@@ -390,7 +391,7 @@ async function chercherParRayonCroissant(lat, lon, query_text, offset, limit, ex
 
         // Règle d'affichage : Si moins de 20 prestataires AU TOTAL, on ignore la distance et on affiche tout
         let finalSelection = results;
-        if (nbInscritsTotalBase > 20 && type === 'service' && query_text) {
+        if (hasValidGps && nbInscritsTotalBase > 20 && type === 'service' && query_text) {
             // On ne limite par rayon que si on a bcp de monde, sinon on montre tout par ordre
             finalSelection = results.filter(p => p.distanceM <= RAYON_MAX_METRES);
         }
@@ -456,8 +457,8 @@ function pageConnexion(req, res) { res.sendFile(path.join(publicDir, 'connexion.
 function pageInscription(req, res) { res.sendFile(path.join(publicDir, 'inscription.html')); }
 function pageVortexHub(req, res) { res.sendFile(path.join(publicDir, 'vortex.html')); }
 function pagePetitsDjobs(req, res) { res.sendFile(path.join(publicDir, 'index.html')); }
-function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia.html')); }
-function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio.html')); }
+function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'index.html')); }
+function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'index.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -902,12 +903,14 @@ app.post('/chercher-prestataires', async (req, res) => {
     const lonC = lon ?? req.session.lonClient;
     const svc = service || req.session.commande?.service;
 
-    if (type !== 'nom' && (latC == null || lonC == null)) {
-        return res.status(400).json({ error: 'Position GPS requise' });
-    }
+    const latNum = parseFloat(latC);
+    const lonNum = parseFloat(lonC);
+    const hasGps = !isNaN(latNum) && !isNaN(lonNum);
 
-    req.session.latClient = parseFloat(latC);
-    req.session.lonClient = parseFloat(lonC);
+    if (hasGps) {
+        req.session.latClient = latNum;
+        req.session.lonClient = lonNum;
+    }
 
     const result = await chercherParRayonCroissant(latC, lonC, svc, parseInt(offset, 10) || 0, BATCH_PRESTATAIRES, req.session.user?.id, type);
     res.json(result);
@@ -1042,7 +1045,17 @@ app.get('/api/mes-missions-prestataire', requireAuth, async (req, res) => {
         return res.status(500).json({ error: mError.message });
     }
 
-    const missions = [...(mPrimary || []), ...(mBackup || [])];
+    const missionsMap = new Map();
+    [...(mPrimary || []), ...(mBackup || [])].forEach(mission => {
+        if (!mission?.id) return;
+        missionsMap.set(String(mission.id), mission);
+    });
+    const missions = Array.from(missionsMap.values()).sort((a, b) => {
+        const prioriteStatut = (statut) => statut === 'en_attente_prestataire' ? 0 : 1;
+        const diffStatut = prioriteStatut(a.statut) - prioriteStatut(b.statut);
+        if (diffStatut !== 0) return diffStatut;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     if (!missions || missions.length === 0) {
         console.log(`⚠️ [NOTIF-STEP-2] Aucune mission active trouvée en base pour ${pId}`);

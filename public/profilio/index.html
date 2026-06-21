@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.min.css">
+    <title>Profilio - Réseau Vortex</title>
+    <style>
+        body.profilio-page { background: #f4f4f4; color:#2e7d32; }
+        .profilio-page .home-header { background: rgba(255,255,255,0.88); backdrop-filter: blur(10px); }
+        .profilio-search-row { display:flex; flex-direction:column; gap:10px; }
+        .profilio-search-inline { display:flex; gap:8px; }
+        .profilio-search-inline input, #profilio-filter {
+            width:100%;
+            padding:16px;
+            border-radius:15px;
+            border:2px solid #FF6600;
+            background:#fff;
+            color:#2e7d32;
+            font-size:1rem;
+            font-weight:700;
+        }
+        .profilio-banner-card {
+            min-width:260px;
+            max-width:260px;
+            background:white;
+            border-radius:18px;
+            overflow:hidden;
+            flex:0 0 auto;
+            box-shadow:0 8px 18px rgba(0,0,0,0.12);
+            border:1px solid #eee;
+        }
+        .profilio-banner-media {
+            height:150px;
+            background: linear-gradient(135deg, #2e7d32 0%, #e8f5e9 55%, #FF8200 100%);
+            color:#fff;
+            font-weight:900;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.2rem;
+        }
+        .profilio-banner-body { padding:14px; }
+        .profilio-banner-body h3 { margin:0 0 8px; color:#2e7d32; font-size:1rem; }
+        .profilio-banner-body p { margin:0; color:#666; font-size:0.9rem; }
+        .job-card .module-thumb {
+            height:180px;
+            background: linear-gradient(135deg, #e8f5e9 0%, #fff 45%, #ffe0b2 100%);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#2e7d32;
+            font-size:1.15rem;
+            font-weight:900;
+        }
+        .job-card .card-info { text-align:left; }
+        .job-card .card-info p { color:#666; margin:6px 0; }
+        .profile-mini-card {
+            background:white;
+            color:#2e7d32;
+            border-radius:18px;
+            padding:16px;
+            min-width:280px;
+            max-width:280px;
+            flex:0 0 auto;
+            box-shadow:0 8px 18px rgba(0,0,0,0.12);
+            border:1px solid #eee;
+        }
+        .profile-mini-card strong { display:block; color:#2e7d32; margin-bottom:6px; }
+        .profile-mini-card p, .profile-mini-card small { margin:0 0 8px; color:#666; display:block; }
+        .profile-mini-card span { color:#FF8200; font-weight:900; }
+        .empty-state { margin:0; padding:18px; text-align:center; border-radius:16px; background:#fff3e0; color:#2e7d32; }
+        @media (max-width: 900px) {
+            .profilio-search-inline { flex-direction:column; }
+        }
+    </style>
+</head>
+<body class="profilio-page">
+    <div id="bg-logo-fixed" class="profilio-bg"></div>
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/profilio" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+                <h1 style="margin:0; display:flex; align-items:center; gap:10px; color:#2e7d32;">
+                    <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M160 100 C 160 55, 120 20, 70 20 C 30 20, 30 100, 70 100 L 70 140 L 110 100 Z" fill="#FF8200"/>
+                        <circle cx="95" cy="65" r="8" fill="#FFFFFF"/>
+                    </svg>
+                    PROFILIO
+                </h1>
+            </a>
+            <div class="nav-compact">
+                <a href="/">VORTEX HUB</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-wrap" style="margin-bottom: 20px;">
+        <div class="profilio-search-row">
+            <select id="profilio-filter">
+                <option value="">Rechercher par métier</option>
+                <option value="service">Recherche métier</option>
+                <option value="profil">Recherche profil</option>
+            </select>
+            <div class="profilio-search-inline">
+                <input id="profilio-search" type="search" placeholder="Ingénieur, Secrétaire, Plombier">
+                <button id="profilio-search-btn" class="btn-primary-sm" style="width: 70px; height: 58px; margin: 0; padding: 0; border-radius: 15px;">🔍</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profilio-showcase" class="showcase-header-band" style="display:block;">
+        <div class="app-wrap" style="padding: 8px 15px 0;">
+            <h2 class="showcase-title">En direct des professionnels</h2>
+        </div>
+        <div class="showcase-scroll-wrap">
+            <div id="profilio-ads" class="showcase-track"></div>
+        </div>
+    </div>
+
+    <h2 id="profilio-title" style="color:#2e7d32;">Métiers recherchés</h2>
+    <div class="service-grid" id="profilio-jobs"></div>
+
+    <section class="app-wrap" style="padding: 15px 15px 10px; text-align: center; background: #f9f9f9; margin-top: 10px;">
+        <h2 style="color:#2e7d32; margin: 0 0 8px; font-size: 1.1rem;">Profils et services à proximité</h2>
+        <div class="scroll-container" id="profilio-nearby"></div>
+    </section>
+
+    <script src="/profilio/js/app.js"></script>
+</body>
+</html>
