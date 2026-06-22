@@ -459,6 +459,8 @@ function pageVortexHub(req, res) { res.sendFile(path.join(publicDir, 'vortex.htm
 function pagePetitsDjobs(req, res) { res.sendFile(path.join(publicDir, 'index.html')); }
 function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'index.html')); }
 function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'index.html')); }
+function pageVendiaDevenirVendeur(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'devenir-vendeur.html')); }
+function pageProfilioDevenirCandidat(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'devenir-candidat.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -471,6 +473,8 @@ app.get('/index.html', pageVortexHub);
 app.get('/jobs', pagePetitsDjobs);
 app.get('/vendia', pageVendia);
 app.get('/profilio', pageProfilio);
+app.get('/vendia/devenir-vendeur', requireAuth, pageVendiaDevenirVendeur);
+app.get('/profilio/devenir-candidat', requireAuth, pageProfilioDevenirCandidat);
 
 app.get('/profil', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'profil.html')));
 app.get('/prestataire', requireAuth, (req, res) => {
@@ -2431,4 +2435,752 @@ app.use(express.static(publicDir, optionsCache));
 
 app.listen(port, () => {
     console.log(`🚀 [SYSTEM] Serveur démarré sur le port ${port}`);
+});
+// =========================================================
+// API ENDPOINTS POUR PROFILIO
+// =========================================================
+
+app.get('/api/profilio/metiers', async (req, res) => {
+    try {
+        const { data: metiers, error } = await supabase
+            .from('profilio_metiers')
+            .select('nom, slug, ordre_affichage')
+            .eq('actif', true)
+            .order('ordre_affichage', { ascending: true });
+        
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(metiers.map(m => m.nom));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/profilio/profils', async (req, res) => {
+    try {
+        const { search, metier } = req.query;
+        
+        let query = supabase
+            .from('profilio_profils')
+            .select(`
+                id,
+                titre_profil,
+                presentation,
+                ville,
+                commune,
+                quartier,
+                lat,
+                lon,
+                disponible,
+                photo_url,
+                metier_id,
+                user_id,
+                utilisateurs!inner (
+                    id,
+                    nom,
+                    prenom,
+                    photo_url
+                ),
+                profilio_metiers (
+                    nom
+                )
+            `)
+            .eq('disponible', true);
+        
+        if (metier) {
+            query = query.eq('metier_id', metier);
+        }
+        
+        const { data: profils, error } = await query;
+        
+        if (error) return res.status(500).json({ error: error.message });
+        
+        let filtered = profils || [];
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(p => {
+                const fullName = `${p.utilisateurs.prenom} ${p.utilisateurs.nom}`.toLowerCase();
+                const metierName = (p.profilio_metiers?.nom || '').toLowerCase();
+                const titre = (p.titre_profil || '').toLowerCase();
+                return fullName.includes(searchLower) || metierName.includes(searchLower) || titre.includes(searchLower);
+            });
+        }
+        
+        res.json(filtered.map(p => ({
+            id: p.id,
+            name: `${p.utilisateurs.prenom} ${p.utilisateurs.nom}`,
+            service: p.profilio_metiers?.nom || p.titre_profil,
+            city: p.commune || p.ville || 'Non spécifié',
+            availability: p.disponible ? 'Disponible' : 'Non disponible',
+            distance: p.lat && p.lon ? 0 : null,
+            photo: p.photo_url || p.utilisateurs.photo_url,
+            presentation: p.presentation
+        })));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/profilio/publicites', async (req, res) => {
+    try {
+        const { data: pubs, error } = await supabase
+            .from('profilio_publicites')
+            .select('titre, description, media_url, media_type, ordre_affichage')
+            .eq('actif', true)
+            .order('ordre_affichage', { ascending: true });
+        
+        if (error) return res.status(500).json({ error: error.message });
+        res.json((pubs || []).map(p => ({
+            title: p.titre,
+            subtitle: p.description,
+            type: p.media_type === 'video' ? 'Vidéo' : 'Photo',
+            media_url: p.media_url
+        })));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// =========================================================
+// API ENDPOINTS POUR VENDIA
+// =========================================================
+
+app.get('/api/vendia/categories', async (req, res) => {
+    try {
+        const { data: categories, error } = await supabase
+            .from('vendia_categories')
+            .select('nom, slug, ordre_affichage')
+            .eq('actif', true)
+            .order('ordre_affichage', { ascending: true });
+        
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(categories.map(c => c.nom));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/vendia/produits', async (req, res) => {
+    try {
+        const { search, category } = req.query;
+        
+        let query = supabase
+            .from('vendia_produits')
+            .select(`
+                id,
+                nom,
+                description,
+                prix,
+                devise,
+                stock,
+                unite,
+                vente_particuliere,
+                image_url,
+                actif,
+                categorie_id,
+                boutique_id,
+                vendia_categories (
+                    nom
+                ),
+                vendia_boutiques (
+                    nom_boutique,
+                    ville,
+                    commune,
+                    quartier,
+                    lat,
+                    lon
+                )
+            `)
+            .eq('actif', true);
+        
+        if (category) {
+            query = query.eq('categorie_id', category);
+        }
+        
+        const { data: produits, error } = await query;
+        
+        if (error) return res.status(500).json({ error: error.message });
+        
+        let filtered = produits || [];
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(p => {
+                const name = (p.nom || '').toLowerCase();
+                const boutique = (p.vendia_boutiques?.nom_boutique || '').toLowerCase();
+                const category = (p.vendia_categories?.nom || '').toLowerCase();
+                return name.includes(searchLower) || boutique.includes(searchLower) || category.includes(searchLower);
+            });
+        }
+        
+        res.json(filtered.map(p => ({
+            id: p.id,
+            name: p.nom,
+            category: p.vendia_categories?.nom || 'Non catégorisé',
+            price: `${p.prix} ${p.devise}`,
+            vendor: p.vendia_boutiques?.nom_boutique || 'Vendeur inconnu',
+            description: p.description,
+            image_url: p.image_url,
+            stock: p.stock
+        })));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/vendia/boutiques', async (req, res) => {
+    try {
+        const { search } = req.query;
+        
+        let query = supabase
+            .from('vendia_boutiques')
+            .select('id, nom_boutique, description, ville, commune, quartier, lat, lon, est_actif')
+            .eq('est_actif', true);
+        
+        const { data: boutiques, error } = await query;
+        
+        if (error) return res.status(500).json({ error: error.message });
+        
+        let filtered = boutiques || [];
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(b => {
+                const name = (b.nom_boutique || '').toLowerCase();
+                const city = (b.commune || b.ville || '').toLowerCase();
+                return name.includes(searchLower) || city.includes(searchLower);
+            });
+        }
+        
+        res.json(filtered.map(b => ({
+            id: b.id,
+            name: b.nom_boutique,
+            speciality: b.description || 'Commerce général',
+            city: b.commune || b.ville || 'Non spécifié',
+            distance: b.lat && b.lon ? 0 : null,
+            lat: b.lat,
+            lon: b.lon
+        })));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/vendia/publicites', async (req, res) => {
+    try {
+        const { data: pubs, error } = await supabase
+            .from('vendia_publicites')
+            .select('titre, description, media_url, media_type, ordre_affichage')
+            .eq('actif', true)
+            .order('ordre_affichage', { ascending: true });
+        
+        if (error) return res.status(500).json({ error: error.message });
+        res.json((pubs || []).map(p => ({
+            title: p.titre,
+            subtitle: p.description,
+            type: p.media_type === 'video' ? 'Vidéo' : 'Photo',
+            media_url: p.media_url
+        })));
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+// =========================================================
+// API ENDPOINTS POUR INSCRIPTION SPÉCIFIQUE PROFILIO/VENDIA
+// =========================================================
+
+app.post('/api/inscription-profilio', async (req, res) => {
+    try {
+        const { nom, prenom, email, password, age, metier_id, titre_profil, presentation, ville, commune, quartier, lat, lon, photo_profil } = req.body;
+        
+        // Vérifier si l'email existe déjà
+        const { data: existingUser, error: checkError } = await supabase
+            .from('utilisateurs')
+            .select('id')
+            .eq('email', email)
+            .single();
+        
+        if (existingUser) {
+            return res.status(400).json({ error: 'Cet email est déjà inscrit' });
+        }
+        
+        // Hasher le mot de passe
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Insérer l'utilisateur
+        const { data: newUser, error: insertError } = await supabase
+            .from('utilisateurs')
+            .insert({
+                nom,
+                prenom,
+                email,
+                password: hashedPassword,
+                age: parseInt(age),
+                photo_url: photo_profil || null,
+                lat: lat ? parseFloat(lat) : null,
+                lon: lon ? parseFloat(lon) : null,
+                commune,
+                ville,
+                quartier,
+                is_profilio_member: true,
+                is_vendia_seller: false
+            })
+            .select('id')
+            .single();
+        
+        if (insertError) {
+            console.error('Erreur insertion utilisateur:', insertError);
+            return res.status(500).json({ error: 'Erreur lors de la création du compte' });
+        }
+        
+        // Créer le profil Profilio
+        if (metier_id || titre_profil) {
+            const { error: profilError } = await supabase
+                .from('profilio_profils')
+                .insert({
+                    user_id: newUser.id,
+                    metier_id: metier_id || null,
+                    titre_profil: titre_profil || 'Professionnel',
+                    presentation: presentation || '',
+                    ville,
+                    commune,
+                    quartier,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    disponible: true
+                });
+            
+            if (profilError) {
+                console.error('Erreur création profil Profilio:', profilError);
+                // Ne pas bloquer l'inscription si le profil échoue
+            }
+        }
+        
+        res.json({ success: true, message: 'Compte Profilio créé avec succès' });
+    } catch (e) {
+        console.error('Erreur inscription Profilio:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+app.post('/api/inscription-vendia', async (req, res) => {
+    try {
+        const { nom, prenom, email, password, age, nom_boutique, description, telephone, ville, commune, quartier, lat, lon, photo_profil } = req.body;
+        
+        // Vérifier si l'email existe déjà
+        const { data: existingUser, error: checkError } = await supabase
+            .from('utilisateurs')
+            .select('id')
+            .eq('email', email)
+            .single();
+        
+        if (existingUser) {
+            return res.status(400).json({ error: 'Cet email est déjà inscrit' });
+        }
+        
+        // Hasher le mot de passe
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Insérer l'utilisateur
+        const { data: newUser, error: insertError } = await supabase
+            .from('utilisateurs')
+            .insert({
+                nom,
+                prenom,
+                email,
+                password: hashedPassword,
+                age: parseInt(age),
+                photo_url: photo_profil || null,
+                telephone,
+                lat: lat ? parseFloat(lat) : null,
+                lon: lon ? parseFloat(lon) : null,
+                commune,
+                ville,
+                quartier,
+                is_profilio_member: false,
+                is_vendia_seller: true
+            })
+            .select('id')
+            .single();
+        
+        if (insertError) {
+            console.error('Erreur insertion utilisateur:', insertError);
+            return res.status(500).json({ error: 'Erreur lors de la création du compte' });
+        }
+        
+        // Créer la boutique Vendia
+        if (nom_boutique) {
+            const { error: boutiqueError } = await supabase
+                .from('vendia_boutiques')
+                .insert({
+                    user_id: newUser.id,
+                    nom_boutique,
+                    description: description || '',
+                    telephone,
+                    ville,
+                    commune,
+                    quartier,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    est_actif: true
+                });
+            
+            if (boutiqueError) {
+                console.error('Erreur création boutique Vendia:', boutiqueError);
+                // Ne pas bloquer l'inscription si la boutique échoue
+            }
+        }
+        
+        res.json({ success: true, message: 'Compte Vendia créé avec succès' });
+    } catch (e) {
+        console.error('Erreur inscription Vendia:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+app.post('/api/activer-profilio', requireAuth, async (req, res) => {
+    try {
+        const { metier_id, titre_profil, presentation } = req.body;
+        const userId = req.session.user.id;
+        
+        // Mettre à jour l'utilisateur
+        const { error: userError } = await supabase
+            .from('utilisateurs')
+            .update({ is_profilio_member: true })
+            .eq('id', userId);
+        
+        if (userError) {
+            return res.status(500).json({ error: userError.message });
+        }
+        
+        // Créer ou mettre à jour le profil Profilio
+        const { data: existingProfil, error: checkError } = await supabase
+            .from('profilio_profils')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+        
+        if (existingProfil) {
+            // Mettre à jour le profil existant
+            const { error: updateError } = await supabase
+                .from('profilio_profils')
+                .update({
+                    metier_id: metier_id || null,
+                    titre_profil: titre_profil || 'Professionnel',
+                    presentation: presentation || ''
+                })
+                .eq('user_id', userId);
+            
+            if (updateError) {
+                return res.status(500).json({ error: updateError.message });
+            }
+        } else {
+            // Créer un nouveau profil
+            const { error: insertError } = await supabase
+                .from('profilio_profils')
+                .insert({
+                    user_id: userId,
+                    metier_id: metier_id || null,
+                    titre_profil: titre_profil || 'Professionnel',
+                    presentation: presentation || '',
+                    disponible: true
+                });
+            
+            if (insertError) {
+                return res.status(500).json({ error: insertError.message });
+            }
+        }
+        
+        // Mettre à jour la session
+        req.session.user.is_profilio_member = true;
+        req.session.save(() => {
+            res.json({ success: true, message: 'Profilio activé avec succès' });
+        });
+    } catch (e) {
+        console.error('Erreur activation Profilio:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+app.post('/api/activer-vendia', requireAuth, async (req, res) => {
+    try {
+        const { nom_boutique, description, telephone } = req.body;
+        const userId = req.session.user.id;
+        
+        // Mettre à jour l'utilisateur
+        const { error: userError } = await supabase
+            .from('utilisateurs')
+            .update({ is_vendia_seller: true, telephone })
+            .eq('id', userId);
+        
+        if (userError) {
+            return res.status(500).json({ error: userError.message });
+        }
+        
+        // Créer ou mettre à jour la boutique
+        const { data: existingBoutique, error: checkError } = await supabase
+            .from('vendia_boutiques')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+        
+        if (existingBoutique) {
+            // Mettre à jour la boutique existante
+            const { error: updateError } = await supabase
+                .from('vendia_boutiques')
+                .update({
+                    nom_boutique,
+                    description,
+                    telephone
+                })
+                .eq('user_id', userId);
+            
+            if (updateError) {
+                return res.status(500).json({ error: updateError.message });
+            }
+        } else {
+            // Créer une nouvelle boutique
+            const { error: insertError } = await supabase
+                .from('vendia_boutiques')
+                .insert({
+                    user_id: userId,
+                    nom_boutique,
+                    description,
+                    telephone,
+                    est_actif: true
+                });
+            
+            if (insertError) {
+                return res.status(500).json({ error: insertError.message });
+            }
+        }
+        
+        // Mettre à jour la session
+        req.session.user.is_vendia_seller = true;
+        req.session.save(() => {
+            res.json({ success: true, message: 'Vendia activé avec succès' });
+        });
+    } catch (e) {
+        console.error('Erreur activation Vendia:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+// =========================================================
+// API ENDPOINTS POUR TRANSITIONS VENDIA/PROFILIO
+// Utilisation des tables dédiées : vendia_boutiques, profilio_profils
+// =========================================================
+
+// VENDIA : Transition Client → Vendeur
+app.post('/api/vendia/devenir-vendeur', requireAuth, async (req, res) => {
+    try {
+        const { nom_boutique, description, telephone, ville, commune, quartier, adresse_detail, lat, lon } = req.body;
+        const userId = req.session.user.id;
+        
+        // Vérifier si l'utilisateur a déjà une boutique
+        const { data: existingBoutique, error: checkError } = await supabase
+            .from('vendia_boutiques')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+        
+        if (existingBoutique) {
+            // Mettre à jour la boutique existante
+            const { error: updateError } = await supabase
+                .from('vendia_boutiques')
+                .update({
+                    nom_boutique,
+                    description,
+                    telephone,
+                    ville,
+                    commune,
+                    quartier,
+                    adresse_detail,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    est_actif: true
+                })
+                .eq('user_id', userId);
+            
+            if (updateError) {
+                console.error('Erreur mise à jour boutique:', updateError);
+                return res.status(500).json({ error: 'Erreur lors de la mise à jour de la boutique' });
+            }
+        } else {
+            // Créer une nouvelle boutique
+            const { error: insertError } = await supabase
+                .from('vendia_boutiques')
+                .insert({
+                    user_id: userId,
+                    nom_boutique,
+                    description,
+                    telephone,
+                    ville,
+                    commune,
+                    quartier,
+                    adresse_detail,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    est_actif: true
+                });
+            
+            if (insertError) {
+                console.error('Erreur création boutique:', insertError);
+                return res.status(500).json({ error: 'Erreur lors de la création de la boutique' });
+            }
+        }
+        
+        // Mettre à jour le rôle dans utilisateurs
+        const { error: userError } = await supabase
+            .from('utilisateurs')
+            .update({ is_vendia_seller: true, telephone })
+            .eq('id', userId);
+        
+        if (userError) {
+            console.error('Erreur mise à jour utilisateur:', userError);
+            return res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+        }
+        
+        // Mettre à jour la session
+        req.session.user.is_vendia_seller = true;
+        req.session.user.telephone = telephone;
+        req.session.save(() => {
+            res.json({ success: true, message: 'Boutique créée avec succès' });
+        });
+    } catch (e) {
+        console.error('Erreur transition Vendia:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// PROFILIO : Transition → Candidat
+app.post('/api/profilio/devenir-candidat', requireAuth, async (req, res) => {
+    try {
+        const { metier_id, titre_profil, presentation, competences, services, ville, commune, quartier, lat, lon } = req.body;
+        const userId = req.session.user.id;
+        
+        // Vérifier si l'utilisateur a déjà un profil
+        const { data: existingProfil, error: checkError } = await supabase
+            .from('profilio_profils')
+            .select('id')
+            .eq('user_id', userId)
+            .single();
+        
+        if (existingProfil) {
+            // Mettre à jour le profil existant
+            const { error: updateError } = await supabase
+                .from('profilio_profils')
+                .update({
+                    metier_id: metier_id || null,
+                    titre_profil,
+                    presentation,
+                    competences,
+                    services,
+                    ville,
+                    commune,
+                    quartier,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    disponible: true
+                })
+                .eq('user_id', userId);
+            
+            if (updateError) {
+                console.error('Erreur mise à jour profil:', updateError);
+                return res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+            }
+        } else {
+            // Créer un nouveau profil
+            const { error: insertError } = await supabase
+                .from('profilio_profils')
+                .insert({
+                    user_id: userId,
+                    metier_id: metier_id || null,
+                    titre_profil,
+                    presentation,
+                    competences,
+                    services,
+                    ville,
+                    commune,
+                    quartier,
+                    lat: lat ? parseFloat(lat) : null,
+                    lon: lon ? parseFloat(lon) : null,
+                    disponible: true
+                });
+            
+            if (insertError) {
+                console.error('Erreur création profil:', insertError);
+                return res.status(500).json({ error: 'Erreur lors de la création du profil' });
+            }
+        }
+        
+        // Mettre à jour le rôle dans utilisateurs
+        const { error: userError } = await supabase
+            .from('utilisateurs')
+            .update({ is_profilio_member: true })
+            .eq('id', userId);
+        
+        if (userError) {
+            console.error('Erreur mise à jour utilisateur:', userError);
+            return res.status(500).json({ error: 'Erreur lors de la mise à jour du profil' });
+        }
+        
+        // Mettre à jour la session
+        req.session.user.is_profilio_member = true;
+        req.session.save(() => {
+            res.json({ success: true, message: 'Profil créé avec succès' });
+        });
+    } catch (e) {
+        console.error('Erreur transition Profilio:', e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Vérifier le statut vendeur d'un utilisateur
+app.get('/api/vendia/statut-vendeur', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        
+        const { data: boutique, error } = await supabase
+            .from('vendia_boutiques')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            return res.status(500).json({ error: error.message });
+        }
+        
+        res.json({
+            is_vendeur: !!boutique,
+            boutique: boutique || null
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Vérifier le statut candidat d'un utilisateur
+app.get('/api/profilio/statut-candidat', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        
+        const { data: profil, error } = await supabase
+            .from('profilio_profils')
+            .select(`
+                *,
+                profilio_metiers (
+                    nom
+                )
+            `)
+            .eq('user_id', userId)
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            return res.status(500).json({ error: error.message });
+        }
+        
+        res.json({
+            is_candidat: !!profil,
+            profil: profil || null
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });

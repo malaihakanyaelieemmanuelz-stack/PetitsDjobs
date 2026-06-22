@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.min.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>Devenir Candidat - PROFILIO</title>
+    <style>
+        body.profilio-page { background: linear-gradient(135deg, #2e7d32 0%, #FF8200 100%); min-height: 100vh; }
+        .profilio-page .home-header { background: rgba(255,255,255,0.95); }
+        .transition-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .transition-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .transition-header h1 {
+            color: #2e7d32;
+            font-size: 1.8rem;
+            margin: 0 0 10px;
+            font-weight: 900;
+        }
+        .transition-header p {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            color: #2e7d32;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.1);
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2e7d32 0%, #009E60 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46,125,50,0.4);
+        }
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            color: #FF8200;
+        }
+        .required-mark { color: #FF6600; }
+    </style>
+</head>
+<body class="profilio-page">
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/profilio" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+                <h1 style="margin:0; display:flex; align-items:center; gap:10px; color:#2e7d32;">
+                    <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M160 100 C 160 55, 120 20, 70 20 C 30 20, 30 100, 70 100 L 70 140 L 110 100 Z" fill="#2e7d32"/>
+                        <circle cx="95" cy="65" r="8" fill="#FFFFFF"/>
+                    </svg>
+                    PROFILIO
+                </h1>
+            </a>
+            <nav class="nav-compact">
+                <a href="/profilio">RETOUR</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="transition-container">
+        <div class="transition-header">
+            <h1>💼 Devenir Candidat</h1>
+            <p>Créez votre profil professionnel et trouvez des opportunités sur PROFILIO</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <form id="candidat-form">
+            <div class="form-group">
+                <label>Métier <span class="required-mark">*</span></label>
+                <select id="metier_id" name="metier_id" required>
+                    <option value="">Sélectionnez votre métier</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Titre du profil <span class="required-mark">*</span></label>
+                <input type="text" id="titre_profil" name="titre_profil" placeholder="Ex: Ingénieur en génie civil" required>
+            </div>
+
+            <div class="form-group">
+                <label>Présentation</label>
+                <textarea id="presentation" name="presentation" placeholder="Présentez-vous, votre parcours, vos motivations..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Compétences</label>
+                <textarea id="competences" name="competences" placeholder="Listez vos compétences clés (séparées par des virgules)"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Services proposés</label>
+                <textarea id="services" name="services" placeholder="Décrivez les services que vous proposez"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Ville <span class="required-mark">*</span></label>
+                <input type="text" id="ville" name="ville" placeholder="Ex: Kinshasa" required>
+            </div>
+
+            <div class="form-group">
+                <label>Commune</label>
+                <input type="text" id="commune" name="commune" placeholder="Ex: Limete">
+            </div>
+
+            <div class="form-group">
+                <label>Quartier</label>
+                <input type="text" id="quartier" name="quartier" placeholder="Ex: Matonge">
+            </div>
+
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lon" name="lon">
+
+            <button type="submit" class="btn-submit" id="submit-btn">CRÉER MON PROFIL</button>
+        </form>
+
+        <a href="/profilio" class="back-link">← Retour à PROFILIO</a>
+    </div>
+
+    <script>
+        const form = document.getElementById('candidat-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const errorMsg = document.getElementById('error-message');
+        const successMsg = document.getElementById('success-message');
+        const metierSelect = document.getElementById('metier_id');
+
+        // Charger les métiers depuis Supabase
+        async function chargerMetiers() {
+            try {
+                const response = await fetch('/api/profilio/metiers');
+                const metiers = await response.json();
+                
+                metiers.forEach(metier => {
+                    const option = document.createElement('option');
+                    option.value = metier;
+                    option.textContent = metier;
+                    metierSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Erreur chargement métiers:', err);
+            }
+        }
+
+        // Récupérer la localisation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('lat').value = pos.coords.latitude;
+                    document.getElementById('lon').value = pos.coords.longitude;
+                },
+                (err) => {
+                    console.log('Localisation non disponible:', err);
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        chargerMetiers();
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'CRÉATION EN COURS...';
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            const formData = {
+                metier_id: metierSelect.value,
+                titre_profil: document.getElementById('titre_profil').value,
+                presentation: document.getElementById('presentation').value,
+                competences: document.getElementById('competences').value,
+                services: document.getElementById('services').value,
+                ville: document.getElementById('ville').value,
+                commune: document.getElementById('commune').value,
+                quartier: document.getElementById('quartier').value,
+                lat: document.getElementById('lat').value,
+                lon: document.getElementById('lon').value
+            };
+
+            try {
+                const response = await fetch('/api/profilio/devenir-candidat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    successMsg.textContent = data.message;
+                    successMsg.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/profilio';
+                    }, 2000);
+                } else {
+                    errorMsg.textContent = data.error || 'Erreur lors de la création du profil';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Erreur de connexion au serveur';
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'CRÉER MON PROFIL';
+            }
+        };
+    </script>
+</body>
+</html>
