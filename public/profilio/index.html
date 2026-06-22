@@ -7,7 +7,13 @@
     <title>Profilio - Réseau Vortex</title>
     <style>
         body.profilio-page { background: #f4f4f4; color:#2e7d32; }
-        .profilio-page .home-header { background: rgba(255,255,255,0.88); backdrop-filter: blur(10px); }
+        .profilio-page .home-header { 
+            background: rgba(255,255,255,0.88); 
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
         .profilio-search-row { display:flex; flex-direction:column; gap:10px; }
         .profilio-search-inline { display:flex; gap:8px; }
         .profilio-search-inline input, #profilio-filter {
@@ -89,8 +95,9 @@
                 </h1>
             </a>
             <div class="nav-compact">
-                <a href="/profilio/devenir-candidat" style="color:#FF8200; font-weight:900;">DEVENIR CANDIDAT</a>
-                <a href="/">VORTEX HUB</a>
+                <a href="/" style="background: #FF8200; color: white; border: 2px solid #FF8200; margin-right: 5px; font-weight: bold; padding: 8px 15px; border-radius: 8px; transition: all 0.3s ease;">🌐 VORTEX HUB</a>
+                <a href="/profilio/connexion" style="color:#FF8200; font-weight:900;">CONNEXION</a>
+                <a href="/profilio/inscription">INSCRIPTION</a>
             </div>
         </div>
     </header>

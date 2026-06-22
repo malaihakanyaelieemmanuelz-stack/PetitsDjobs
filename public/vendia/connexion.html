@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.min.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <title>Connexion - VENDIA</title>
+    <style>
+        body.vendia-page { background: linear-gradient(135deg, #FF8200 0%, #2e7d32 100%); min-height: 100vh; }
+        .vendia-page .home-header { background: rgba(255,255,255,0.95); }
+        .login-card { margin-top: 80px; }
+    </style>
+</head>
+<body class="vendia-page">
+    <header class="home-header">
+        <div class="header-content">
+            <a href="/vendia" style="text-decoration:none; display:flex; align-items:center; gap:10px;">
+                <h1 style="margin:0; display:flex; align-items:center; gap:10px; color:#FF8200;">
+                    <svg class="home-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 80 L150 80 L140 160 C 140 170, 60 170, 60 160 L50 80 Z" fill="#FF8200"/>
+                        <path d="M75 80 Q 75 40, 125 40 Q 125 80, 100 80" fill="none" stroke="#FF8200" stroke-width="12"/>
+                    </svg>
+                    VENDIA
+                </h1>
+            </a>
+            <nav class="nav-compact">
+                <a href="/" style="background: #FF8200; color: white; border: 2px solid #FF8200; margin-right: 5px; font-weight: bold; padding: 8px 15px; border-radius: 8px; transition: all 0.3s ease;">🌐 VORTEX HUB</a>
+                <a href="/vendia">ACCUEIL</a>
+                <a href="/vendia/inscription">INSCRIPTION</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="auth-page">
+        <div class="login-card">
+            <h1>CONNEXION VENDIA</h1>
+            <form id="loginForm" action="/connexion" method="POST">
+                <div id="champs-compte">
+                    <input type="email" name="email" id="email" placeholder="EMAIL" required autocomplete="username">
+                    <div class="password-group">
+                        <input type="password" name="password" id="password" placeholder="MOT DE PASSE" required autocomplete="current-password">
+                        <button type="button" class="toggle-password" data-target="password"></button>
+                    </div>
+                </div>
+                <input type="hidden" name="lat" id="lat">
+                <input type="hidden" name="lon" id="lon">
+                <input type="hidden" name="redirect" value="/vendia">
+
+                <div class="options" style="text-align: left; margin: 10px 0; font-size: 0.9rem;">
+                    <label>
+                        <input type="checkbox" name="remember" id="remember"> Rester connecté
+                    </label>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" name="locAccepted" id="locAccepted" required> Activer la localisation
+                        </label>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <label>
+                            <input type="checkbox" name="polAccepted" id="polAccepted" required> J'accepte la <a href="/politique" style="color: #FF6600; text-decoration: none; font-weight: bold;">politique de confidentialité</a>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-connect">SE CONNECTER</button>
+                
+                <div style="margin-top:15px;">
+                    <a href="/recuperation-mdp" style="font-size:0.85rem; color:#666; text-decoration:none;">Mot de passe oublié ?</a>
+                </div>
+            </form>
+            <p id="erreur-msg" style="color:#c62828; font-size:0.9rem; display:none;"></p>
+            <p style="margin-top: 15px; font-size: 0.9rem;">
+                Pas de compte ? <a href="/vendia/inscription">Inscrivez-vous</a>
+            </p>
+            <a href="/vendia" class="home-auth-btn" style="display:inline-block; margin-top:16px; text-decoration:none;">← RETOUR À VENDIA</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const champs = document.getElementById('champs-compte');
+
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = document.getElementById(this.dataset.target);
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                this.classList.toggle('visible');
+            });
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('erreur');
+        const msg = document.getElementById('erreur-msg');
+        if (err === 'mdp') msg.textContent = 'Mot de passe incorrect.';
+        if (err === 'consentement') msg.textContent = 'Acceptez la localisation et la politique.';
+        if (err === 'compte') msg.textContent = 'Compte introuvable. Inscrivez-vous d\'abord.';
+        if (err === 'serveur') msg.textContent = 'Erreur technique. Veuillez réessayer.';
+        if (err) msg.style.display = 'block';
+
+        fetch('/session-status').then(r => r.json()).then(s => {
+            if (s.loggedIn) window.location.href = '/vendia';
+        }).catch(() => {});
+
+        document.getElementById('locAccepted').addEventListener('change', function() {
+            if (this.checked) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        document.getElementById('lat').value = pos.coords.latitude;
+                        document.getElementById('lon').value = pos.coords.longitude;
+                    }, err => {
+                        alert("La localisation est obligatoire pour utiliser VENDIA.");
+                        this.checked = false;
+                    }, { enableHighAccuracy: true });
+                } else {
+                    alert("Votre appareil ne supporte pas la géolocalisation.");
+                    this.checked = false;
+                }
+            }
+        });
+
+        form.onsubmit = function(e) {
+            if (champs.style.display !== 'none') {
+                if (!document.getElementById('email').value || !document.getElementById('password').value || !document.getElementById('locAccepted').checked || !document.getElementById('polAccepted').checked) {
+                    alert('Veuillez remplir vos identifiants et accepter les conditions de localisation et de confidentialité.');
+                    e.preventDefault();
+                }
+            }
+        };
+    </script>
+</body>
+</html>

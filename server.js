@@ -461,6 +461,10 @@ function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'ind
 function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'index.html')); }
 function pageVendiaDevenirVendeur(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'devenir-vendeur.html')); }
 function pageProfilioDevenirCandidat(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'devenir-candidat.html')); }
+function pageVendiaConnexion(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'connexion.html')); }
+function pageVendiaInscription(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'inscription.html')); }
+function pageProfilioConnexion(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'connexion.html')); }
+function pageProfilioInscription(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'inscription.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -475,6 +479,10 @@ app.get('/vendia', pageVendia);
 app.get('/profilio', pageProfilio);
 app.get('/vendia/devenir-vendeur', requireAuth, pageVendiaDevenirVendeur);
 app.get('/profilio/devenir-candidat', requireAuth, pageProfilioDevenirCandidat);
+app.get('/vendia/connexion', redirectSiConnecte, pageVendiaConnexion);
+app.get('/vendia/inscription', redirectSiConnecte, pageVendiaInscription);
+app.get('/profilio/connexion', redirectSiConnecte, pageProfilioConnexion);
+app.get('/profilio/inscription', redirectSiConnecte, pageProfilioInscription);
 
 app.get('/profil', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'profil.html')));
 app.get('/prestataire', requireAuth, (req, res) => {

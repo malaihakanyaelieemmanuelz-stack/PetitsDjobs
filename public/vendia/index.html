@@ -7,7 +7,13 @@
     <title>Vendia - Marketplace Vortex</title>
     <style>
         body.vendia-page { color: #ffffff; }
-        .vendia-page .home-header { background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+        .vendia-page .home-header { 
+            background: rgba(255,255,255,0.12); 
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
         .vendia-page .nav-compact a { color: #fff; border-color: rgba(255,255,255,0.45); }
         .vendia-page .nav-compact a:hover { background: rgba(255,255,255,0.18); }
         .market-search-row { display:flex; flex-direction:column; gap:10px; }
@@ -102,8 +108,9 @@
                 </h1>
             </a>
             <div class="nav-compact">
-                <a href="/vendia/devenir-vendeur" style="color:#FF8200; font-weight:900;">DEVENIR VENDEUR</a>
-                <a href="/">VORTEX HUB</a>
+                <a href="/" style="background: #FF8200; color: white; border: 2px solid #FF8200; margin-right: 5px; font-weight: bold; padding: 8px 15px; border-radius: 8px; transition: all 0.3s ease;">🌐 VORTEX HUB</a>
+                <a href="/vendia/connexion" style="color:#FF8200; font-weight:900;">CONNEXION</a>
+                <a href="/vendia/inscription">INSCRIPTION</a>
             </div>
         </div>
     </header>

@@ -19,7 +19,7 @@ async function chargerPublicitesProfilio() {
 function renderProfilioAds(items) {
   const container = document.getElementById('profilio-ads');
   if (!items || items.length === 0) {
-    container.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Aucune publicité pour le moment.</p>';
+    container.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Contenu prochainement disponible.</p>';
     return;
   }
   container.innerHTML = items.map(item => `
@@ -36,7 +36,7 @@ function renderProfilioAds(items) {
 function renderMetiers(metiers) {
   const container = document.getElementById('profilio-jobs');
   if (!metiers || metiers.length === 0) {
-    container.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Aucun métier disponible pour le moment.</p>';
+    container.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Contenu prochainement disponible.</p>';
     return;
   }
   container.innerHTML = metiers.map(job => `
@@ -74,7 +74,7 @@ function renderProfils(items) {
 
   const container = document.getElementById('profilio-nearby');
   if (!filtered || filtered.length === 0) {
-    container.innerHTML = `<p class="empty-state">Aucun profil ne correspond à cette recherche.</p>`;
+    container.innerHTML = `<p class="empty-state">Contenu prochainement disponible.</p>`;
     return;
   }
   container.innerHTML = filtered.map(item => `
@@ -117,8 +117,8 @@ async function initProfilio() {
     });
   } catch (error) {
     console.error('Erreur initialisation Profilio:', error);
-    document.getElementById('profilio-jobs').innerHTML = '<p style="padding:20px; text-align:center; color:#c62828;">Erreur de chargement des métiers. Veuillez réessayer.</p>';
-    document.getElementById('profilio-nearby').innerHTML = '<p style="padding:20px; text-align:center; color:#c62828;">Erreur de chargement des profils. Veuillez réessayer.</p>';
+    document.getElementById('profilio-jobs').innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Contenu prochainement disponible.</p>';
+    document.getElementById('profilio-nearby').innerHTML = '<p style="padding:20px; text-align:center; color:#666;">Contenu prochainement disponible.</p>';
   }
 }
 

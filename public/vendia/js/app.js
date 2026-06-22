@@ -26,7 +26,7 @@ async function chargerPublicitesVendia() {
 function renderVendiaCarousel(items) {
   const container = document.getElementById('vendia-carousel');
   if (!items || items.length === 0) {
-    container.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Aucune publicité pour le moment.</p>';
+    container.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Contenu prochainement disponible.</p>';
     return;
   }
   container.innerHTML = items.map(item => `
@@ -56,7 +56,7 @@ async function renderVendiaProduits() {
 
   const container = document.getElementById('vendia-products');
   if (!filtered || filtered.length === 0) {
-    container.innerHTML = `<p class="empty-state">Aucun produit pour cette recherche.</p>`;
+    container.innerHTML = `<p class="empty-state">Contenu prochainement disponible.</p>`;
     return;
   }
   container.innerHTML = filtered.map(product => `
@@ -80,7 +80,7 @@ async function renderVendiaVendeurs() {
   
   const container = document.getElementById('vendia-nearby');
   if (!sorted || sorted.length === 0) {
-    container.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Aucun vendeur à proximité.</p>';
+    container.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Contenu prochainement disponible.</p>';
     return;
   }
   container.innerHTML = sorted.map(vendor => `
@@ -113,7 +113,7 @@ async function initVendia() {
     const select = document.getElementById('vendia-category');
 
     if (!categories || categories.length === 0) {
-      select.innerHTML = '<option value="">Aucune catégorie disponible</option>';
+      select.innerHTML = '<option value="">Contenu prochainement disponible</option>';
     } else {
       select.innerHTML = `<option value="">Toutes les catégories</option>` + categories.map(category => `
         <option value="${category}">${category}</option>
@@ -130,7 +130,7 @@ async function initVendia() {
     
     const containerProduits = document.getElementById('vendia-products');
     if (!produits || produits.length === 0) {
-      containerProduits.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Aucun produit disponible pour le moment.</p>';
+      containerProduits.innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Contenu prochainement disponible.</p>';
     } else {
       await renderVendiaProduits();
     }
@@ -149,8 +149,8 @@ async function initVendia() {
     document.getElementById('become-seller').addEventListener('change', mettreAJourModeVendeur);
   } catch (error) {
     console.error('Erreur initialisation Vendia:', error);
-    document.getElementById('vendia-products').innerHTML = '<p style="padding:20px; text-align:center; color:#c62828;">Erreur de chargement des produits. Veuillez réessayer.</p>';
-    document.getElementById('vendia-nearby').innerHTML = '<p style="padding:20px; text-align:center; color:#c62828;">Erreur de chargement des vendeurs. Veuillez réessayer.</p>';
+    document.getElementById('vendia-products').innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Contenu prochainement disponible.</p>';
+    document.getElementById('vendia-nearby').innerHTML = '<p style="padding:20px; text-align:center; color:rgba(255,255,255,0.7);">Contenu prochainement disponible.</p>';
   }
 }
 
