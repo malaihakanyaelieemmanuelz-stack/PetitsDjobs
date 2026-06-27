@@ -461,10 +461,7 @@ function pageVendia(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'ind
 function pageProfilio(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'index.html')); }
 function pageVendiaDevenirVendeur(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'devenir-vendeur.html')); }
 function pageProfilioDevenirCandidat(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'devenir-candidat.html')); }
-function pageVendiaConnexion(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'connexion.html')); }
-function pageVendiaInscription(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'inscription.html')); }
-function pageProfilioConnexion(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'connexion.html')); }
-function pageProfilioInscription(req, res) { res.sendFile(path.join(publicDir, 'profilio', 'inscription.html')); }
+function pageVendiaInscriptionSimple(req, res) { res.sendFile(path.join(publicDir, 'vendia', 'inscription-simple.html')); }
 
 app.get('/connexion', redirectSiConnecte, pageConnexion);
 app.get('/connexion.html', redirectSiConnecte, pageConnexion);
@@ -479,10 +476,7 @@ app.get('/vendia', pageVendia);
 app.get('/profilio', pageProfilio);
 app.get('/vendia/devenir-vendeur', requireAuth, pageVendiaDevenirVendeur);
 app.get('/profilio/devenir-candidat', requireAuth, pageProfilioDevenirCandidat);
-app.get('/vendia/connexion', redirectSiConnecte, pageVendiaConnexion);
-app.get('/vendia/inscription', redirectSiConnecte, pageVendiaInscription);
-app.get('/profilio/connexion', redirectSiConnecte, pageProfilioConnexion);
-app.get('/profilio/inscription', redirectSiConnecte, pageProfilioInscription);
+app.get('/vendia/inscription-simple', redirectSiConnecte, pageVendiaInscriptionSimple);
 
 app.get('/profil', requireAuth, (req, res) => res.sendFile(path.join(publicDir, 'profil.html')));
 app.get('/prestataire', requireAuth, (req, res) => {
@@ -3190,5 +3184,96 @@ app.get('/api/profilio/statut-candidat', requireAuth, async (req, res) => {
         });
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});
+
+// Endpoint de debug pour recevoir les logs du logo de fond
+app.post('/api/debug/logo-positions', async (req, res) => {
+    try {
+        const { positions } = req.body;
+        console.log('[DEBUG LOGO BACKEND] Logs reçus du frontend:');
+        console.log('[DEBUG LOGO BACKEND] Nombre de positions:', positions.length);
+        
+        positions.forEach((pos, index) => {
+            console.log(`[DEBUG LOGO BACKEND] Position ${index + 1}:`, {
+                timestamp: pos.timestamp,
+                scrollY: pos.scrollY,
+                logoTop: pos.logoRect.top,
+                logoLeft: pos.logoRect.left,
+                position: pos.computedStyle.position,
+                transform: pos.computedStyle.transform
+            });
+            
+            // Détecter les anomalies
+            if (Math.abs(pos.logoRect.top) > 10) {
+                console.error(`[DEBUG LOGO BACKEND] ERREUR DÉTECTÉE: Logo bouge verticalement! top=${pos.logoRect.top} à ${pos.timestamp}`);
+            }
+            if (Math.abs(pos.logoRect.left) > 10) {
+                console.error(`[DEBUG LOGO BACKEND] ERREUR DÉTECTÉE: Logo bouge horizontalement! left=${pos.logoRect.left} à ${pos.timestamp}`);
+            }
+            if (pos.computedStyle.position !== 'fixed') {
+                console.error(`[DEBUG LOGO BACKEND] ERREUR DÉTECTÉE: Position n'est pas 'fixed'! position=${pos.computedStyle.position} à ${pos.timestamp}`);
+            }
+        });
+        
+        res.json({ success: true, received: positions.length });
+    } catch (e) {
+        console.error('[DEBUG LOGO BACKEND] Erreur traitement logs:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Endpoint d'inscription simple pour Vendia
+app.post('/api/vendia/inscription-simple', async (req, res) => {
+    try {
+        const { prenom, password, telephone, autorisation_numero } = req.body;
+
+        if (!prenom || !password || !telephone || !autorisation_numero) {
+            return res.status(400).json({ success: false, error: 'Tous les champs sont obligatoires.' });
+        }
+
+        // Vérifier si le téléphone existe déjà
+        const { data: existingUser, error: checkError } = await supabase
+            .from('utilisateurs')
+            .select('id')
+            .eq('telephone', telephone)
+            .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+            return res.status(500).json({ success: false, error: checkError.message });
+        }
+
+        if (existingUser) {
+            return res.status(400).json({ success: false, error: 'Ce numéro de téléphone est déjà utilisé.' });
+        }
+
+        // Créer l'utilisateur
+        const { data: newUser, error: createError } = await supabase
+            .from('utilisateurs')
+            .insert({
+                prenom: prenom,
+                password: password, // Note: En production, hasher le mot de passe
+                telephone: telephone,
+                autorisation_numero: autorisation_numero,
+                is_vendia_seller: false,
+                is_profilio_member: false,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (createError) {
+            console.error('Erreur création utilisateur:', createError);
+            return res.status(500).json({ success: false, error: 'Erreur lors de la création du compte.' });
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Compte créé avec succès. Veuillez vous connecter.',
+            user: { id: newUser.id, prenom: newUser.prenom }
+        });
+    } catch (e) {
+        console.error('Erreur inscription simple:', e);
+        res.status(500).json({ success: false, error: 'Erreur serveur.' });
     }
 });

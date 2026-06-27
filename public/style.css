@@ -510,7 +510,8 @@ body {
 }
 
 .showcase-scroll-wrap {
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     width: 100%;
 }
 

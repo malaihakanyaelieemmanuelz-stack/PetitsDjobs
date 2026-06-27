@@ -21,7 +21,7 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body class="home-page">
-    <!-- Logo de fond FIXE via background CSS -->
+    <!-- Logo de fond supprimé -->
 
     <!-- Bandeau de Notification Chat Global -->
     <div id="global-chat-notif" style="display:none; position:fixed; top:10px; left:10px; right:10px; background:white; border:2px solid #FF6600; border-radius:15px; padding:12px; z-index:11000; box-shadow:0 10px 30px rgba(0,0,0,0.2); animation: slideDownNotif 0.4s ease; cursor:pointer;" onclick="openChatFromNotif()">
@@ -722,6 +722,115 @@
     <!-- Bouton flottant pour revenir au Vortex Hub -->
     <a href="/" style="position: fixed; bottom: 20px; right: 20px; z-index: 9000; background: #FF6600; color: white; padding: 12px 20px; border-radius: 8px; border: 2px solid white; box-shadow: 0 4px 12px rgba(255, 102, 0, 0.4); text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;" title="Retour au Vortex Hub" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 18px rgba(255, 102, 0, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(255, 102, 0, 0.4)';">← Vortex Hub</a>
 
+    <!-- Script de détection d'erreur pour le logo de fond -->
+    <script>
+        (function() {
+            const logoElement = document.getElementById('bg-logo-fixed');
+            if (!logoElement) {
+                console.error('[DEBUG LOGO] Élément bg-logo-fixed NON TROUVÉ dans le DOM');
+                return;
+            }
+
+            console.log('[DEBUG LOGO] Script de détection initialisé');
+            console.log('[DEBUG LOGO] Élément logo trouvé:', logoElement);
+            console.log('[DEBUG LOGO] Classes:', logoElement.className);
+            console.log('[DEBUG LOGO] Position calculée:', window.getComputedStyle(logoElement).position);
+            console.log('[DEBUG LOGO] Top calculé:', window.getComputedStyle(logoElement).top);
+            console.log('[DEBUG LOGO] Left calculé:', window.getComputedStyle(logoElement).left);
+            console.log('[DEBUG LOGO] Background-position:', window.getComputedStyle(logoElement).backgroundPosition);
+            console.log('[DEBUG LOGO] Background-attachment:', window.getComputedStyle(logoElement).backgroundAttachment);
+
+            let lastScrollY = 0;
+            let logoPositions = [];
+
+            function logLogoPosition() {
+                const rect = logoElement.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(logoElement);
+                const scrollY = window.scrollY;
+                const scrollX = window.scrollX;
+
+                const positionData = {
+                    timestamp: new Date().toISOString(),
+                    scrollY: scrollY,
+                    scrollX: scrollX,
+                    logoRect: {
+                        top: rect.top,
+                        left: rect.left,
+                        right: rect.right,
+                        bottom: rect.bottom,
+                        width: rect.width,
+                        height: rect.height
+                    },
+                    computedStyle: {
+                        position: computedStyle.position,
+                        top: computedStyle.top,
+                        left: computedStyle.left,
+                        right: computedStyle.right,
+                        bottom: computedStyle.bottom,
+                        transform: computedStyle.transform,
+                        backgroundPosition: computedStyle.backgroundPosition,
+                        backgroundAttachment: computedStyle.backgroundAttachment
+                    },
+                    scrollDelta: scrollY - lastScrollY
+                };
+
+                logoPositions.push(positionData);
+                lastScrollY = scrollY;
+
+                console.log('[DEBUG LOGO] Position après scroll:', positionData);
+
+                // Détecter si le logo bouge anormalement
+                if (Math.abs(rect.top) > 10) {
+                    console.error('[DEBUG LOGO] ERREUR: Logo bouge verticalement! top:', rect.top);
+                }
+                if (Math.abs(rect.left) > 10) {
+                    console.error('[DEBUG LOGO] ERREUR: Logo bouge horizontalement! left:', rect.left);
+                }
+            }
+
+            // Logger au chargement initial
+            setTimeout(logLogoPosition, 100);
+
+            // Logger à chaque scroll
+            let scrollTimeout;
+            window.addEventListener('scroll', function() {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(logLogoPosition, 50);
+            }, { passive: true });
+
+            // Logger les changements de taille de fenêtre
+            window.addEventListener('resize', function() {
+                console.log('[DEBUG LOGO] Resize détecté');
+                setTimeout(logLogoPosition, 100);
+            });
+
+            // Logger les événements de mutation du DOM
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        console.error('[DEBUG LOGO] ERREUR: Style du logo modifié dynamiquement!');
+                        console.log('[DEBUG LOGO] Nouveau style:', logoElement.style.cssText);
+                    }
+                });
+            });
+
+            observer.observe(logoElement, { attributes: true, attributeFilter: ['style'] });
+
+            // Envoyer les logs au backend toutes les 30 secondes
+            setInterval(function() {
+                if (logoPositions.length > 0) {
+                    fetch('/api/debug/logo-positions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ positions: logoPositions })
+                    }).catch(err => console.error('[DEBUG LOGO] Erreur envoi logs:', err));
+                    logoPositions = [];
+                }
+            }, 30000);
+
+            console.log('[DEBUG LOGO] Monitoring actif - logs envoyés toutes les 30s');
+        })();
+    </script>
 
 </body>
 </html>
