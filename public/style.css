@@ -42,6 +42,11 @@ body {
     background-color: #FF8200 !important; /* Orange vif pour le contraste avec le blanc */
 }
 
+/* Fond blanc pour la page d'accueil Petitsdjobs */
+body.home-page {
+    background-color: #ffffff !important;
+}
+
 body.vortex-hub-page::before {
     content: "";
     position: fixed;
