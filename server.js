@@ -3277,3 +3277,40 @@ app.post('/api/vendia/inscription-simple', async (req, res) => {
         res.status(500).json({ success: false, error: 'Erreur serveur.' });
     }
 });
+
+// Endpoint de détection de logo de fond
+app.post('/api/debug/logo-detection', async (req, res) => {
+    try {
+        const { bodyBgColor, bodyBgImage, bodyBeforeContent, bgLogoExists, elementsWithBg } = req.body;
+        
+        console.log('[DETECTION LOGO BACKEND] Rapport de détection reçu:');
+        console.log('[DETECTION LOGO BACKEND] Body background-color:', bodyBgColor);
+        console.log('[DETECTION LOGO BACKEND] Body background-image:', bodyBgImage);
+        console.log('[DETECTION LOGO BACKEND] Body ::before content:', bodyBeforeContent);
+        console.log('[DETECTION LOGO BACKEND] Élément #bg-logo-fixed existe:', bgLogoExists);
+        console.log('[DETECTION LOGO BACKEND] Éléments avec background-image:', elementsWithBg.length);
+        
+        if (elementsWithBg.length > 0) {
+            console.log('[DETECTION LOGO BACKEND] Détail des éléments avec background-image:');
+            elementsWithBg.forEach((el, index) => {
+                console.log(`[DETECTION LOGO BACKEND] Élément ${index + 1}:`, el);
+            });
+        }
+        
+        // Détecter les anomalies
+        if (bodyBgImage && bodyBgImage !== 'none') {
+            console.error('[DETECTION LOGO BACKEND] ERREUR: Body a un background-image!');
+        }
+        if (bodyBeforeContent && bodyBeforeContent !== 'none') {
+            console.error('[DETECTION LOGO BACKEND] ERREUR: Body ::before a du contenu!');
+        }
+        if (bgLogoExists) {
+            console.error('[DETECTION LOGO BACKEND] ERREUR: Élément #bg-logo-fixed existe encore!');
+        }
+        
+        res.json({ success: true, message: 'Rapport reçu' });
+    } catch (e) {
+        console.error('[DETECTION LOGO BACKEND] Erreur:', e);
+        res.status(500).json({ error: e.message });
+    }
+});

@@ -21,6 +21,52 @@
     <title>Accueil - PETITSDJOBS</title>
 </head>
 <body class="home-page">
+    <!-- Script de détection de logo de fond -->
+    <script>
+        (function() {
+            console.log('[DETECTION LOGO] Script initialisé');
+            
+            // Vérifier les pseudo-éléments CSS
+            const bodyStyle = window.getComputedStyle(document.body);
+            console.log('[DETECTION LOGO] Body background-color:', bodyStyle.backgroundColor);
+            console.log('[DETECTION LOGO] Body background-image:', bodyStyle.backgroundImage);
+            console.log('[DETECTION LOGO] Body ::before content:', window.getComputedStyle(document.body, '::before').content);
+            
+            // Vérifier les éléments DOM
+            const bgLogo = document.getElementById('bg-logo-fixed');
+            console.log('[DETECTION LOGO] Élément #bg-logo-fixed existe:', !!bgLogo);
+            
+            // Vérifier tous les éléments avec background-image
+            const allElements = document.querySelectorAll('*');
+            let elementsWithBg = [];
+            allElements.forEach(el => {
+                const style = window.getComputedStyle(el);
+                if (style.backgroundImage && style.backgroundImage !== 'none') {
+                    elementsWithBg.push({
+                        tag: el.tagName,
+                        id: el.id,
+                        class: el.className,
+                        backgroundImage: style.backgroundImage
+                    });
+                }
+            });
+            
+            console.log('[DETECTION LOGO] Éléments avec background-image:', elementsWithBg);
+            
+            // Envoyer au backend
+            fetch('/api/debug/logo-detection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bodyBgColor: bodyStyle.backgroundColor,
+                    bodyBgImage: bodyStyle.backgroundImage,
+                    bodyBeforeContent: window.getComputedStyle(document.body, '::before').content,
+                    bgLogoExists: !!bgLogo,
+                    elementsWithBg: elementsWithBg
+                })
+            }).catch(err => console.error('[DETECTION LOGO] Erreur envoi:', err));
+        })();
+    </script>
     <!-- Logo de fond supprimé -->
 
     <!-- Bandeau de Notification Chat Global -->
