@@ -1,20 +1,18 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Dégradé blanc principal -->
+    <!-- Dégradé blanc -->
     <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#F5F5F5;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#E8E8E8;stop-opacity:1" />
     </linearGradient>
     
     <!-- Dégradé blanc clair -->
     <linearGradient id="lightWhiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F0F0F0;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#E8E8E8;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#F5F5F5;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#D8D8D8;stop-opacity:1" />
     </linearGradient>
     
-    <!-- Effet de glow -->
+    <!-- Glow -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
       <feMerge>
@@ -24,64 +22,114 @@
     </filter>
   </defs>
   
-  <!-- Centre vide (trou noir) -->
-  <circle cx="100" cy="100" r="18" fill="none"/>
-  
-  <!-- Pale 1 - Blanc - Courbe fluide -->
+  <!-- Spirale 1 - Blanc -->
   <path d="M100 100 
-           C 120 80 150 65 165 80 
-           C 180 95 175 125 160 140 
-           C 145 155 120 150 108 138 
-           C 96 126 92 112 100 100 Z" 
-        fill="url(#whiteGrad)" 
-        filter="url(#glow)"/>
-  
-  <!-- Pale 2 - Blanc clair - Courbe fluide -->
-  <path d="M100 100 
-           C 80 120 65 150 80 165 
-           C 95 180 125 175 140 160 
-           C 155 145 150 120 138 108 
-           C 126 96 112 92 100 100 Z" 
-        fill="url(#lightWhiteGrad)" 
-        filter="url(#glow)"/>
-  
-  <!-- Pale 3 - Blanc - Courbe fluide -->
-  <path d="M100 100 
-           C 120 80 150 65 165 80 
-           C 180 95 175 125 160 140 
-           C 145 155 120 150 108 138 
-           C 96 126 92 112 100 100 Z" 
-        fill="url(#whiteGrad)" 
+           Q 130 70 160 80 
+           T 180 120 
+           T 160 160 
+           T 120 180 
+           T 80 160 
+           T 60 120 
+           T 80 80 
+           T 120 60 
+           T 160 80" 
+        fill="none" 
+        stroke="url(#whiteGrad)" 
+        stroke-width="6" 
+        stroke-linecap="round"
         filter="url(#glow)"
-        transform="rotate(72 100 100)"/>
+        opacity="0.9"/>
   
-  <!-- Pale 4 - Blanc clair - Courbe fluide -->
+  <!-- Spirale 2 - Blanc clair -->
   <path d="M100 100 
-           C 80 120 65 150 80 165 
-           C 95 180 125 175 140 160 
-           C 155 145 150 120 138 108 
-           C 126 96 112 92 100 100 Z" 
-        fill="url(#lightWhiteGrad)" 
+           Q 120 80 140 90 
+           T 160 120 
+           T 140 150 
+           T 110 160 
+           T 80 150 
+           T 60 120 
+           T 80 90 
+           T 110 80" 
+        fill="none" 
+        stroke="url(#lightWhiteGrad)" 
+        stroke-width="5" 
+        stroke-linecap="round"
         filter="url(#glow)"
-        transform="rotate(72 100 100)"/>
+        opacity="0.85"
+        transform="rotate(60 100 100)"/>
   
-  <!-- Pale 5 - Blanc - Courbe fluide -->
+  <!-- Spirale 3 - Blanc -->
   <path d="M100 100 
-           C 120 80 150 65 165 80 
-           C 180 95 175 125 160 140 
-           C 145 155 120 150 108 138 
-           C 96 126 92 112 100 100 Z" 
-        fill="url(#whiteGrad)" 
+           Q 125 75 155 85 
+           T 175 125 
+           T 155 165 
+           T 115 175 
+           T 75 165 
+           T 55 125 
+           T 75 85 
+           T 115 75" 
+        fill="none" 
+        stroke="url(#whiteGrad)" 
+        stroke-width="4" 
+        stroke-linecap="round"
         filter="url(#glow)"
-        transform="rotate(144 100 100)"/>
+        opacity="0.8"
+        transform="rotate(120 100 100)"/>
   
-  <!-- Pale 6 - Blanc clair - Courbe fluide -->
+  <!-- Spirale 4 - Blanc clair -->
   <path d="M100 100 
-           C 80 120 65 150 80 165 
-           C 95 180 125 175 140 160 
-           C 155 145 150 120 138 108 
-           C 126 96 112 92 100 100 Z" 
-        fill="url(#lightWhiteGrad)" 
+           Q 115 85 135 95 
+           T 155 125 
+           T 135 155 
+           T 105 165 
+           T 75 155 
+           T 55 125 
+           T 75 95 
+           T 105 85" 
+        fill="none" 
+        stroke="url(#lightWhiteGrad)" 
+        stroke-width="3" 
+        stroke-linecap="round"
         filter="url(#glow)"
-        transform="rotate(144 100 100)"/>
+        opacity="0.75"
+        transform="rotate(180 100 100)"/>
+  
+  <!-- Spirale 5 - Blanc -->
+  <path d="M100 100 
+           Q 120 80 145 90 
+           T 165 125 
+           T 145 160 
+           T 110 170 
+           T 70 160 
+           T 50 125 
+           T 70 90 
+           T 110 80" 
+        fill="none" 
+        stroke="url(#whiteGrad)" 
+        stroke-width="2.5" 
+        stroke-linecap="round"
+        filter="url(#glow)"
+        opacity="0.7"
+        transform="rotate(240 100 100)"/>
+  
+  <!-- Spirale 6 - Blanc clair -->
+  <path d="M100 100 
+           Q 110 90 130 100 
+           T 150 125 
+           T 130 150 
+           T 100 160 
+           T 70 150 
+           T 50 125 
+           T 70 100 
+           T 100 90" 
+        fill="none" 
+        stroke="url(#lightWhiteGrad)" 
+        stroke-width="2" 
+        stroke-linecap="round"
+        filter="url(#glow)"
+        opacity="0.65"
+        transform="rotate(300 100 100)"/>
+  
+  <!-- Centre noir -->
+  <circle cx="100" cy="100" r="15" fill="#000000"/>
 </svg>
