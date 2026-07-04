@@ -3,16 +3,17 @@
 /* Variables de couleurs */
 :root {
     --orange: #FF8C00;
+    --orange-bright: #FFA500;
     --orange-light: #FFB347;
     --white: #FFFFFF;
     --green: #22C55E;
     --green-light: #7CFF7C;
     --black: #000000;
+    --black-deep: #010101;
     --black-secondary: #020202;
     --black-tertiary: #050505;
-    --black-quaternary: #080808;
-    --glass-bg: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.06);
 }
 
 /* Reset et base */
@@ -38,7 +39,19 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: radial-gradient(ellipse at center, var(--black-tertiary) 0%, var(--black-secondary) 50%, var(--black) 100%);
+    background: radial-gradient(ellipse at center, var(--black-tertiary) 0%, var(--black-secondary) 40%, var(--black-deep) 70%, var(--black) 100%);
+}
+
+/* Vignette pour profondeur */
+.cosmic-background::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.8) 100%);
+    pointer-events: none;
 }
 
 #starsCanvas {
@@ -84,7 +97,7 @@ body {
 }
 
 .nav-logo img {
-    filter: drop-shadow(0 0 40px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 80px rgba(255, 140, 0, 0.4));
+    filter: drop-shadow(0 0 50px rgba(255, 140, 0, 0.9)) drop-shadow(0 0 100px rgba(255, 165, 0, 0.6));
 }
 
 .nav-links {
@@ -183,22 +196,22 @@ body {
     font-size: 6rem;
     font-weight: 800;
     margin-bottom: 25px;
-    background: linear-gradient(135deg, var(--orange) 0%, var(--white) 50%, var(--green) 100%);
+    background: linear-gradient(135deg, var(--orange-bright) 0%, var(--white) 50%, var(--green) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -3px;
     line-height: 1;
-    filter: drop-shadow(0 0 60px rgba(255, 140, 0, 0.6));
+    filter: drop-shadow(0 0 80px rgba(255, 140, 0, 0.8));
     animation: titleGlow 4s ease-in-out infinite;
 }
 
 @keyframes titleGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 60px rgba(255, 140, 0, 0.6));
+        filter: drop-shadow(0 0 80px rgba(255, 140, 0, 0.8));
     }
     50% {
-        filter: drop-shadow(0 0 100px rgba(255, 140, 0, 0.9));
+        filter: drop-shadow(0 0 120px rgba(255, 165, 0, 1));
     }
 }
 
@@ -208,6 +221,16 @@ body {
     margin-bottom: 35px;
     color: rgba(255, 255, 255, 0.95);
     line-height: 1.3;
+}
+
+.text-orange {
+    color: var(--orange-bright);
+    text-shadow: 0 0 30px rgba(255, 140, 0, 0.6);
+}
+
+.text-green {
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
 }
 
 .hero-description {
@@ -362,7 +385,7 @@ body {
     width: 70px;
     height: 70px;
     margin-bottom: 25px;
-    filter: drop-shadow(0 0 30px rgba(255, 140, 0, 0.6));
+    filter: drop-shadow(0 0 50px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 80px rgba(255, 165, 0, 0.5));
 }
 
 .platform-title {
@@ -370,10 +393,11 @@ body {
     font-weight: 700;
     margin-bottom: 15px;
     color: var(--white);
-    background: linear-gradient(135deg, var(--orange), var(--white));
+    background: linear-gradient(135deg, var(--orange-bright), var(--white));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.5));
 }
 
 .platform-description {
@@ -428,7 +452,7 @@ body {
 }
 
 .footer-logo img {
-    filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.6));
+    filter: drop-shadow(0 0 40px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 60px rgba(255, 165, 0, 0.5));
 }
 
 .footer-content p {
