@@ -63,6 +63,8 @@ body {
     margin-bottom: 40px;
     box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    display: block;
 }
 
 .service-card:hover {
@@ -173,6 +175,318 @@ body {
     text-align: center;
 }
 
+/* Page Accueil */
+.accueil-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+}
+
+.accueil-header {
+    background: linear-gradient(135deg, #191970, #0a192f);
+    padding: 30px 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-container svg {
+    filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.3));
+}
+
+.site-info h1 {
+    color: #00FFFF;
+    font-size: 2.5em;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0;
+}
+
+.site-info p {
+    color: #d4d4d4;
+    font-size: 1.1em;
+    font-style: italic;
+    margin: 5px 0 0 0;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00FFFF, #00e5ff);
+    color: #191970;
+    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #00FFFF;
+    border: 2px solid #00FFFF;
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.btn-full {
+    width: 100%;
+    text-align: center;
+}
+
+/* Page Connexion */
+.connexion-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+}
+
+.connexion-header {
+    background: linear-gradient(135deg, #191970, #0a192f);
+    padding: 20px 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.connexion-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    padding: 40px 20px;
+}
+
+.connexion-form-container {
+    background: #f0f0f0;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
+    max-width: 450px;
+    width: 100%;
+}
+
+.connexion-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #191970;
+    font-weight: 600;
+    font-size: 1em;
+}
+
+.form-group input[type="email"],
+.form-group input[type="password"] {
+    padding: 12px 15px;
+    border: 2px solid #d4d4d4;
+    border-radius: 8px;
+    font-size: 1em;
+    background: #e8e8e8;
+    color: #0a192f;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #00FFFF;
+}
+
+.password-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input input {
+    width: 100%;
+    padding-right: 50px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle svg {
+    color: #191970;
+    transition: color 0.3s ease;
+}
+
+.password-toggle:hover svg {
+    color: #00FFFF;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    color: #0a192f;
+    font-size: 0.95em;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: #00FFFF;
+    width: 18px;
+    height: 18px;
+}
+
+.privacy-link {
+    color: #00FFFF;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.privacy-link:hover {
+    color: #191970;
+    text-decoration: underline;
+}
+
+.connexion-footer {
+    margin-top: 30px;
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #d4d4d4;
+}
+
+.connexion-footer p {
+    color: #0a192f;
+    margin-bottom: 15px;
+    font-size: 1em;
+}
+
+/* Page Politique de Confidentialité */
+.politique-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+}
+
+.politique-header {
+    background: linear-gradient(135deg, #191970, #0a192f);
+    padding: 20px 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.politique-main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.politique-content {
+    background: #f0f0f0;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
+}
+
+.politique-content h2 {
+    color: #191970;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.politique-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #d4d4d4;
+}
+
+.politique-section:last-child {
+    border-bottom: none;
+}
+
+.politique-section h3 {
+    color: #0a192f;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+}
+
+.politique-section p {
+    color: #0a192f;
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.politique-section ul {
+    margin-left: 20px;
+    color: #0a192f;
+    font-size: 1.1em;
+    line-height: 1.8;
+}
+
+.politique-section li {
+    margin-bottom: 8px;
+}
+
+.politique-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #d4d4d4;
+    text-align: center;
+}
+
+.politique-footer p {
+    color: #0a192f;
+    margin-bottom: 20px;
+    font-size: 1em;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .vortex-header {
@@ -212,5 +526,33 @@ body {
     
     .card-footer p {
         font-size: 1.1em;
+    }
+    
+    .accueil-header {
+        padding: 20px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+    
+    .logo-section {
+        flex-direction: column;
+    }
+    
+    .site-info h1 {
+        font-size: 2em;
+    }
+    
+    .auth-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        text-align: center;
     }
 }
