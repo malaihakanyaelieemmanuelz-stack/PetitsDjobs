@@ -240,24 +240,24 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #00FFFF, #00e5ff);
-    color: #191970;
-    box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
 }
 
 .btn-secondary {
     background: transparent;
-    color: #00FFFF;
-    border: 2px solid #00FFFF;
+    color: #4a90e2;
+    border: 2px solid #4a90e2;
 }
 
 .btn-secondary:hover {
-    background: rgba(0, 255, 255, 0.1);
+    background: rgba(74, 144, 226, 0.1);
     transform: translateY(-2px);
 }
 
@@ -314,7 +314,9 @@ body {
 }
 
 .form-group input[type="email"],
-.form-group input[type="password"] {
+.form-group input[type="password"],
+.form-group input[type="text"],
+.form-group input[type="number"] {
     padding: 12px 15px;
     border: 2px solid #d4d4d4;
     border-radius: 8px;
@@ -322,6 +324,8 @@ body {
     background: #e8e8e8;
     color: #0a192f;
     transition: border-color 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .form-group input:focus {
@@ -333,11 +337,13 @@ body {
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
 }
 
 .password-input input {
     width: 100%;
     padding-right: 50px;
+    box-sizing: border-box;
 }
 
 .password-toggle {
@@ -358,7 +364,7 @@ body {
 }
 
 .password-toggle:hover svg {
-    color: #00FFFF;
+    color: #4a90e2;
 }
 
 .checkbox-group {
@@ -384,7 +390,7 @@ body {
 }
 
 .privacy-link {
-    color: #00FFFF;
+    color: #4a90e2;
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
@@ -484,6 +490,54 @@ body {
 .politique-footer p {
     color: #0a192f;
     margin-bottom: 20px;
+    font-size: 1em;
+}
+
+/* Page Inscription */
+.inscription-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+}
+
+.inscription-header {
+    background: linear-gradient(135deg, #191970, #0a192f);
+    padding: 20px 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.inscription-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    padding: 40px 20px;
+}
+
+.inscription-form-container {
+    background: #f0f0f0;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
+    max-width: 450px;
+    width: 100%;
+}
+
+.inscription-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.inscription-footer {
+    margin-top: 30px;
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #d4d4d4;
+}
+
+.inscription-footer p {
+    color: #0a192f;
+    margin-bottom: 15px;
     font-size: 1em;
 }
 
