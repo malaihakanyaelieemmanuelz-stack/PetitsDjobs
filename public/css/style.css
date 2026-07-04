@@ -1,14 +1,23 @@
-/* Styles de base pour Vortex Hub */
+/* Styles de base pour Vortex Hub - Mobile First Android */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Optimisation tactile */
+button, a, input, .service-card {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    touch-action: manipulation;
 }
 
 .vortex-page {
@@ -35,15 +44,15 @@ body {
 
 .header-text h1 {
     color: #00FFFF;
-    font-size: 3em;
+    font-size: 1.8em;
     font-weight: 800;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .header-text p {
     color: #d4d4d4;
-    font-size: 1.2em;
+    font-size: 0.9em;
     font-style: italic;
     margin-top: 5px;
 }
@@ -52,15 +61,15 @@ body {
 .main-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 50px 20px;
+    padding: 30px 15px;
 }
 
 /* Cartes de services */
 .service-card {
     background: #e8e8e8;
-    border-radius: 20px;
-    padding: 40px;
-    margin-bottom: 40px;
+    border-radius: 15px;
+    padding: 25px 15px;
+    margin-bottom: 25px;
     box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-decoration: none;
@@ -88,7 +97,7 @@ body {
 }
 
 .service-card h2 {
-    font-size: 2.5em;
+    font-size: 1.5em;
     font-weight: 700;
     color: #191970;
 }
@@ -111,16 +120,16 @@ body {
 /* Carousels */
 .carousel-container {
     overflow: hidden;
-    margin: 30px 0;
-    border-radius: 15px;
+    margin: 20px 0;
+    border-radius: 12px;
     background: linear-gradient(135deg, #d4d4d4, #e8e8e8);
-    padding: 30px;
+    padding: 20px 15px;
 }
 
 .carousel-slide {
-    padding: 30px;
+    padding: 20px 15px;
     background: #f0f0f0;
-    border-radius: 12px;
+    border-radius: 10px;
     box-shadow: 0 4px 15px rgba(25, 25, 112, 0.1);
     text-align: center;
 }
@@ -170,7 +179,7 @@ body {
 
 .card-footer p {
     color: #00FFFF;
-    font-size: 1.3em;
+    font-size: 1em;
     font-weight: 600;
     text-align: center;
 }
@@ -183,7 +192,7 @@ body {
 
 .accueil-header {
     background: linear-gradient(135deg, #191970, #0a192f);
-    padding: 30px 50px;
+    padding: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     position: sticky;
     top: 0;
@@ -201,7 +210,7 @@ body {
 .logo-section {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
 }
 
 .logo-container svg {
@@ -210,33 +219,37 @@ body {
 
 .site-info h1 {
     color: #00FFFF;
-    font-size: 2.5em;
+    font-size: 1.5em;
     font-weight: 800;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     margin: 0;
 }
 
 .site-info p {
     color: #d4d4d4;
-    font-size: 1.1em;
+    font-size: 0.8em;
     font-style: italic;
     margin: 5px 0 0 0;
 }
 
 .auth-buttons {
     display: flex;
-    gap: 15px;
+    gap: 10px;
 }
 
 .btn {
-    padding: 12px 30px;
+    padding: 14px 25px;
     border-radius: 25px;
     font-size: 1em;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-primary {
@@ -274,7 +287,7 @@ body {
 
 .connexion-header {
     background: linear-gradient(135deg, #191970, #0a192f);
-    padding: 20px 50px;
+    padding: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -282,14 +295,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 80px);
-    padding: 40px 20px;
+    min-height: calc(100vh - 60px);
+    padding: 20px 15px;
 }
 
 .connexion-form-container {
     background: #f0f0f0;
-    border-radius: 20px;
-    padding: 40px;
+    border-radius: 15px;
+    padding: 25px 15px;
     box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
     max-width: 450px;
     width: 100%;
@@ -298,7 +311,7 @@ body {
 .connexion-form {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
 }
 
 .form-group {
@@ -317,15 +330,16 @@ body {
 .form-group input[type="password"],
 .form-group input[type="text"],
 .form-group input[type="number"] {
-    padding: 12px 15px;
+    padding: 14px 15px;
     border: 2px solid #d4d4d4;
     border-radius: 8px;
-    font-size: 1em;
+    font-size: 16px;
     background: #e8e8e8;
     color: #0a192f;
     transition: border-color 0.3s ease;
     box-sizing: border-box;
     width: 100%;
+    min-height: 48px;
 }
 
 .form-group input:focus {
@@ -501,7 +515,7 @@ body {
 
 .inscription-header {
     background: linear-gradient(135deg, #191970, #0a192f);
-    padding: 20px 50px;
+    padding: 15px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -509,14 +523,14 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 80px);
-    padding: 40px 20px;
+    min-height: calc(100vh - 60px);
+    padding: 20px 15px;
 }
 
 .inscription-form-container {
     background: #f0f0f0;
-    border-radius: 20px;
-    padding: 40px;
+    border-radius: 15px;
+    padding: 25px 15px;
     box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
     max-width: 450px;
     width: 100%;
@@ -525,7 +539,7 @@ body {
 .inscription-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
 .inscription-footer {
@@ -541,72 +555,161 @@ body {
     font-size: 1em;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Page Récupération */
+.recuperation-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d4d4d4 0%, #e8e8e8 50%, #f0f0f0 100%);
+}
+
+.recuperation-header {
+    background: linear-gradient(135deg, #191970, #0a192f);
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.recuperation-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 60px);
+    padding: 20px 15px;
+}
+
+.recuperation-form-container {
+    background: #f0f0f0;
+    border-radius: 15px;
+    padding: 25px 15px;
+    box-shadow: 0 10px 40px rgba(25, 25, 112, 0.15);
+    max-width: 450px;
+    width: 100%;
+}
+
+.recuperation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recuperation-footer {
+    margin-top: 30px;
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid #d4d4d4;
+}
+
+.recuperation-footer p {
+    color: #0a192f;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+.forgot-password {
+    color: #4a90e2;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-align: right;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #191970;
+    text-decoration: underline;
+}
+
+/* Responsive - Desktop */
+@media (min-width: 769px) {
     .vortex-header {
-        padding: 20px;
-        flex-direction: column;
-        text-align: center;
+        padding: 30px 50px;
+        gap: 30px;
     }
-    
+
     .header-text h1 {
+        font-size: 3em;
+    }
+
+    .header-text p {
+        font-size: 1.2em;
+    }
+
+    .main-content {
+        padding: 50px 20px;
+    }
+
+    .service-card {
+        padding: 40px;
+        margin-bottom: 40px;
+    }
+
+    .card-header {
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .service-card h2 {
+        font-size: 2.5em;
+    }
+
+    .carousel-container {
+        padding: 30px;
+        margin: 30px 0;
+    }
+
+    .carousel-slide {
+        padding: 30px;
+    }
+
+    .slide-content h3 {
         font-size: 2em;
     }
-    
-    .header-text p {
-        font-size: 1em;
+
+    .slide-content p {
+        font-size: 1.2em;
     }
-    
-    .main-content {
-        padding: 30px 15px;
-    }
-    
-    .service-card {
-        padding: 25px;
-    }
-    
-    .card-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .service-card h2 {
-        font-size: 1.8em;
-    }
-    
-    .slide-content h3 {
-        font-size: 1.4em;
-    }
-    
+
     .card-footer p {
+        font-size: 1.3em;
+    }
+
+    .accueil-header {
+        padding: 30px 50px;
+    }
+
+    .logo-section {
+        gap: 20px;
+    }
+
+    .site-info h1 {
+        font-size: 2.5em;
+    }
+
+    .site-info p {
         font-size: 1.1em;
     }
-    
-    .accueil-header {
-        padding: 20px;
-    }
-    
-    .header-content {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-    }
-    
-    .logo-section {
-        flex-direction: column;
-    }
-    
-    .site-info h1 {
-        font-size: 2em;
-    }
-    
+
     .auth-buttons {
-        flex-direction: column;
-        width: 100%;
+        gap: 15px;
     }
-    
-    .btn {
-        width: 100%;
-        text-align: center;
+
+    .connexion-header,
+    .inscription-header {
+        padding: 20px 50px;
+    }
+
+    .connexion-main,
+    .inscription-main {
+        padding: 40px 20px;
+    }
+
+    .connexion-form-container,
+    .inscription-form-container {
+        padding: 40px;
+    }
+
+    .connexion-form {
+        gap: 25px;
+    }
+
+    .inscription-form {
+        gap: 20px;
     }
 }

@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#191970">
-    <title>Accueil - Vortex</title>
+    <title>Récupération de Mot de Passe - Vortex</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="accueil-page">
+<body class="recuperation-page">
     <!-- Header -->
-    <header class="accueil-header">
+    <header class="recuperation-header">
         <div class="header-content">
             <div class="logo-section">
                 <div class="logo-container">
@@ -22,15 +22,30 @@
                 </div>
                 <div class="site-info">
                     <h1>VORTEX</h1>
-                    <p>L'écosystème formel et informel</p>
+                    <p>Récupération de Mot de Passe</p>
                 </div>
-            </div>
-            <div class="auth-buttons">
-                <a href="inscription.html" class="btn btn-primary">Inscription</a>
-                <a href="connexion.html" class="btn btn-secondary">Connexion</a>
             </div>
         </div>
     </header>
+
+    <!-- Formulaire de récupération -->
+    <main class="recuperation-main">
+        <div class="recuperation-form-container">
+            <form class="recuperation-form" id="recuperationForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Entrez votre email" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">Envoyer le lien de récupération</button>
+            </form>
+
+            <div class="recuperation-footer">
+                <p>Un email de récupération vous sera envoyé avec un mot de passe temporaire.</p>
+                <a href="connexion.html" class="btn btn-secondary">Retour à la connexion</a>
+            </div>
+        </div>
+    </main>
 
     <script src="js/script.js"></script>
     <script src="js/supabase-client.js"></script>

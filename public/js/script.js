@@ -65,4 +65,16 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Formulaire d\'inscription soumis !');
         });
     }
+
+    // Soumission du formulaire de récupération
+    const recuperationForm = document.getElementById('recuperationForm');
+    if (recuperationForm) {
+        recuperationForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            
+            // Ici vous pouvez ajouter la logique d'envoi d'email
+            alert(`Un lien de récupération a été envoyé à ${email}`);
+        });
+    }
 });
