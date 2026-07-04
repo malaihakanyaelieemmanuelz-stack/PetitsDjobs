@@ -6,188 +6,219 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .vortex-page {
-    background: linear-gradient(135deg, #FFE4B5 0%, #FFFFF0 50%, #E0FFE0 100%);
     min-height: 100vh;
-    padding: 20px;
+    padding: 0;
 }
 
-/* Logo Vortex en fond */
-.vortex-background {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.1;
-    z-index: -1;
+/* Header Vortex */
+.vortex-header {
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.95), rgba(34, 139, 34, 0.95));
+    padding: 30px 50px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
-.vortex-background svg {
-    width: 400px;
-    height: 400px;
+.logo-container svg {
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
-/* Titre Vortex principal */
-.vortex-title {
-    text-align: center;
-    padding: 40px 20px;
-    margin-bottom: 40px;
+.header-text h1 {
+    color: white;
+    font-size: 3em;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.vortex-title h1 {
-    color: #333;
-    font-size: 4em;
-    text-transform: uppercase;
-    letter-spacing: 5px;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.vortex-subtitle {
-    color: #666;
+.header-text p {
+    color: rgba(255, 255, 255, 0.9);
     font-size: 1.2em;
     font-style: italic;
+    margin-top: 5px;
 }
 
-/* Sections des services */
-.service-section {
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 15px;
-    padding: 30px;
-    margin: 30px 0;
-    text-align: center;
-    backdrop-filter: blur(5px);
+/* Contenu principal */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 50px 20px;
 }
 
-.service-logo {
-    margin-bottom: 20px;
+/* Cartes de services */
+.service-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.service-logo svg {
-    width: 150px;
-    height: 150px;
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
 }
 
-.service-section h2 {
-    font-size: 2em;
-    margin-bottom: 20px;
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.card-icon {
+    flex-shrink: 0;
+}
+
+.card-icon svg {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.service-card h2 {
+    font-size: 2.5em;
+    font-weight: 700;
     color: #333;
 }
 
-/* Petitsdjobs - fond vert très clair, texte vert */
-.petits-jobs {
-    background: rgba(200, 255, 200, 0.6);
-    border: 2px solid #C8FFC8;
-}
-
+/* Petitsdjobs - Vert */
 .petits-jobs h2 {
-    color: #228B22;
+    color: #4CAF50;
 }
 
-.petits-jobs .slogan-box {
-    background: rgba(200, 255, 200, 0.5);
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
+.petits-jobs .card-footer {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
 }
 
-.petits-jobs .slogan-box p {
-    color: #228B22;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-/* Vendia - fond orange très clair, texte orange */
-.vendia {
-    background: rgba(255, 220, 180, 0.6);
-    border: 2px solid #FFDCA0;
-}
-
+/* Vendia - Orange */
 .vendia h2 {
-    color: #FF8C00;
+    color: #FF9800;
 }
 
-.vendia .slogan-box {
-    background: rgba(255, 220, 180, 0.5);
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
+.vendia .card-footer {
+    background: linear-gradient(135deg, #FF9800, #f57c00);
 }
 
-.vendia .slogan-box p {
-    color: #FF8C00;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-/* Profilio - fond blanc très clair, texte orange */
-.profilio {
-    background: rgba(255, 255, 255, 0.8);
-    border: 2px solid #FFF8DC;
-}
-
+/* Profilio - Bleu */
 .profilio h2 {
-    color: #FF8C00;
+    color: #2196F3;
 }
 
-.profilio .slogan-box {
-    background: rgba(255, 248, 220, 0.6);
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
-}
-
-.profilio .slogan-box p {
-    color: #FF8C00;
-    font-size: 1.2em;
-    font-weight: bold;
+.profilio .card-footer {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
 }
 
 /* Carousels */
-.carousel {
+.carousel-container {
     overflow: hidden;
-    margin: 20px 0;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 8px;
-    padding: 15px;
+    margin: 30px 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    padding: 20px;
 }
 
-.carousel-message {
-    text-align: center;
+.carousel-track {
+    display: flex;
+    gap: 20px;
+    animation: scroll 20s linear infinite;
 }
 
-.carousel-message p {
-    color: #666;
+.carousel-slide {
+    flex: 0 0 100%;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.slide-content h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.slide-content p {
     font-size: 1.1em;
-    font-style: italic;
+    color: #666;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    33% {
+        transform: translateX(-100%);
+    }
+    66% {
+        transform: translateX(-200%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Footer des cartes */
+.card-footer {
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.card-footer p {
+    color: white;
+    font-size: 1.3em;
+    font-weight: 600;
+    text-align: center;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .vortex-background svg {
-        width: 200px;
-        height: 200px;
+    .vortex-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
     }
     
-    .vortex-title h1 {
-        font-size: 2.5em;
+    .header-text h1 {
+        font-size: 2em;
     }
     
-    .service-logo svg {
-        width: 100px;
-        height: 100px;
+    .header-text p {
+        font-size: 1em;
     }
     
-    .service-section h2 {
-        font-size: 1.5em;
+    .main-content {
+        padding: 30px 15px;
     }
     
-    .carousel-item {
-        width: 150px;
-        font-size: 0.9em;
+    .service-card {
+        padding: 25px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .service-card h2 {
+        font-size: 1.8em;
+    }
+    
+    .slide-content h3 {
+        font-size: 1.4em;
+    }
+    
+    .card-footer p {
+        font-size: 1.1em;
     }
 }

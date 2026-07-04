@@ -7,80 +7,140 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="vortex-page">
-    <!-- Logo Vortex en fond -->
-    <div class="vortex-background">
-        <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="#FF8C00"/>
-            <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="#FFFFFF" stroke="#333" stroke-width="1"/>
-            <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="#228B22"/>
-        </svg>
-    </div>
-
-    <!-- Titre Vortex principal -->
-    <div class="vortex-title">
-        <h1>VORTEX</h1>
-        <p class="vortex-subtitle">L'écosystème formel et informel</p>
-    </div>
-
-    <!-- Section Petitsdjobs -->
-    <section class="service-section petits-jobs">
-        <div class="service-logo">
-            <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="#90EE90"/>
-                <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="none" stroke="#32CD32" stroke-width="2" stroke-dasharray="6 4"/>
-                <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="none" stroke="#32CD32" stroke-width="2" stroke-dasharray="6 4"/>
+    <!-- Header avec logo Vortex -->
+    <header class="vortex-header">
+        <div class="logo-container">
+            <svg width="80" height="80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="#FF8C00"/>
+                <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="#FFFFFF" stroke="#333" stroke-width="1"/>
+                <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="#228B22"/>
             </svg>
         </div>
-        <h2>Petitsdjobs</h2>
-        <div class="carousel">
-            <div class="carousel-message">
-                <p>Services prochainement disponibles</p>
-            </div>
+        <div class="header-text">
+            <h1>VORTEX</h1>
+            <p>L'écosystème formel et informel</p>
         </div>
-        <div class="slogan-box">
-            <p>Votre plateforme Dynamique de mise en relation pour petits jobs de qualité</p>
-        </div>
-    </section>
+    </header>
 
-    <!-- Section Vendia -->
-    <section class="service-section vendia">
-        <div class="service-logo">
-            <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="#FFB347"/>
-                <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="none" stroke="#FFA500" stroke-width="2" stroke-dasharray="6 4"/>
-                <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="none" stroke="#FFA500" stroke-width="2" stroke-dasharray="6 4"/>
-            </svg>
-        </div>
-        <h2>Vendia</h2>
-        <div class="carousel">
-            <div class="carousel-message">
-                <p>Articles prochainement disponibles</p>
+    <!-- Section principale -->
+    <main class="main-content">
+        <!-- Petitsdjobs -->
+        <section class="service-card petits-jobs">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="80" fill="#4CAF50"/>
+                        <path d="M70 100 L90 120 L130 80" stroke="white" stroke-width="8" fill="none"/>
+                    </svg>
+                </div>
+                <h2>Petitsdjobs</h2>
             </div>
-        </div>
-        <div class="slogan-box">
-            <p>Votre hypermarché dynamique pour tous vos achats en ligne à bas prix et sécurisé</p>
-        </div>
-    </section>
+            <div class="carousel-container">
+                <div class="carousel-track" id="petits-jobs-carousel">
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Trouvez votre prestataire idéal</h3>
+                            <p>Des professionnels qualifiés à votre service</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Services à domicile</h3>
+                            <p>Ménage, jardinage, bricolage et plus</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Paiement sécurisé</h3>
+                            <p>Payez seulement après satisfaction</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <p>Votre plateforme Dynamique de mise en relation pour petits jobs de qualité</p>
+            </div>
+        </section>
 
-    <!-- Section Profilio -->
-    <section class="service-section profilio">
-        <div class="service-logo">
-            <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="#FFFFFF"/>
-                <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="none" stroke="#FFA500" stroke-width="2" stroke-dasharray="6 4"/>
-                <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="none" stroke="#FFA500" stroke-width="2" stroke-dasharray="6 4"/>
-            </svg>
-        </div>
-        <h2>Profilio</h2>
-        <div class="carousel">
-            <div class="carousel-message">
-                <p>Profils prochainement disponibles</p>
+        <!-- Vendia -->
+        <section class="service-card vendia">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="80" fill="#FF9800"/>
+                        <path d="M60 70 L140 70 L140 130 L60 130 Z" fill="white"/>
+                        <circle cx="85" cy="100" r="15" fill="#FF9800"/>
+                        <circle cx="115" cy="100" r="15" fill="#FF9800"/>
+                    </svg>
+                </div>
+                <h2>Vendia</h2>
             </div>
-        </div>
-        <div class="slogan-box">
-            <p>Profils d'excellence expérience professionnel unique</p>
-        </div>
-    </section>
+            <div class="carousel-container">
+                <div class="carousel-track" id="vendia-carousel">
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Achetez au meilleur prix</h3>
+                            <p>Des milliers d'articles disponibles</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Vendeurs de confiance</h3>
+                            <p>Profils vérifiés et notés</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Livraison rapide</h3>
+                            <p>Recevez vos commandes en temps record</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <p>Votre hypermarché dynamique pour tous vos achats en ligne à bas prix et sécurisé</p>
+            </div>
+        </section>
+
+        <!-- Profilio -->
+        <section class="service-card profilio">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg width="60" height="60" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="80" fill="#2196F3"/>
+                        <circle cx="100" cy="80" r="30" fill="white"/>
+                        <path d="M50 150 Q100 100 150 150" stroke="white" stroke-width="8" fill="none"/>
+                    </svg>
+                </div>
+                <h2>Profilio</h2>
+            </div>
+            <div class="carousel-container">
+                <div class="carousel-track" id="profilio-carousel">
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Profils d'excellence</h3>
+                            <p>Talents professionnels qualifiés</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Recrutement simplifié</h3>
+                            <p>Trouvez le candidat parfait</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide">
+                        <div class="slide-content">
+                            <h3>Expérience unique</h3>
+                            <p>Une plateforme moderne et intuitive</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <p>Profils d'excellence expérience professionnel unique</p>
+            </div>
+        </section>
+    </main>
 
     <script src="js/script.js"></script>
 </body>
