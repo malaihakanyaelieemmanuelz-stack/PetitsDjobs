@@ -7,13 +7,6 @@
       <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
     </linearGradient>
     
-    <!-- Dégradé blanc -->
-    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#F0F0F0;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#E8E8E8;stop-opacity:1" />
-    </linearGradient>
-    
     <!-- Dégradé vert -->
     <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#22C55E;stop-opacity:1" />
@@ -21,9 +14,16 @@
       <stop offset="100%" style="stop-color:#22C55E;stop-opacity:1" />
     </linearGradient>
     
+    <!-- Dégradé blanc -->
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F5F5F5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E8E8E8;stop-opacity:1" />
+    </linearGradient>
+    
     <!-- Effet de glow -->
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -32,62 +32,62 @@
   </defs>
   
   <!-- Centre vide (trou noir) -->
-  <circle cx="100" cy="100" r="25" fill="none"/>
+  <circle cx="100" cy="100" r="18" fill="none"/>
   
-  <!-- Pale 1 - Orange -->
+  <!-- Pale 1 - Orange - Courbe fluide -->
   <path d="M100 100 
-           C 130 70 165 55 180 75 
-           C 195 95 190 130 165 150 
-           C 140 170 115 165 105 145 
-           C 95 125 95 110 100 100 Z" 
+           C 120 80 150 65 165 80 
+           C 180 95 175 125 160 140 
+           C 145 155 120 150 108 138 
+           C 96 126 92 112 100 100 Z" 
         fill="url(#orangeGrad)" 
         filter="url(#glow)"/>
   
-  <!-- Pale 2 - Blanc -->
+  <!-- Pale 2 - Blanc - Courbe fluide -->
   <path d="M100 100 
-           C 70 130 55 165 75 180 
-           C 95 195 130 190 150 165 
-           C 170 140 165 115 145 105 
-           C 125 95 110 95 100 100 Z" 
+           C 80 120 65 150 80 165 
+           C 95 180 125 175 140 160 
+           C 155 145 150 120 138 108 
+           C 126 96 112 92 100 100 Z" 
         fill="url(#whiteGrad)" 
         filter="url(#glow)"/>
   
-  <!-- Pale 3 - Vert -->
+  <!-- Pale 3 - Vert - Courbe fluide -->
   <path d="M100 100 
-           C 130 70 165 55 180 75 
-           C 195 95 190 130 165 150 
-           C 140 170 115 165 105 145 
-           C 95 125 95 110 100 100 Z" 
+           C 120 80 150 65 165 80 
+           C 180 95 175 125 160 140 
+           C 145 155 120 150 108 138 
+           C 96 126 92 112 100 100 Z" 
         fill="url(#greenGrad)" 
         filter="url(#glow)"
         transform="rotate(72 100 100)"/>
   
-  <!-- Pale 4 - Orange -->
+  <!-- Pale 4 - Orange - Courbe fluide -->
   <path d="M100 100 
-           C 70 130 55 165 75 180 
-           C 95 195 130 190 150 165 
-           C 170 140 165 115 145 105 
-           C 125 95 110 95 100 100 Z" 
+           C 80 120 65 150 80 165 
+           C 95 180 125 175 140 160 
+           C 155 145 150 120 138 108 
+           C 126 96 112 92 100 100 Z" 
         fill="url(#orangeGrad)" 
         filter="url(#glow)"
         transform="rotate(72 100 100)"/>
   
-  <!-- Pale 5 - Blanc -->
+  <!-- Pale 5 - Blanc - Courbe fluide -->
   <path d="M100 100 
-           C 130 70 165 55 180 75 
-           C 195 95 190 130 165 150 
-           C 140 170 115 165 105 145 
-           C 95 125 95 110 100 100 Z" 
+           C 120 80 150 65 165 80 
+           C 180 95 175 125 160 140 
+           C 145 155 120 150 108 138 
+           C 96 126 92 112 100 100 Z" 
         fill="url(#whiteGrad)" 
         filter="url(#glow)"
         transform="rotate(144 100 100)"/>
   
-  <!-- Pale 6 - Vert -->
+  <!-- Pale 6 - Vert - Courbe fluide -->
   <path d="M100 100 
-           C 70 130 55 165 75 180 
-           C 95 195 130 190 150 165 
-           C 170 140 165 115 145 105 
-           C 125 95 110 95 100 100 Z" 
+           C 80 120 65 150 80 165 
+           C 95 180 125 175 140 160 
+           C 155 145 150 120 138 108 
+           C 126 96 112 92 100 100 Z" 
         fill="url(#greenGrad)" 
         filter="url(#glow)"
         transform="rotate(144 100 100)"/>
