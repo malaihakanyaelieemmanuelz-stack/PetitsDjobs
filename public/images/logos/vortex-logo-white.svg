@@ -1,38 +1,87 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dégradé blanc -->
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F5F5F5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E8E8E8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Dégradé blanc clair -->
+    <linearGradient id="lightWhiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F0F0F0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#E8E8E8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D8D8D8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Effet de glow -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Centre vide (trou noir) -->
+  <circle cx="100" cy="100" r="25" fill="none"/>
+  
   <!-- Pale 1 - Blanc -->
   <path d="M100 100 
-           C 140 60 180 50 190 80 
-           C 200 110 190 150 150 170 
-           C 110 190 90 170 85 140 
-           C 80 110 90 100 100 100 Z" 
-        fill="#FFFFFF" 
-        stroke="#FFFFFF" 
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"/>
+           C 130 70 165 55 180 75 
+           C 195 95 190 130 165 150 
+           C 140 170 115 165 105 145 
+           C 95 125 95 110 100 100 Z" 
+        fill="url(#whiteGrad)" 
+        filter="url(#glow)"/>
   
-  <!-- Pale 2 - Blanc -->
+  <!-- Pale 2 - Blanc clair -->
   <path d="M100 100 
-           C 60 140 50 180 80 190 
-           C 110 200 150 190 170 150 
-           C 190 110 170 90 140 85 
-           C 110 80 100 90 100 100 Z" 
-        fill="#E8E8E8" 
-        stroke="#E8E8E8" 
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"/>
+           C 70 130 55 165 75 180 
+           C 95 195 130 190 150 165 
+           C 170 140 165 115 145 105 
+           C 125 95 110 95 100 100 Z" 
+        fill="url(#lightWhiteGrad)" 
+        filter="url(#glow)"/>
   
   <!-- Pale 3 - Blanc -->
   <path d="M100 100 
-           C 100 60 90 30 110 20 
-           C 130 10 170 40 185 80 
-           C 200 120 190 160 160 175 
-           C 130 190 110 170 100 100 Z" 
-        fill="#F0F0F0" 
-        stroke="#F0F0F0" 
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        transform="rotate(120 100 100)"/>
+           C 130 70 165 55 180 75 
+           C 195 95 190 130 165 150 
+           C 140 170 115 165 105 145 
+           C 95 125 95 110 100 100 Z" 
+        fill="url(#whiteGrad)" 
+        filter="url(#glow)"
+        transform="rotate(72 100 100)"/>
+  
+  <!-- Pale 4 - Blanc clair -->
+  <path d="M100 100 
+           C 70 130 55 165 75 180 
+           C 95 195 130 190 150 165 
+           C 170 140 165 115 145 105 
+           C 125 95 110 95 100 100 Z" 
+        fill="url(#lightWhiteGrad)" 
+        filter="url(#glow)"
+        transform="rotate(72 100 100)"/>
+  
+  <!-- Pale 5 - Blanc -->
+  <path d="M100 100 
+           C 130 70 165 55 180 75 
+           C 195 95 190 130 165 150 
+           C 140 170 115 165 105 145 
+           C 95 125 95 110 100 100 Z" 
+        fill="url(#whiteGrad)" 
+        filter="url(#glow)"
+        transform="rotate(144 100 100)"/>
+  
+  <!-- Pale 6 - Blanc clair -->
+  <path d="M100 100 
+           C 70 130 55 165 75 180 
+           C 95 195 130 190 150 165 
+           C 170 140 165 115 145 105 
+           C 125 95 110 95 100 100 Z" 
+        fill="url(#lightWhiteGrad)" 
+        filter="url(#glow)"
+        transform="rotate(144 100 100)"/>
 </svg>

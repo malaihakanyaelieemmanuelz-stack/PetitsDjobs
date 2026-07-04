@@ -3,8 +3,10 @@
 /* Variables de couleurs */
 :root {
     --orange: #FF8C00;
+    --orange-light: #FFB347;
     --white: #FFFFFF;
-    --green: #228B22;
+    --green: #22C55E;
+    --green-light: #7CFF7C;
     --black: #000000;
     --black-secondary: #020202;
     --black-tertiary: #050505;
