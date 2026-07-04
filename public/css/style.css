@@ -1,0 +1,199 @@
+/* Styles de base pour Vortex Hub */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+}
+
+.vortex-page {
+    background: linear-gradient(135deg, #FF8C00 0%, #FFFFFF 50%, #228B22 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Logo Vortex en fond */
+.vortex-background {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.1;
+    z-index: -1;
+}
+
+.vortex-background svg {
+    width: 400px;
+    height: 400px;
+}
+
+/* Slogan Vortex global */
+.vortex-slogan {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    margin-bottom: 40px;
+}
+
+.vortex-slogan h1 {
+    color: white;
+    font-size: 2.5em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* Sections des services */
+.service-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.service-logo {
+    margin-bottom: 20px;
+}
+
+.service-logo svg {
+    width: 150px;
+    height: 150px;
+}
+
+.service-section h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Petitsdjobs - fond vert, texte blanc */
+.petits-jobs {
+    background: #228B22;
+}
+
+.petits-jobs h2 {
+    color: white;
+}
+
+.petits-jobs .slogan-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.petits-jobs .slogan-box p {
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* Vendia - fond orange, texte vert */
+.vendia {
+    background: #FF8C00;
+}
+
+.vendia h2 {
+    color: white;
+}
+
+.vendia .slogan-box {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.vendia .slogan-box p {
+    color: #228B22;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* Profilio - fond blanc, texte orange */
+.profilio {
+    background: white;
+    border: 3px solid #228B22;
+}
+
+.profilio h2 {
+    color: #228B22;
+}
+
+.profilio .slogan-box {
+    background: #FF8C00;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.profilio .slogan-box p {
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+/* Carousels */
+.carousel {
+    overflow: hidden;
+    margin: 20px 0;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.carousel-track {
+    display: flex;
+    animation: scroll 15s linear infinite;
+}
+
+.carousel-item {
+    flex: 0 0 auto;
+    width: 200px;
+    padding: 10px 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .vortex-background svg {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .vortex-slogan h1 {
+        font-size: 1.8em;
+    }
+    
+    .service-logo svg {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .service-section h2 {
+        font-size: 1.5em;
+    }
+    
+    .carousel-item {
+        width: 150px;
+        font-size: 0.9em;
+    }
+}
