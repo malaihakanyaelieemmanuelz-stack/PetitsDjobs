@@ -1,0 +1,69 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dégradé pour la pale orange -->
+    <linearGradient id="orangeGradientGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Dégradé pour la pale blanche -->
+    <linearGradient id="whiteGradientGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0E0E0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Dégradé pour la pale verte -->
+    <linearGradient id="greenGradientGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#228B22;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#32CD32;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Effet de glow -->
+    <filter id="glowEffect" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <g filter="url(#glowEffect)">
+    <!-- Pale 1 - Orange -->
+    <path d="M100 100 
+             C 130 70 160 60 170 80 
+             C 180 100 170 130 140 150 
+             C 110 170 90 160 85 140 
+             C 80 120 90 110 100 100 Z" 
+          fill="url(#orangeGradientGlow)" 
+          stroke="#FF8C00" 
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- Pale 2 - Blanc -->
+    <path d="M100 100 
+             C 70 130 60 160 80 170 
+             C 100 180 130 170 150 140 
+             C 170 110 160 90 140 85 
+             C 120 80 110 90 100 100 Z" 
+          fill="url(#whiteGradientGlow)" 
+          stroke="#FFFFFF" 
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+    
+    <!-- Pale 3 - Vert -->
+    <path d="M100 100 
+             C 100 70 90 40 110 30 
+             C 130 20 160 40 170 70 
+             C 180 100 170 130 150 140 
+             C 130 150 110 140 100 100 Z" 
+          fill="url(#greenGradientGlow)" 
+          stroke="#228B22" 
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          transform="rotate(120 100 100)"/>
+  </g>
+</svg>
