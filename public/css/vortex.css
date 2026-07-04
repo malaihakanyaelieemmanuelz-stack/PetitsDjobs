@@ -97,7 +97,7 @@ body {
 }
 
 .nav-logo img {
-    filter: drop-shadow(0 0 50px rgba(255, 140, 0, 0.9)) drop-shadow(0 0 100px rgba(255, 165, 0, 0.6));
+    filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.5)) drop-shadow(0 0 50px rgba(255, 165, 0, 0.3));
 }
 
 .nav-links {
@@ -196,22 +196,22 @@ body {
     font-size: 6rem;
     font-weight: 800;
     margin-bottom: 25px;
-    background: linear-gradient(135deg, var(--orange-bright) 0%, var(--white) 50%, var(--green) 100%);
+    background: linear-gradient(135deg, var(--orange) 0%, var(--white) 50%, var(--green) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -3px;
     line-height: 1;
-    filter: drop-shadow(0 0 80px rgba(255, 140, 0, 0.8));
+    filter: drop-shadow(0 0 40px rgba(255, 140, 0, 0.4));
     animation: titleGlow 4s ease-in-out infinite;
 }
 
 @keyframes titleGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 80px rgba(255, 140, 0, 0.8));
+        filter: drop-shadow(0 0 40px rgba(255, 140, 0, 0.4));
     }
     50% {
-        filter: drop-shadow(0 0 120px rgba(255, 165, 0, 1));
+        filter: drop-shadow(0 0 60px rgba(255, 140, 0, 0.6));
     }
 }
 
@@ -365,7 +365,7 @@ body {
 
 .platform-card:hover {
     transform: translateY(-12px);
-    box-shadow: 0 30px 80px rgba(255, 140, 0, 0.3), 0 0 60px rgba(255, 140, 0, 0.15);
+    box-shadow: 0 30px 80px rgba(255, 140, 0, 0.25), 0 0 50px rgba(255, 165, 0, 0.15);
     border-color: rgba(255, 140, 0, 0.4);
 }
 
@@ -385,7 +385,7 @@ body {
     width: 70px;
     height: 70px;
     margin-bottom: 25px;
-    filter: drop-shadow(0 0 50px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 80px rgba(255, 165, 0, 0.5));
+    filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.5)) drop-shadow(0 0 40px rgba(255, 165, 0, 0.3));
 }
 
 .platform-title {
@@ -393,11 +393,11 @@ body {
     font-weight: 700;
     margin-bottom: 15px;
     color: var(--white);
-    background: linear-gradient(135deg, var(--orange-bright), var(--white));
+    background: linear-gradient(135deg, var(--orange), var(--white));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.5));
+    filter: drop-shadow(0 0 10px rgba(255, 140, 0, 0.3));
 }
 
 .platform-description {
@@ -452,7 +452,7 @@ body {
 }
 
 .footer-logo img {
-    filter: drop-shadow(0 0 40px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 60px rgba(255, 165, 0, 0.5));
+    filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.5)) drop-shadow(0 0 30px rgba(255, 165, 0, 0.3));
 }
 
 .footer-content p {
