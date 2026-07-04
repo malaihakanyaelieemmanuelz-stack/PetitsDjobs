@@ -6,10 +6,10 @@
     <title>VORTEX - L'Écosystème Numérique</title>
     <link rel="stylesheet" href="css/vortex.css">
 </head>
-<body class="vortex-body">
-    <!-- Logo en arrière-plan -->
-    <div class="background-logo">
-        <img src="images/logos/vortex-logo-white.svg" alt="VORTEX Logo">
+<body>
+    <!-- Fond cosmique avec étoiles -->
+    <div class="cosmic-background">
+        <canvas id="starsCanvas"></canvas>
     </div>
 
     <!-- Navigation -->
@@ -48,70 +48,73 @@
                     <button class="btn btn-primary">Découvrir l'écosystème</button>
                     <button class="btn btn-secondary">Commencer</button>
                 </div>
+                <div class="hero-features">
+                    <div class="feature">
+                        <span class="feature-icon">🔒</span>
+                        <span class="feature-text">Sécurisé</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">⚡</span>
+                        <span class="feature-text">Rapide</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">👥</span>
+                        <span class="feature-text">Communauté active</span>
+                    </div>
+                </div>
             </div>
             <div class="hero-vortex">
-                <img src="images/logos/vortex-logo-glow.svg" alt="VORTEX Animation" class="hero-vortex-logo">
+                <canvas id="vortexCanvas"></canvas>
             </div>
         </div>
     </section>
 
-    <!-- Section PetitsdJobs -->
-    <section class="platform-section" id="petitsdjobs">
-        <div class="section-header">
-            <h2>PetitsdJobs</h2>
-            <p class="section-slogan">Votre plateforme dynamique de mise en relation pour des petits jobs de qualité.</p>
-        </div>
-        <div class="carousel-container">
-            <div class="carousel" id="petitsdjobsCarousel">
-                <!-- Cartes générées par JavaScript -->
+    <!-- Section Plateformes -->
+    <section class="platforms-section">
+        <div class="platforms-container">
+            <div class="platform-card" id="petitsdjobs">
+                <div class="platform-card-content">
+                    <img src="images/logos/vortex-logo.svg" alt="PetitsdJobs" class="platform-logo">
+                    <h3 class="platform-title">PetitsdJobs</h3>
+                    <p class="platform-description">Trouvez des prestataires qualifiés pour vos petits jobs du quotidien.</p>
+                    <div class="platform-content" id="petitsdjobsContent">
+                        <!-- Contenu chargé depuis la base de données -->
+                    </div>
+                    <button class="btn btn-primary platform-btn">Découvrir PetitsdJobs</button>
+                </div>
             </div>
-        </div>
-        <button class="btn btn-primary section-btn">Découvrir PetitsdJobs</button>
-    </section>
 
-    <!-- Section Vendia -->
-    <section class="platform-section" id="vendia">
-        <div class="section-header">
-            <h2>Vendia</h2>
-            <p class="section-description">Plateforme moderne d'achat et de vente.</p>
-        </div>
-        <div class="carousel-container">
-            <div class="carousel" id="vendiaCarousel">
-                <!-- Cartes générées par JavaScript -->
+            <div class="platform-card" id="vendia">
+                <div class="platform-card-content">
+                    <img src="images/logos/vortex-logo.svg" alt="Vendia" class="platform-logo">
+                    <h3 class="platform-title">Vendia</h3>
+                    <p class="platform-description">Achetez et vendez facilement sur une marketplace moderne.</p>
+                    <div class="platform-content" id="vendiaContent">
+                        <!-- Contenu chargé depuis la base de données -->
+                    </div>
+                    <button class="btn btn-primary platform-btn">Découvrir Vendia</button>
+                </div>
             </div>
-        </div>
-        <div class="top-sellers">
-            <h3>Vendeurs les plus réputés</h3>
-            <div class="sellers-grid" id="sellersGrid">
-                <!-- Vendeurs générés par JavaScript -->
-            </div>
-        </div>
-        <button class="btn btn-primary section-btn">Découvrir Vendia</button>
-    </section>
 
-    <!-- Section Profilio -->
-    <section class="platform-section" id="profilio">
-        <div class="section-header">
-            <h2>Profilio</h2>
-            <p class="section-description">Construisez votre identité professionnelle, présentez vos compétences, vos réalisations, vos expériences et augmentez votre visibilité auprès des particuliers et des entreprises.</p>
-        </div>
-        <div class="carousel-container">
-            <div class="carousel" id="profilioCarousel">
-                <!-- Cartes générées par JavaScript -->
+            <div class="platform-card" id="profilio">
+                <div class="platform-card-content">
+                    <img src="images/logos/vortex-logo.svg" alt="Profilio" class="platform-logo">
+                    <h3 class="platform-title">Profilio</h3>
+                    <p class="platform-description">Construisez votre identité professionnelle et boostez votre carrière.</p>
+                    <div class="platform-content" id="profilioContent">
+                        <!-- Contenu chargé depuis la base de données -->
+                    </div>
+                    <button class="btn btn-primary platform-btn">Découvrir Profilio</button>
+                </div>
             </div>
         </div>
-        <button class="btn btn-primary section-btn">Découvrir Profilio</button>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <svg width="40" height="40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M100 100 C 120 20 180 20 180 100 C 180 180 120 180 100 100 Z" fill="#FF8C00"/>
-                    <path d="M100 100 C 20 120 20 20 100 20 C 180 20 180 120 100 100 Z" fill="#FFFFFF"/>
-                    <path d="M100 100 C 80 180 20 180 20 100 C 20 20 80 20 100 100 Z" fill="#228B22"/>
-                </svg>
+                <img src="images/logos/vortex-logo-white.svg" alt="VORTEX" width="40" height="40">
                 <span>VORTEX</span>
             </div>
             <p>&copy; 2026 VORTEX. Tous droits réservés.</p>

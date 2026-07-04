@@ -1,4 +1,171 @@
-// VORTEX - JavaScript Principal - Connexion Base de Données
+// VORTEX - Animation Cosmique et Connexion Base de Données
+
+// Animation des étoiles (fond cosmique)
+class StarsAnimation {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.stars = [];
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.initStars();
+        this.animate();
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    initStars() {
+        this.stars = [];
+        const starCount = Math.floor((this.canvas.width * this.canvas.height) / 3000);
+        
+        for (let i = 0; i < starCount; i++) {
+            this.stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: Math.random() * 2 + 0.5,
+                opacity: Math.random() * 0.5 + 0.3,
+                speed: Math.random() * 0.02 + 0.01
+            });
+        }
+    }
+
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.stars.forEach(star => {
+            star.opacity += (Math.random() - 0.5) * 0.02;
+            star.opacity = Math.max(0.1, Math.min(0.8, star.opacity));
+            
+            this.ctx.beginPath();
+            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+            this.ctx.fill();
+        });
+        
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// Animation du Vortex (trou noir cosmique)
+class VortexAnimation {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.angle = 0;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.initParticles();
+        this.animate();
+    }
+
+    resize() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+        this.centerX = this.canvas.width / 2;
+        this.centerY = this.canvas.height / 2;
+    }
+
+    initParticles() {
+        this.particles = [];
+        for (let i = 0; i < 300; i++) {
+            this.particles.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: Math.random() * 250 + 50,
+                speed: Math.random() * 0.03 + 0.01,
+                size: Math.random() * 4 + 1,
+                color: Math.random() > 0.5 ? '#FF8C00' : '#228B22',
+                opacity: Math.random() * 0.6 + 0.4
+            });
+        }
+    }
+
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Dessiner le halo central
+        this.drawHalo();
+        
+        // Dessiner les spirales du vortex
+        this.drawSpirals();
+        
+        // Dessiner les particules
+        this.drawParticles();
+        
+        this.angle += 0.008;
+        requestAnimationFrame(() => this.animate());
+    }
+
+    drawHalo() {
+        const gradient = this.ctx.createRadialGradient(
+            this.centerX, this.centerY, 0,
+            this.centerX, this.centerY, 300
+        );
+        
+        gradient.addColorStop(0, 'rgba(255, 140, 0, 0.4)');
+        gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0.6, 'rgba(34, 139, 34, 0.3)');
+        gradient.addColorStop(1, 'transparent');
+        
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 300, 0, Math.PI * 2);
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+    }
+
+    drawSpirals() {
+        for (let i = 0; i < 4; i++) {
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = i === 0 ? 'rgba(255, 140, 0, 0.6)' : 
+                                  i === 1 ? 'rgba(255, 255, 255, 0.4)' : 
+                                  i === 2 ? 'rgba(34, 139, 34, 0.6)' : 
+                                  'rgba(255, 140, 0, 0.3)';
+            this.ctx.lineWidth = 3;
+            this.ctx.lineCap = 'round';
+            
+            for (let j = 0; j < 720; j++) {
+                const angle = (j * Math.PI / 180) + this.angle + (i * 0.4);
+                const radius = j * 0.4 + (i * 30);
+                const x = this.centerX + Math.cos(angle) * radius;
+                const y = this.centerY + Math.sin(angle) * radius;
+                
+                if (j === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+            this.ctx.stroke();
+        }
+    }
+
+    drawParticles() {
+        this.particles.forEach(particle => {
+            particle.angle += particle.speed;
+            particle.radius -= 0.1;
+            
+            if (particle.radius < 20) {
+                particle.radius = Math.random() * 250 + 50;
+            }
+            
+            const x = this.centerX + Math.cos(particle.angle + this.angle) * particle.radius;
+            const y = this.centerY + Math.sin(particle.angle + this.angle) * particle.radius;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = particle.color;
+            this.ctx.globalAlpha = particle.opacity;
+            this.ctx.shadowBlur = 20;
+            this.ctx.shadowColor = particle.color;
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+            this.ctx.shadowBlur = 0;
+        });
+    }
+}
 
 // Service de données (à connecter avec Supabase)
 class DataService {
@@ -18,7 +185,6 @@ class DataService {
             //     .order('created_at', { ascending: false })
             //     .limit(10);
             
-            // Pour l'instant, retourne empty array
             return [];
         } catch (error) {
             console.error('Erreur PetitsdJobs:', error);
@@ -39,23 +205,6 @@ class DataService {
             return [];
         } catch (error) {
             console.error('Erreur Vendia:', error);
-            return [];
-        }
-    }
-
-    // Récupérer les vendeurs les plus réputés
-    async getTopSellers() {
-        try {
-            // À implémenter avec Supabase:
-            // const { data, error } = await supabase
-            //     .from('profiles')
-            //     .select('*')
-            //     .order('rating', { ascending: false })
-            //     .limit(4);
-            
-            return [];
-        } catch (error) {
-            console.error('Erreur vendeurs:', error);
             return [];
         }
     }
@@ -86,135 +235,53 @@ class DisplayService {
 
     // Afficher PetitsdJobs
     async displayPetitsdJobs() {
-        const container = document.getElementById('petitsdjobsCarousel');
+        const container = document.getElementById('petitsdjobsContent');
         if (!container) return;
 
         const data = await this.dataService.getPetitsdJobs();
         
         if (data.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Aucun petit job disponible pour le moment. Soyez le premier à publier une annonce.</p>
-                </div>
-            `;
+            container.innerHTML = '<p class="empty">Aucune annonce disponible.</p>';
+            container.classList.add('empty');
             return;
         }
 
-        container.innerHTML = '';
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'carousel-card fade-in';
-            card.innerHTML = `
-                <div class="carousel-card-icon">${this.getIcon(item.categorie)}</div>
-                <h3 class="carousel-card-title">${item.titre}</h3>
-                <p class="carousel-card-description">${item.description}</p>
-            `;
-            container.appendChild(card);
-        });
+        container.classList.remove('empty');
+        container.innerHTML = `<p>${data.length} annonces disponibles</p>`;
     }
 
     // Afficher Vendia
     async displayVendia() {
-        const container = document.getElementById('vendiaCarousel');
+        const container = document.getElementById('vendiaContent');
         if (!container) return;
 
         const data = await this.dataService.getVendiaProducts();
         
         if (data.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Aucun article disponible pour le moment.</p>
-                </div>
-            `;
+            container.innerHTML = '<p class="empty">Aucun produit disponible.</p>';
+            container.classList.add('empty');
             return;
         }
 
-        container.innerHTML = '';
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'carousel-card fade-in';
-            card.innerHTML = `
-                ${item.image_url ? `<img src="${item.image_url}" alt="${item.titre}" class="carousel-card-image">` : ''}
-                <div class="carousel-card-icon">${this.getIcon(item.categorie)}</div>
-                <h3 class="carousel-card-title">${item.titre}</h3>
-                <p class="carousel-card-price">${item.prix} €</p>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    // Afficher les vendeurs
-    async displaySellers() {
-        const container = document.getElementById('sellersGrid');
-        if (!container) return;
-
-        const data = await this.dataService.getTopSellers();
-        
-        if (data.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Aucun vendeur disponible pour le moment.</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = '';
-        data.forEach(seller => {
-            const card = document.createElement('div');
-            card.className = 'seller-card fade-in';
-            card.innerHTML = `
-                <div class="seller-avatar">${seller.nom.charAt(0)}</div>
-                <h4 class="seller-name">${seller.nom} ${seller.prenom}</h4>
-                <div class="seller-rating">
-                    <span>★</span>
-                    <span>${seller.rating || 'N/A'}</span>
-                </div>
-                <span class="seller-badge">Vendeur vérifié</span>
-            `;
-            container.appendChild(card);
-        });
+        container.classList.remove('empty');
+        container.innerHTML = `<p>${data.length} produits disponibles</p>`;
     }
 
     // Afficher Profilio
     async displayProfilio() {
-        const container = document.getElementById('profilioCarousel');
+        const container = document.getElementById('profilioContent');
         if (!container) return;
 
         const data = await this.dataService.getProfilioProfiles();
         
         if (data.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <p>Aucun profil professionnel disponible pour le moment.</p>
-                </div>
-            `;
+            container.innerHTML = '<p class="empty">Aucun profil disponible.</p>';
+            container.classList.add('empty');
             return;
         }
 
-        container.innerHTML = '';
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'carousel-card fade-in';
-            card.innerHTML = `
-                <div class="carousel-card-icon">👤</div>
-                <h3 class="carousel-card-title">${item.titre}</h3>
-                <p class="carousel-card-description">${item.experience}</p>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    // Helper pour les icônes
-    getIcon(category) {
-        const icons = {
-            'électricien': '⚡',
-            'plombier': '🔧',
-            'développeur': '💻',
-            'graphiste': '🎨',
-            'default': '🔷'
-        };
-        return icons[category?.toLowerCase()] || icons['default'];
+        container.classList.remove('empty');
+        container.innerHTML = `<p>${data.length} profils disponibles</p>`;
     }
 }
 
@@ -244,26 +311,6 @@ function handleMobileMenu() {
     });
 }
 
-// Scroll animations
-function handleScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, observerOptions);
-    
-    document.querySelectorAll('.fade-in').forEach(el => {
-        observer.observe(el);
-    });
-}
-
 // Smooth scroll pour les liens de navigation
 function handleSmoothScroll() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -277,7 +324,6 @@ function handleSmoothScroll() {
                 });
             }
             
-            // Fermer le menu mobile si ouvert
             const navLinks = document.querySelector('.nav-links');
             if (navLinks) {
                 navLinks.classList.remove('active');
@@ -286,44 +332,30 @@ function handleSmoothScroll() {
     });
 }
 
-// Auto-scroll des carousels
-function autoScrollCarousels() {
-    const carousels = document.querySelectorAll('.carousel');
-    
-    carousels.forEach(carousel => {
-        let scrollAmount = 0;
-        const scrollSpeed = 1;
-        const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-        
-        function scroll() {
-            scrollAmount += scrollSpeed;
-            if (scrollAmount >= maxScroll) {
-                scrollAmount = 0;
-            }
-            carousel.scrollLeft = scrollAmount;
-            requestAnimationFrame(scroll);
-        }
-        
-        scroll();
-    });
-}
-
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser les services
+    // Initialiser les animations
+    const starsCanvas = document.getElementById('starsCanvas');
+    if (starsCanvas) {
+        new StarsAnimation(starsCanvas);
+    }
+    
+    const vortexCanvas = document.getElementById('vortexCanvas');
+    if (vortexCanvas) {
+        new VortexAnimation(vortexCanvas);
+    }
+    
+    // Initialiser les services de données
     const dataService = new DataService();
     const displayService = new DisplayService(dataService);
     
     // Charger les données depuis la base de données
     displayService.displayPetitsdJobs();
     displayService.displayVendia();
-    displayService.displaySellers();
     displayService.displayProfilio();
     
     // Initialiser les fonctionnalités UI
     handleNavbarScroll();
     handleMobileMenu();
-    handleScrollAnimations();
     handleSmoothScroll();
-    autoScrollCarousels();
 });
