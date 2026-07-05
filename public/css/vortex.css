@@ -1,40 +1,34 @@
-/* VORTEX - Univers Cosmique Immersif */
+/* VORTEX - Trou Noir Cosmique Réaliste */
 
 /* Variables de couleurs cosmiques */
 :root {
     /* Noir spatial dominant */
     --void-black: #000000;
-    --deep-space: #030308;
-    --cosmic-void: #050510;
+    --deep-space: #020205;
+    --cosmic-void: #050508;
     
-    /* Phénomènes lumineux naturels */
-    --stellar-blue: #00d4ff;
-    --plasma-cyan: #00fff5;
-    --nebula-pink: #ff6b9d;
-    --energy-violet: #8b5cf6;
-    --cosmic-purple: #1a0a2e;
-    
-    /* Disque d'accrétion et horizon des événements */
-    --event-horizon: #ff4500;
-    --accretion-disk: #ff6b35;
-    --plasma-core: #ff8c42;
+    /* Disque d'accrétion - chaud vers violet */
+    --accretion-core: #ffb480;
+    --accretion-mid: #ff9664;
+    --accretion-outer: #ff7850;
+    --plasma-warm: #c86496;
+    --plasma-cool: #965180;
     
     /* Lumière stellaire */
     --starlight: #ffffff;
-    --star-glow: #e0e8ff;
+    --star-glow: #f0f4ff;
     
     /* Matière cosmique */
-    --cosmic-dust: #4a4a6a;
-    --nebula-mist: #2a2a4a;
+    --cosmic-dust: #3a3a4a;
+    --nebula-mist: #2a2a3a;
     
     /* Glassmorphism cosmique */
-    --glass-bg: rgba(10, 10, 25, 0.35);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg: rgba(5, 5, 10, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
     --glass-blur: 25px;
     
     /* Transitions fluides */
     --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 /* Reset et base */
@@ -118,12 +112,12 @@ body {
 }
 
 .nav-logo img {
-    filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.4)) drop-shadow(0 0 40px rgba(139, 92, 246, 0.3));
+    filter: drop-shadow(0 0 20px rgba(255, 180, 128, 0.4)) drop-shadow(0 0 40px rgba(200, 100, 150, 0.3));
     transition: var(--transition-smooth);
 }
 
 .nav-logo img:hover {
-    filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.6)) drop-shadow(0 0 50px rgba(139, 92, 246, 0.4));
+    filter: drop-shadow(0 0 30px rgba(255, 180, 128, 0.6)) drop-shadow(0 0 50px rgba(200, 100, 150, 0.4));
 }
 
 .nav-links {
@@ -222,22 +216,22 @@ body {
     font-size: 6rem;
     font-weight: 800;
     margin-bottom: 25px;
-    background: linear-gradient(135deg, var(--stellar-blue) 0%, var(--plasma-cyan) 50%, var(--energy-violet) 100%);
+    background: linear-gradient(135deg, var(--accretion-core) 0%, var(--accretion-mid) 50%, var(--plasma-warm) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -3px;
     line-height: 1;
-    filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.3)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.2));
+    filter: drop-shadow(0 0 30px rgba(255, 180, 128, 0.3)) drop-shadow(0 0 60px rgba(200, 100, 150, 0.2));
     animation: titleGlow 4s ease-in-out infinite;
 }
 
 @keyframes titleGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.3)) drop-shadow(0 0 60px rgba(139, 92, 246, 0.2));
+        filter: drop-shadow(0 0 30px rgba(255, 180, 128, 0.3)) drop-shadow(0 0 60px rgba(200, 100, 150, 0.2));
     }
     50% {
-        filter: drop-shadow(0 0 50px rgba(0, 212, 255, 0.5)) drop-shadow(0 0 80px rgba(139, 92, 246, 0.3));
+        filter: drop-shadow(0 0 50px rgba(255, 180, 128, 0.5)) drop-shadow(0 0 80px rgba(200, 100, 150, 0.3));
     }
 }
 
@@ -406,12 +400,12 @@ body {
     width: 70px;
     height: 70px;
     margin-bottom: 25px;
-    filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.4)) drop-shadow(0 0 35px rgba(139, 92, 246, 0.3));
+    filter: drop-shadow(0 0 20px rgba(255, 180, 128, 0.4)) drop-shadow(0 0 35px rgba(200, 100, 150, 0.3));
     transition: var(--transition-smooth);
 }
 
 .platform-card:hover .platform-logo {
-    filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.6)) drop-shadow(0 0 50px rgba(139, 92, 246, 0.4));
+    filter: drop-shadow(0 0 30px rgba(255, 180, 128, 0.6)) drop-shadow(0 0 50px rgba(200, 100, 150, 0.4));
 }
 
 .platform-title {
@@ -419,11 +413,11 @@ body {
     font-weight: 700;
     margin-bottom: 15px;
     color: var(--starlight);
-    background: linear-gradient(135deg, var(--stellar-blue), var(--plasma-cyan));
+    background: linear-gradient(135deg, var(--accretion-core), var(--accretion-mid));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.3));
+    filter: drop-shadow(0 0 15px rgba(255, 180, 128, 0.3));
 }
 
 .platform-description {
@@ -458,7 +452,7 @@ body {
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(30px);
     padding: 50px 40px;
-    border-top: 1px solid rgba(0, 212, 255, 0.1);
+    border-top: 1px solid rgba(255, 180, 128, 0.1);
 }
 
 .footer-content {
@@ -478,7 +472,7 @@ body {
 }
 
 .footer-logo img {
-    filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.4)) drop-shadow(0 0 25px rgba(139, 92, 246, 0.3));
+    filter: drop-shadow(0 0 15px rgba(255, 180, 128, 0.4)) drop-shadow(0 0 25px rgba(200, 100, 150, 0.3));
 }
 
 .footer-content p {
