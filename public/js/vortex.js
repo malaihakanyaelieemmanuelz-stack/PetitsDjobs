@@ -1,15 +1,16 @@
-// VORTEX - Animation Cosmique et Connexion Base de Données
+// VORTEX - Univers Cosmique Immersif
 
-// Animation cosmique unifiée (fond + vortex intégrés)
-class CosmicAnimation {
+// Animation cosmique unifiée (trou noir + galaxie + matière cosmique)
+class CosmicUniverse {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.stars = [];
         this.cosmicDust = [];
-        this.darkNebula = [];
-        this.ribbons = [];
-        this.particles = [];
+        this.nebulaClouds = [];
+        this.accretionDisk = [];
+        this.gravitationalFlux = [];
+        this.spiralArms = [];
         this.angle = 0;
         this.time = 0;
         this.centerX = 0;
@@ -18,103 +19,169 @@ class CosmicAnimation {
         window.addEventListener('resize', () => this.resize());
         this.initStars();
         this.initCosmicDust();
-        this.initDarkNebula();
-        this.initRibbons();
-        this.initParticles();
+        this.initNebulaClouds();
+        this.initAccretionDisk();
+        this.initGravitationalFlux();
+        this.initSpiralArms();
         this.animate();
     }
 
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.centerX = this.canvas.width * 0.75; // Vortex à droite
+        this.centerX = this.canvas.width * 0.72;
         this.centerY = this.canvas.height * 0.5;
     }
 
     initStars() {
         this.stars = [];
-        const starCount = Math.floor((this.canvas.width * this.canvas.height) / 1200);
+        const starCount = Math.floor((this.canvas.width * this.canvas.height) / 800);
         
         for (let i = 0; i < starCount; i++) {
+            const depth = Math.random();
             this.stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 0.8 + 0.2,
-                opacity: Math.random() * 0.25 + 0.1,
+                size: (0.3 + Math.random() * 0.7) * (1 - depth * 0.5),
+                opacity: (0.15 + Math.random() * 0.25) * (1 - depth * 0.3),
+                depth: depth,
                 twinkle: Math.random() * Math.PI * 2,
-                twinkleSpeed: Math.random() * 0.02 + 0.008
+                twinkleSpeed: (0.015 + Math.random() * 0.02) * (1 - depth * 0.5),
+                color: this.getStarColor(depth)
             });
         }
     }
 
+    getStarColor(depth) {
+        const colors = [
+            '#ffffff',
+            '#e0e8ff',
+            '#d4e1ff',
+            '#c8d4ff',
+            '#00d4ff',
+            '#8b5cf6'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
     initCosmicDust() {
         this.cosmicDust = [];
-        const dustCount = Math.floor((this.canvas.width * this.canvas.height) / 5000);
+        const dustCount = Math.floor((this.canvas.width * this.canvas.height) / 3000);
         
         for (let i = 0; i < dustCount; i++) {
             this.cosmicDust.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 1 + 0.3,
-                opacity: Math.random() * 0.05 + 0.01,
-                speedX: (Math.random() - 0.5) * 0.01,
-                speedY: (Math.random() - 0.5) * 0.01
+                size: Math.random() * 0.8 + 0.2,
+                opacity: Math.random() * 0.04 + 0.01,
+                speedX: (Math.random() - 0.5) * 0.008,
+                speedY: (Math.random() - 0.5) * 0.008
             });
         }
     }
 
-    initDarkNebula() {
-        this.darkNebula = [];
-        const nebulaCount = 5;
+    initNebulaClouds() {
+        this.nebulaClouds = [];
+        const cloudCount = 7;
         
-        for (let i = 0; i < nebulaCount; i++) {
-            this.darkNebula.push({
+        for (let i = 0; i < cloudCount; i++) {
+            this.nebulaClouds.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                radius: 120 + Math.random() * 180,
-                opacity: Math.random() * 0.03 + 0.01,
-                speedX: (Math.random() - 0.5) * 0.005,
-                speedY: (Math.random() - 0.5) * 0.005
+                radius: 100 + Math.random() * 200,
+                color: this.getNebulaColor(),
+                opacity: Math.random() * 0.025 + 0.008,
+                speedX: (Math.random() - 0.5) * 0.004,
+                speedY: (Math.random() - 0.5) * 0.004
             });
         }
     }
 
-    initRibbons() {
-        this.ribbons = [];
-        for (let i = 0; i < 20; i++) {
-            this.ribbons.push({
-                baseAngle: (i / 20) * Math.PI * 2,
-                radius: 45 + i * 9,
-                speed: 0.0012 + i * 0.00012,
-                color: this.getRandomColor(),
-                width: 0.6 + Math.random() * 1.2,
-                length: 0.35 + Math.random() * 0.45,
-                amplitude: 10 + Math.random() * 18,
-                frequency: 2.5 + Math.random() * 3,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
+    getNebulaColor() {
+        const colors = [
+            'rgba(26, 10, 46, 0.3)',
+            'rgba(139, 92, 246, 0.2)',
+            'rgba(0, 212, 255, 0.15)',
+            'rgba(255, 107, 157, 0.12)'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    initParticles() {
-        this.particles = [];
-        for (let i = 0; i < 250; i++) {
+    initAccretionDisk() {
+        this.accretionDisk = [];
+        const diskCount = 300;
+        
+        for (let i = 0; i < diskCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * 180 + 50;
-            this.particles.push({
+            const distance = 50 + Math.random() * 150;
+            this.accretionDisk.push({
                 angle: angle,
                 distance: distance,
-                speed: (0.0018 + Math.random() * 0.0025) * (230 / distance),
-                size: Math.random() * 2 + 0.6,
-                color: this.getRandomColor(),
-                opacity: Math.random() * 0.5 + 0.35,
+                speed: (0.003 + Math.random() * 0.004) * (200 / distance),
+                size: Math.random() * 2.5 + 0.8,
+                color: this.getDiskColor(distance),
+                opacity: Math.random() * 0.6 + 0.4,
+                wobble: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    getDiskColor(distance) {
+        if (distance < 80) return '#ff4500';
+        if (distance < 120) return '#ff6b35';
+        if (distance < 160) return '#ff8c42';
+        return '#ffa050';
+    }
+
+    initGravitationalFlux() {
+        this.gravitationalFlux = [];
+        const fluxCount = 150;
+        
+        for (let i = 0; i < fluxCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 100 + Math.random() * 300;
+            this.gravitationalFlux.push({
+                angle: angle,
+                distance: distance,
+                speed: (0.002 + Math.random() * 0.003) * (400 / distance),
+                size: Math.random() * 1.5 + 0.5,
+                color: this.getFluxColor(),
+                opacity: Math.random() * 0.4 + 0.2,
                 trail: []
             });
         }
     }
 
-    getRandomColor() {
-        const colors = ['#FF8C00', '#FFB347', '#FFFFFF', '#22C55E', '#7CFF7C'];
+    getFluxColor() {
+        const colors = [
+            '#00d4ff',
+            '#00fff5',
+            '#8b5cf6',
+            '#ff6b9d'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    initSpiralArms() {
+        this.spiralArms = [];
+        const armCount = 4;
+        
+        for (let i = 0; i < armCount; i++) {
+            this.spiralArms.push({
+                baseAngle: (i / armCount) * Math.PI * 2,
+                twist: 0.8 + Math.random() * 0.4,
+                width: 0.3 + Math.random() * 0.2,
+                color: this.getArmColor()
+            });
+        }
+    }
+
+    getArmColor() {
+        const colors = [
+            'rgba(0, 212, 255, 0.15)',
+            'rgba(139, 92, 246, 0.12)',
+            'rgba(255, 107, 157, 0.1)'
+        ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
@@ -122,24 +189,33 @@ class CosmicAnimation {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.time += 0.016;
         
-        // Dessiner les nébula sombres (profondeur)
-        this.drawDarkNebula();
+        // Dessiner les nébula (fond)
+        this.drawNebulaClouds();
+        
+        // Dessiner les étoiles (toute la scène)
+        this.drawStars();
         
         // Dessiner la poussière cosmique
         this.drawCosmicDust();
         
-        // Dessiner les étoiles fines (toute la page)
-        this.drawStars();
+        // Dessiner les bras spiraux de la galaxie
+        this.drawSpiralArms();
         
-        // Dessiner le vortex intégré
-        this.drawVortex();
+        // Dessiner le flux gravitationnel
+        this.drawGravitationalFlux();
         
-        this.angle += 0.002;
+        // Dessiner le disque d'accrétion
+        this.drawAccretionDisk();
+        
+        // Dessiner le trou noir central
+        this.drawBlackHole();
+        
+        this.angle += 0.0015;
         requestAnimationFrame(() => this.animate());
     }
 
-    drawDarkNebula() {
-        this.darkNebula.forEach(cloud => {
+    drawNebulaClouds() {
+        this.nebulaClouds.forEach(cloud => {
             cloud.x += cloud.speedX;
             cloud.y += cloud.speedY;
             
@@ -152,16 +228,33 @@ class CosmicAnimation {
                 cloud.x, cloud.y, 0,
                 cloud.x, cloud.y, cloud.radius
             );
-            gradient.addColorStop(0, `rgba(0, 0, 0, ${cloud.opacity})`);
-            gradient.addColorStop(0.5, `rgba(0, 0, 0, ${cloud.opacity * 0.5})`);
+            gradient.addColorStop(0, cloud.color.replace('0.3', cloud.opacity.toString()).replace('0.2', (cloud.opacity * 0.7).toString()).replace('0.15', (cloud.opacity * 0.5).toString()).replace('0.12', (cloud.opacity * 0.4).toString()));
+            gradient.addColorStop(0.5, cloud.color.replace('0.3', (cloud.opacity * 0.5).toString()).replace('0.2', (cloud.opacity * 0.35).toString()).replace('0.15', (cloud.opacity * 0.25).toString()).replace('0.12', (cloud.opacity * 0.2).toString()));
             gradient.addColorStop(1, 'transparent');
             
             this.ctx.beginPath();
             this.ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
             this.ctx.fillStyle = gradient;
-            this.ctx.filter = 'blur(45px)';
+            this.ctx.filter = 'blur(50px)';
             this.ctx.fill();
             this.ctx.filter = 'none';
+        });
+    }
+
+    drawStars() {
+        this.stars.forEach(star => {
+            star.twinkle += star.twinkleSpeed;
+            const twinkleOpacity = star.opacity * (0.5 + Math.sin(star.twinkle) * 0.5);
+            
+            this.ctx.beginPath();
+            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = star.color;
+            this.ctx.globalAlpha = twinkleOpacity;
+            this.ctx.shadowBlur = 2 * (1 - star.depth);
+            this.ctx.shadowColor = star.color;
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+            this.ctx.shadowBlur = 0;
         });
     }
 
@@ -182,113 +275,17 @@ class CosmicAnimation {
         });
     }
 
-    drawStars() {
-        this.stars.forEach(star => {
-            star.twinkle += star.twinkleSpeed;
-            const twinkleOpacity = star.opacity * (0.6 + Math.sin(star.twinkle) * 0.4);
-            
+    drawSpiralArms() {
+        this.spiralArms.forEach(arm => {
             this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            this.ctx.fillStyle = `rgba(255, 255, 255, ${twinkleOpacity})`;
-            this.ctx.shadowBlur = 1.5;
-            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
-        });
-    }
-
-    drawVortex() {
-        // Dessiner le trou noir central
-        this.drawBlackHole();
-        
-        // Dessiner les halos de lumière (très subtils)
-        this.drawLightHalos();
-        
-        // Dessiner les rubans lumineux
-        this.drawRibbons();
-        
-        // Dessiner les étoiles de la galaxie
-        this.drawGalaxyStars();
-        
-        // Dessiner les particules avec traînées
-        this.drawParticles();
-    }
-
-    drawBlackHole() {
-        const gradient = this.ctx.createRadialGradient(
-            this.centerX, this.centerY, 0,
-            this.centerX, this.centerY, 38
-        );
-        gradient.addColorStop(0, '#000000');
-        gradient.addColorStop(0.92, '#000000');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.995)');
-        
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 38, 0, Math.PI * 2);
-        this.ctx.fillStyle = gradient;
-        this.ctx.fill();
-        
-        const pulseIntensity = 0.5 + Math.sin(this.time * 2.2) * 0.12;
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 36, 0, Math.PI * 2);
-        this.ctx.strokeStyle = `rgba(255, 140, 0, ${pulseIntensity})`;
-        this.ctx.lineWidth = 1.2;
-        this.ctx.shadowBlur = 25;
-        this.ctx.shadowColor = '#FFA500';
-        this.ctx.stroke();
-        this.ctx.shadowBlur = 0;
-    }
-
-    drawLightHalos() {
-        const halo1 = this.ctx.createRadialGradient(
-            this.centerX, this.centerY, 38,
-            this.centerX, this.centerY, 180
-        );
-        halo1.addColorStop(0, 'rgba(255, 140, 0, 0.1)');
-        halo1.addColorStop(0.3, 'rgba(255, 165, 0, 0.05)');
-        halo1.addColorStop(0.6, 'rgba(255, 179, 71, 0.025)');
-        halo1.addColorStop(0.8, 'rgba(34, 197, 94, 0.015)');
-        halo1.addColorStop(1, 'transparent');
-        
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 180, 0, Math.PI * 2);
-        this.ctx.fillStyle = halo1;
-        this.ctx.fill();
-        
-        const halo2 = this.ctx.createRadialGradient(
-            this.centerX, this.centerY, 38,
-            this.centerX, this.centerY, 75
-        );
-        halo2.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-        halo2.addColorStop(0.4, 'rgba(255, 255, 255, 0.05)');
-        halo2.addColorStop(0.7, 'rgba(255, 255, 255, 0.025)');
-        halo2.addColorStop(1, 'transparent');
-        
-        this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 75, 0, Math.PI * 2);
-        this.ctx.fillStyle = halo2;
-        this.ctx.fill();
-    }
-
-    drawRibbons() {
-        this.ribbons.forEach((ribbon, index) => {
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = ribbon.color;
-            this.ctx.lineWidth = ribbon.width;
+            this.ctx.strokeStyle = arm.color;
+            this.ctx.lineWidth = arm.width;
             this.ctx.lineCap = 'round';
-            this.ctx.lineJoin = 'round';
-            this.ctx.globalAlpha = 0.18;
-            this.ctx.shadowBlur = 6;
-            this.ctx.shadowColor = ribbon.color;
             
-            const startAngle = this.angle + ribbon.baseAngle;
-            const endAngle = startAngle + ribbon.length * Math.PI * 2;
-            
-            for (let j = 0; j <= 120; j++) {
-                const t = j / 120;
-                const angle = startAngle + t * (endAngle - startAngle);
-                const wobble = Math.sin(angle * ribbon.frequency + this.time * 2 + ribbon.phase) * ribbon.amplitude;
-                const radius = ribbon.radius + wobble + Math.sin(this.time + index * 0.5) * 5;
+            for (let j = 0; j <= 200; j++) {
+                const t = j / 200;
+                const angle = arm.baseAngle + t * Math.PI * 2 * arm.twist + this.angle * 0.5;
+                const radius = 60 + t * 350;
                 const x = this.centerX + Math.cos(angle) * radius;
                 const y = this.centerY + Math.sin(angle) * radius;
                 
@@ -299,75 +296,111 @@ class CosmicAnimation {
                 }
             }
             this.ctx.stroke();
-            this.ctx.globalAlpha = 1;
-            this.ctx.shadowBlur = 0;
         });
     }
 
-    drawGalaxyStars() {
-        this.particles.forEach(particle => {
-            particle.angle += particle.speed;
-            particle.distance -= 0.15;
+    drawGravitationalFlux() {
+        this.gravitationalFlux.forEach(flux => {
+            flux.angle += flux.speed;
+            flux.distance -= 0.3;
             
-            if (particle.distance < 40) {
-                particle.distance = Math.random() * 180 + 50;
+            if (flux.distance < 45) {
+                flux.distance = 100 + Math.random() * 300;
             }
             
-            const x = this.centerX + Math.cos(particle.angle + this.angle) * particle.distance;
-            const y = this.centerY + Math.sin(particle.angle + this.angle) * particle.distance;
+            const x = this.centerX + Math.cos(flux.angle + this.angle) * flux.distance;
+            const y = this.centerY + Math.sin(flux.angle + this.angle) * flux.distance;
             
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, particle.size * 0.7, 0, Math.PI * 2);
-            this.ctx.fillStyle = particle.color;
-            this.ctx.globalAlpha = particle.opacity * 0.5;
-            this.ctx.shadowBlur = 5;
-            this.ctx.shadowColor = particle.color;
-            this.ctx.fill();
-            this.ctx.globalAlpha = 1;
-            this.ctx.shadowBlur = 0;
-        });
-    }
-
-    drawParticles() {
-        this.particles.forEach(particle => {
-            particle.angle += particle.speed;
-            particle.distance -= 0.15;
-            
-            if (particle.distance < 40) {
-                particle.distance = Math.random() * 180 + 50;
+            flux.trail.push({ x, y });
+            if (flux.trail.length > 20) {
+                flux.trail.shift();
             }
             
-            const x = this.centerX + Math.cos(particle.angle + this.angle) * particle.distance;
-            const y = this.centerY + Math.sin(particle.angle + this.angle) * particle.distance;
-            
-            particle.trail.push({ x, y });
-            if (particle.trail.length > 12) {
-                particle.trail.shift();
-            }
-            
-            if (particle.trail.length > 2) {
+            if (flux.trail.length > 2) {
                 this.ctx.beginPath();
-                this.ctx.moveTo(particle.trail[0].x, particle.trail[0].y);
-                for (let i = 1; i < particle.trail.length; i++) {
-                    this.ctx.lineTo(particle.trail[i].x, particle.trail[i].y);
+                this.ctx.moveTo(flux.trail[0].x, flux.trail[0].y);
+                for (let i = 1; i < flux.trail.length; i++) {
+                    this.ctx.lineTo(flux.trail[i].x, flux.trail[i].y);
                 }
-                this.ctx.strokeStyle = particle.color;
-                this.ctx.lineWidth = particle.size * 0.4;
+                this.ctx.strokeStyle = flux.color;
+                this.ctx.lineWidth = flux.size * 0.3;
                 this.ctx.lineCap = 'round';
-                this.ctx.globalAlpha = particle.opacity * 0.12;
+                this.ctx.globalAlpha = flux.opacity * 0.15;
                 this.ctx.stroke();
             }
             
             this.ctx.beginPath();
+            this.ctx.arc(x, y, flux.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = flux.color;
+            this.ctx.globalAlpha = flux.opacity * 0.6;
+            this.ctx.shadowBlur = 8;
+            this.ctx.shadowColor = flux.color;
+            this.ctx.fill();
+            this.ctx.globalAlpha = 1;
+            this.ctx.shadowBlur = 0;
+        });
+    }
+
+    drawAccretionDisk() {
+        this.accretionDisk.forEach(particle => {
+            particle.angle += particle.speed;
+            particle.wobble += 0.02;
+            
+            const wobbleOffset = Math.sin(particle.wobble) * 5;
+            const x = this.centerX + Math.cos(particle.angle + this.angle) * (particle.distance + wobbleOffset);
+            const y = this.centerY + Math.sin(particle.angle + this.angle) * (particle.distance + wobbleOffset);
+            
+            this.ctx.beginPath();
             this.ctx.arc(x, y, particle.size, 0, Math.PI * 2);
             this.ctx.fillStyle = particle.color;
-            this.ctx.globalAlpha = particle.opacity * 0.7;
-            this.ctx.shadowBlur = 6;
+            this.ctx.globalAlpha = particle.opacity;
+            this.ctx.shadowBlur = 15;
             this.ctx.shadowColor = particle.color;
             this.ctx.fill();
             this.ctx.globalAlpha = 1;
             this.ctx.shadowBlur = 0;
         });
+    }
+
+    drawBlackHole() {
+        // Gradient du trou noir
+        const gradient = this.ctx.createRadialGradient(
+            this.centerX, this.centerY, 0,
+            this.centerX, this.centerY, 45
+        );
+        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(0.95, '#000000');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.998)');
+        
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 45, 0, Math.PI * 2);
+        this.ctx.fillStyle = gradient;
+        this.ctx.fill();
+        
+        // Horizon des événements pulsant
+        const pulseIntensity = 0.4 + Math.sin(this.time * 2.5) * 0.1;
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 42, 0, Math.PI * 2);
+        this.ctx.strokeStyle = `rgba(255, 69, 0, ${pulseIntensity})`;
+        this.ctx.lineWidth = 1;
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowColor = '#ff4500';
+        this.ctx.stroke();
+        this.ctx.shadowBlur = 0;
+        
+        // Halo de distorsion gravitationnelle
+        const distortionHalo = this.ctx.createRadialGradient(
+            this.centerX, this.centerY, 45,
+            this.centerX, this.centerY, 70
+        );
+        distortionHalo.addColorStop(0, 'rgba(255, 69, 0, 0.08)');
+        distortionHalo.addColorStop(0.5, 'rgba(255, 107, 157, 0.04)');
+        distortionHalo.addColorStop(1, 'transparent');
+        
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 70, 0, Math.PI * 2);
+        this.ctx.fillStyle = distortionHalo;
+        this.ctx.fill();
     }
 }
 
@@ -538,10 +571,10 @@ function handleSmoothScroll() {
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialiser l'animation cosmique unifiée
+    // Initialiser l'univers cosmique
     const cosmicCanvas = document.getElementById('cosmicCanvas');
     if (cosmicCanvas) {
-        new CosmicAnimation(cosmicCanvas);
+        new CosmicUniverse(cosmicCanvas);
     }
     
     // Initialiser les services de données
