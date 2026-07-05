@@ -31,8 +31,14 @@ class BlackHoleUniverse {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.centerX = this.canvas.width * 0.7;
-        this.centerY = this.canvas.height * 0.5;
+        // Adapter la position du vortex pour mobile (centré) vs desktop (droite)
+        if (window.innerWidth < 768) {
+            this.centerX = this.canvas.width * 0.5;
+            this.centerY = this.canvas.height * 0.4;
+        } else {
+            this.centerX = this.canvas.width * 0.7;
+            this.centerY = this.canvas.height * 0.5;
+        }
     }
 
     initStars() {
