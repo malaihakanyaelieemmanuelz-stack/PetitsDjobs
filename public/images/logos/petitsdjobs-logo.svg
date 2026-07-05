@@ -1,15 +1,35 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Dégradé orange -->
-    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#FFB347;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    <!-- Dégradé multicolore cosmique -->
+    <linearGradient id="cosmicRainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:1" />
+      <stop offset="20%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="80%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
     </linearGradient>
     
-    <!-- Glow -->
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+    <!-- Dégradé radial pour disque d'accrétion -->
+    <radialGradient id="accretionDisk" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.9" />
+      <stop offset="25%" style="stop-color:#1e3a8a;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:0.7" />
+      <stop offset="75%" style="stop-color:#14b8a6;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.5" />
+    </radialGradient>
+    
+    <!-- Dégradé pour matière cosmique -->
+    <linearGradient id="cosmicMatter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.7" />
+      <stop offset="33%" style="stop-color:#0891b2;stop-opacity:0.6" />
+      <stop offset="66%" style="stop-color:#14b8a6;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.4" />
+    </linearGradient>
+    
+    <!-- Glow cosmique -->
+    <filter id="cosmicGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -17,114 +37,92 @@
     </filter>
   </defs>
   
-  <!-- Spirale 1 - Orange -->
-  <path d="M100 100 
-           Q 130 70 160 80 
-           T 180 120 
-           T 160 160 
-           T 120 180 
-           T 80 160 
-           T 60 120 
-           T 80 80 
-           T 120 60 
-           T 160 80" 
-        fill="none" 
-        stroke="url(#orangeGrad)" 
-        stroke-width="6" 
-        stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.9"/>
+  <!-- Couche externe - matière cosmique diffuse -->
+  <circle cx="100" cy="100" r="85" fill="url(#cosmicMatter)" opacity="0.25" filter="url(#cosmicGlow)"/>
   
-  <!-- Spirale 2 - Orange -->
+  <!-- Flux de plasma organique 1 -->
   <path d="M100 100 
-           Q 120 80 140 90 
-           T 160 120 
-           T 140 150 
-           T 110 160 
-           T 80 150 
-           T 60 120 
-           T 80 90 
-           T 110 80" 
+           C 130 70 170 80 180 120
+           S 170 170 130 180
+           S 70 170 50 130
+           S 50 70 90 50
+           S 150 50 180 120" 
         fill="none" 
-        stroke="url(#orangeGrad)" 
-        stroke-width="5" 
-        stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.85"
-        transform="rotate(60 100 100)"/>
-  
-  <!-- Spirale 3 - Orange -->
-  <path d="M100 100 
-           Q 125 75 155 85 
-           T 175 125 
-           T 155 165 
-           T 115 175 
-           T 75 165 
-           T 55 125 
-           T 75 85 
-           T 115 75" 
-        fill="none" 
-        stroke="url(#orangeGrad)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="4" 
         stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.8"
-        transform="rotate(120 100 100)"/>
+        filter="url(#cosmicGlow)"
+        opacity="0.6"/>
   
-  <!-- Spirale 4 - Orange -->
+  <!-- Flux de plasma organique 2 -->
   <path d="M100 100 
-           Q 115 85 135 95 
-           T 155 125 
-           T 135 155 
-           T 105 165 
-           T 75 155 
-           T 55 125 
-           T 75 95 
-           T 105 85" 
+           C 120 85 150 95 165 125
+           S 155 165 115 175
+           S 65 155 45 125
+           S 55 85 95 75
+           S 145 65 165 125" 
         fill="none" 
-        stroke="url(#orangeGrad)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="3" 
         stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.75"
-        transform="rotate(180 100 100)"/>
+        filter="url(#cosmicGlow)"
+        opacity="0.5"
+        transform="rotate(72 100 100)"/>
   
-  <!-- Spirale 5 - Orange -->
+  <!-- Flux de plasma organique 3 -->
   <path d="M100 100 
-           Q 120 80 145 90 
-           T 165 125 
-           T 145 160 
-           T 110 170 
-           T 70 160 
-           T 50 125 
-           T 70 90 
-           T 110 80" 
+           C 115 80 145 90 160 120
+           S 150 160 110 170
+           S 60 150 40 120
+           S 50 80 90 70
+           S 140 60 160 120" 
         fill="none" 
-        stroke="url(#orangeGrad)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="2.5" 
         stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.7"
-        transform="rotate(240 100 100)"/>
+        filter="url(#cosmicGlow)"
+        opacity="0.4"
+        transform="rotate(144 100 100)"/>
   
-  <!-- Spirale 6 - Orange -->
+  <!-- Flux de plasma organique 4 -->
   <path d="M100 100 
-           Q 110 90 130 100 
-           T 150 125 
-           T 130 150 
-           T 100 160 
-           T 70 150 
-           T 50 125 
-           T 70 100 
-           T 100 90" 
+           C 125 75 160 85 175 125
+           S 165 175 115 185
+           S 55 165 35 125
+           S 45 75 95 65
+           S 155 55 175 125" 
         fill="none" 
-        stroke="url(#orangeGrad)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="2" 
         stroke-linecap="round"
-        filter="url(#glow)"
-        opacity="0.65"
-        transform="rotate(300 100 100)"/>
+        filter="url(#cosmicGlow)"
+        opacity="0.35"
+        transform="rotate(216 100 100)"/>
   
-  <!-- Centre noir -->
-  <circle cx="100" cy="100" r="15" fill="#000000"/>
+  <!-- Flux de plasma organique 5 -->
+  <path d="M100 100 
+           C 118 82 148 92 163 122
+           S 153 162 113 172
+           S 63 152 43 122
+           S 53 82 93 72
+           S 143 62 163 122" 
+        fill="none" 
+        stroke="url(#cosmicRainbow)" 
+        stroke-width="1.5" 
+        stroke-linecap="round"
+        filter="url(#cosmicGlow)"
+        opacity="0.3"
+        transform="rotate(288 100 100)"/>
+  
+  <!-- Disque d'accrétion - couche proche -->
+  <circle cx="100" cy="100" r="45" fill="url(#accretionDisk)" opacity="0.5" filter="url(#cosmicGlow)"/>
+  
+  <!-- Anneau de distorsion -->
+  <circle cx="100" cy="100" r="38" fill="none" stroke="url(#cosmicRainbow)" stroke-width="1.5" opacity="0.4" filter="url(#cosmicGlow)"/>
+  
+  <!-- Centre trou noir -->
+  <circle cx="100" cy="100" r="25" fill="#000000"/>
+  
+  <!-- Halo subtil autour du trou noir -->
+  <circle cx="100" cy="100" r="28" fill="none" stroke="url(#cosmicRainbow)" stroke-width="1" opacity="0.3" filter="url(#cosmicGlow)"/>
 </svg>

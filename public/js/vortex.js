@@ -7,10 +7,11 @@ class BlackHoleUniverse {
         this.ctx = canvas.getContext('2d');
         this.stars = [];
         this.cosmicDust = [];
-        this.accretionLayers = [];
-        this.plasmaStreams = [];
-        this.gasClouds = [];
-        this.distortionRings = [];
+        this.nebulaClouds = [];
+        this.innerPlasma = [];
+        this.outerSpiral = [];
+        this.cosmicMatter = [];
+        this.haloLayers = [];
         this.angle = 0;
         this.time = 0;
         this.centerX = 0;
@@ -19,10 +20,11 @@ class BlackHoleUniverse {
         window.addEventListener('resize', () => this.resize());
         this.initStars();
         this.initCosmicDust();
-        this.initAccretionLayers();
-        this.initPlasmaStreams();
-        this.initGasClouds();
-        this.initDistortionRings();
+        this.initNebulaClouds();
+        this.initInnerPlasma();
+        this.initOuterSpiral();
+        this.initCosmicMatter();
+        this.initHaloLayers();
         this.animate();
     }
 
@@ -35,18 +37,18 @@ class BlackHoleUniverse {
 
     initStars() {
         this.stars = [];
-        const starCount = Math.floor((this.canvas.width * this.canvas.height) / 600);
+        const starCount = Math.floor((this.canvas.width * this.canvas.height) / 500);
         
         for (let i = 0; i < starCount; i++) {
             const depth = Math.random();
             this.stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: (0.2 + Math.random() * 0.5) * (1 - depth * 0.4),
-                opacity: (0.1 + Math.random() * 0.2) * (1 - depth * 0.3),
+                size: (0.15 + Math.random() * 0.4) * (1 - depth * 0.4),
+                opacity: (0.08 + Math.random() * 0.15) * (1 - depth * 0.3),
                 depth: depth,
                 twinkle: Math.random() * Math.PI * 2,
-                twinkleSpeed: (0.01 + Math.random() * 0.015) * (1 - depth * 0.4),
+                twinkleSpeed: (0.008 + Math.random() * 0.012) * (1 - depth * 0.4),
                 color: this.getStarColor(depth)
             });
         }
@@ -66,176 +68,231 @@ class BlackHoleUniverse {
 
     initCosmicDust() {
         this.cosmicDust = [];
-        const dustCount = Math.floor((this.canvas.width * this.canvas.height) / 2500);
+        const dustCount = Math.floor((this.canvas.width * this.canvas.height) / 2000);
         
         for (let i = 0; i < dustCount; i++) {
             this.cosmicDust.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 0.6 + 0.15,
-                opacity: Math.random() * 0.03 + 0.005,
-                speedX: (Math.random() - 0.5) * 0.006,
-                speedY: (Math.random() - 0.5) * 0.006
+                size: Math.random() * 0.5 + 0.1,
+                opacity: Math.random() * 0.025 + 0.003,
+                speedX: (Math.random() - 0.5) * 0.004,
+                speedY: (Math.random() - 0.5) * 0.004
             });
         }
     }
 
-    initAccretionLayers() {
-        this.accretionLayers = [];
-        const layerCount = 5;
+    initNebulaClouds() {
+        this.nebulaClouds = [];
+        const cloudCount = 6;
         
-        for (let i = 0; i < layerCount; i++) {
+        for (let i = 0; i < cloudCount; i++) {
+            this.nebulaClouds.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                radius: 80 + Math.random() * 150,
+                color: this.getNebulaColor(),
+                opacity: Math.random() * 0.015 + 0.005,
+                speedX: (Math.random() - 0.5) * 0.003,
+                speedY: (Math.random() - 0.5) * 0.003
+            });
+        }
+    }
+
+    getNebulaColor() {
+        const colors = [
+            'rgba(74, 26, 107, 0.25)',
+            'rgba(30, 58, 138, 0.2)',
+            'rgba(8, 145, 178, 0.15)',
+            'rgba(20, 184, 166, 0.12)'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    initInnerPlasma() {
+        this.innerPlasma = [];
+        const particleCount = 600;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 55 + Math.random() * 40;
+            this.innerPlasma.push({
+                angle: angle,
+                distance: distance,
+                speed: (0.0008 + Math.random() * 0.0012) * (100 / distance),
+                size: Math.random() * 1.2 + 0.3,
+                opacity: Math.random() * 0.5 + 0.3,
+                wobble: Math.random() * Math.PI * 2,
+                wobbleSpeed: Math.random() * 0.02 + 0.008,
+                color: this.getPlasmaColor(distance)
+            });
+        }
+    }
+
+    getPlasmaColor(distance) {
+        if (distance < 70) return { r: 74, g: 26, b: 107 };
+        if (distance < 80) return { r: 30, g: 58, b: 138 };
+        if (distance < 90) return { r: 8, g: 145, b: 178 };
+        return { r: 20, g: 184, b: 166 };
+    }
+
+    initOuterSpiral() {
+        this.outerSpiral = [];
+        const armCount = 6;
+        
+        for (let i = 0; i < armCount; i++) {
             const particles = [];
-            const particleCount = 400 + i * 100;
-            const baseRadius = 60 + i * 35;
+            const particleCount = 200;
+            const baseAngle = (i / armCount) * Math.PI * 2;
             
             for (let j = 0; j < particleCount; j++) {
-                const angle = Math.random() * Math.PI * 2;
-                const radiusOffset = (Math.random() - 0.5) * 30;
+                const t = j / particleCount;
+                const angle = baseAngle + t * Math.PI * 1.2;
+                const radius = 100 + t * 200 + Math.sin(t * Math.PI * 4) * 15;
                 particles.push({
-                    angle: angle,
-                    radius: baseRadius + radiusOffset,
-                    speed: (0.002 + Math.random() * 0.003) * (150 / baseRadius),
-                    size: Math.random() * 1.5 + 0.4,
-                    opacity: Math.random() * 0.4 + 0.2,
-                    wobble: Math.random() * Math.PI * 2,
-                    wobbleSpeed: Math.random() * 0.03 + 0.01
-                });
-            }
-            
-            this.accretionLayers.push({
-                particles: particles,
-                baseRadius: baseRadius,
-                color: this.getLayerColor(i)
-            });
-        }
-    }
-
-    getLayerColor(layerIndex) {
-        const colors = [
-            { r: 255, g: 180, b: 120 }, // Couche proche - chaud
-            { r: 255, g: 150, b: 100 },
-            { r: 255, g: 120, b: 80 },
-            { r: 200, g: 100, b: 150 }, // Couche moyenne - violet
-            { r: 150, g: 80, b: 200 }  // Couche externe - violet foncé
-        ];
-        return colors[layerIndex];
-    }
-
-    initPlasmaStreams() {
-        this.plasmaStreams = [];
-        const streamCount = 12;
-        
-        for (let i = 0; i < streamCount; i++) {
-            const points = [];
-            const pointCount = 50;
-            const baseAngle = (i / streamCount) * Math.PI * 2;
-            
-            for (let j = 0; j < pointCount; j++) {
-                const t = j / pointCount;
-                const angle = baseAngle + t * Math.PI * 0.8;
-                const radius = 70 + t * 250 + Math.sin(t * Math.PI * 3) * 20;
-                points.push({
+                    baseAngle: baseAngle,
+                    t: t,
                     angle: angle,
                     radius: radius,
                     baseRadius: radius,
-                    wobble: Math.random() * Math.PI * 2
+                    speed: 0.0005 + Math.random() * 0.0003,
+                    size: Math.random() * 1 + 0.2,
+                    opacity: Math.random() * 0.35 + 0.15,
+                    wobble: Math.random() * Math.PI * 2,
+                    color: this.getSpiralColor(t)
                 });
             }
             
-            this.plasmaStreams.push({
-                points: points,
-                color: this.getStreamColor(),
-                opacity: Math.random() * 0.15 + 0.08
+            this.outerSpiral.push(particles);
+        }
+    }
+
+    getSpiralColor(t) {
+        if (t < 0.3) return { r: 8, g: 145, b: 178 };
+        if (t < 0.5) return { r: 20, g: 184, b: 166 };
+        if (t < 0.7) return { r: 34, g: 197, b: 94 };
+        if (t < 0.85) return { r: 245, g: 158, b: 11 };
+        return { r: 74, g: 26, b: 107 };
+    }
+
+    initCosmicMatter() {
+        this.cosmicMatter = [];
+        const matterCount = 400;
+        
+        for (let i = 0; i < matterCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 250 + Math.random() * 200;
+            this.cosmicMatter.push({
+                angle: angle,
+                distance: distance,
+                speed: (0.0003 + Math.random() * 0.0005) * (450 / distance),
+                size: Math.random() * 0.8 + 0.2,
+                opacity: Math.random() * 0.2 + 0.08,
+                color: this.getMatterColor()
             });
         }
     }
 
-    getStreamColor() {
+    getMatterColor() {
         const colors = [
-            'rgba(255, 200, 150, 0.6)',
-            'rgba(255, 180, 130, 0.5)',
-            'rgba(200, 150, 200, 0.4)',
-            'rgba(180, 130, 220, 0.3)'
+            { r: 74, g: 26, b: 107 },
+            { r: 30, g: 58, b: 138 },
+            { r: 8, g: 145, b: 178 },
+            { r: 20, g: 184, b: 166 },
+            { r: 34, g: 197, b: 94 }
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    initGasClouds() {
-        this.gasClouds = [];
-        const cloudCount = 8;
+    initHaloLayers() {
+        this.haloLayers = [];
+        const layerCount = 5;
         
-        for (let i = 0; i < cloudCount; i++) {
-            this.gasClouds.push({
-                angle: Math.random() * Math.PI * 2,
-                distance: 200 + Math.random() * 300,
-                radius: 80 + Math.random() * 120,
-                color: this.getGasColor(),
-                opacity: Math.random() * 0.06 + 0.02,
-                rotationSpeed: (Math.random() - 0.5) * 0.001,
-                pulseSpeed: Math.random() * 0.02 + 0.01,
-                pulsePhase: Math.random() * Math.PI * 2
+        for (let i = 0; i < layerCount; i++) {
+            this.haloLayers.push({
+                radius: 60 + i * 25,
+                opacity: Math.random() * 0.04 + 0.015,
+                pulseSpeed: Math.random() * 0.015 + 0.005,
+                pulsePhase: Math.random() * Math.PI * 2,
+                color: this.getHaloColor(i)
             });
         }
     }
 
-    getGasColor() {
+    getHaloColor(layerIndex) {
         const colors = [
-            'rgba(200, 150, 180, 0.4)',
-            'rgba(180, 140, 200, 0.35)',
-            'rgba(160, 130, 220, 0.3)',
-            'rgba(220, 170, 160, 0.35)'
+            'rgba(74, 26, 107, 0.3)',
+            'rgba(30, 58, 138, 0.25)',
+            'rgba(8, 145, 178, 0.2)',
+            'rgba(20, 184, 166, 0.15)',
+            'rgba(34, 197, 94, 0.1)'
         ];
-        return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    initDistortionRings() {
-        this.distortionRings = [];
-        const ringCount = 4;
-        
-        for (let i = 0; i < ringCount; i++) {
-            this.distortionRings.push({
-                radius: 55 + i * 15,
-                opacity: Math.random() * 0.08 + 0.03,
-                wobble: Math.random() * Math.PI * 2,
-                wobbleSpeed: Math.random() * 0.02 + 0.01
-            });
-        }
+        return colors[layerIndex];
     }
 
     animate() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.time += 0.016;
         
-        // Dessiner les étoiles (fond spatial)
+        // Dessiner les nébula (arrière-plan)
+        this.drawNebulaClouds();
+        
+        // Dessiner les étoiles (toute la page)
         this.drawStars();
         
         // Dessiner la poussière cosmique
         this.drawCosmicDust();
         
-        // Dessiner les nuages de gaz (arrière-plan)
-        this.drawGasClouds();
+        // Dessiner la matière cosmique externe
+        this.drawCosmicMatter();
         
-        // Dessiner les flux de plasma
-        this.drawPlasmaStreams();
+        // Dessiner les bras spiraux externes
+        this.drawOuterSpiral();
         
-        // Dessiner les couches d'accrétion
-        this.drawAccretionLayers();
+        // Dessiner le plasma interne dense
+        this.drawInnerPlasma();
         
-        // Dessiner les anneaux de distorsion
-        this.drawDistortionRings();
+        // Dessiner les halos qui respirent
+        this.drawHaloLayers();
         
         // Dessiner le trou noir central
         this.drawBlackHole();
         
-        this.angle += 0.001;
+        this.angle += 0.0003;
         requestAnimationFrame(() => this.animate());
+    }
+
+    drawNebulaClouds() {
+        this.nebulaClouds.forEach(cloud => {
+            cloud.x += cloud.speedX;
+            cloud.y += cloud.speedY;
+            
+            if (cloud.x < -cloud.radius) cloud.x = this.canvas.width + cloud.radius;
+            if (cloud.x > this.canvas.width + cloud.radius) cloud.x = -cloud.radius;
+            if (cloud.y < -cloud.radius) cloud.y = this.canvas.height + cloud.radius;
+            if (cloud.y > this.canvas.height + cloud.radius) cloud.y = -cloud.radius;
+            
+            const gradient = this.ctx.createRadialGradient(
+                cloud.x, cloud.y, 0,
+                cloud.x, cloud.y, cloud.radius
+            );
+            gradient.addColorStop(0, cloud.color.replace('0.25', cloud.opacity.toString()).replace('0.2', (cloud.opacity * 0.8).toString()).replace('0.15', (cloud.opacity * 0.6).toString()).replace('0.12', (cloud.opacity * 0.5).toString()));
+            gradient.addColorStop(0.5, cloud.color.replace('0.25', (cloud.opacity * 0.5).toString()).replace('0.2', (cloud.opacity * 0.4).toString()).replace('0.15', (cloud.opacity * 0.3).toString()).replace('0.12', (cloud.opacity * 0.25).toString()));
+            gradient.addColorStop(1, 'transparent');
+            
+            this.ctx.beginPath();
+            this.ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = gradient;
+            this.ctx.filter = 'blur(60px)';
+            this.ctx.fill();
+            this.ctx.filter = 'none';
+        });
     }
 
     drawStars() {
         this.stars.forEach(star => {
             star.twinkle += star.twinkleSpeed;
-            const twinkleOpacity = star.opacity * (0.4 + Math.sin(star.twinkle) * 0.6);
+            const twinkleOpacity = star.opacity * (0.3 + Math.sin(star.twinkle) * 0.7);
             
             this.ctx.beginPath();
             this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
@@ -263,93 +320,73 @@ class BlackHoleUniverse {
         });
     }
 
-    drawGasClouds() {
-        this.gasClouds.forEach(cloud => {
-            cloud.angle += cloud.rotationSpeed;
-            cloud.pulsePhase += cloud.pulseSpeed;
+    drawCosmicMatter() {
+        this.cosmicMatter.forEach(matter => {
+            matter.angle += matter.speed;
             
-            const pulse = 1 + Math.sin(cloud.pulsePhase) * 0.15;
-            const x = this.centerX + Math.cos(cloud.angle + this.angle * 0.5) * cloud.distance;
-            const y = this.centerY + Math.sin(cloud.angle + this.angle * 0.5) * cloud.distance;
-            
-            const gradient = this.ctx.createRadialGradient(
-                x, y, 0,
-                x, y, cloud.radius * pulse
-            );
-            gradient.addColorStop(0, cloud.color.replace('0.4', (cloud.opacity * 1.5).toString()).replace('0.35', (cloud.opacity * 1.3).toString()).replace('0.3', (cloud.opacity * 1.1).toString()));
-            gradient.addColorStop(0.5, cloud.color.replace('0.4', (cloud.opacity * 0.7).toString()).replace('0.35', (cloud.opacity * 0.6).toString()).replace('0.3', (cloud.opacity * 0.5).toString()));
-            gradient.addColorStop(1, 'transparent');
+            const x = this.centerX + Math.cos(matter.angle + this.angle * 0.5) * matter.distance;
+            const y = this.centerY + Math.sin(matter.angle + this.angle * 0.5) * matter.distance;
             
             this.ctx.beginPath();
-            this.ctx.arc(x, y, cloud.radius * pulse, 0, Math.PI * 2);
-            this.ctx.fillStyle = gradient;
-            this.ctx.filter = 'blur(40px)';
+            this.ctx.arc(x, y, matter.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(${matter.color.r}, ${matter.color.g}, ${matter.color.b}, ${matter.opacity})`;
             this.ctx.fill();
-            this.ctx.filter = 'none';
         });
     }
 
-    drawPlasmaStreams() {
-        this.plasmaStreams.forEach(stream => {
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = stream.color;
-            this.ctx.lineWidth = 2;
-            this.ctx.lineCap = 'round';
-            this.ctx.lineJoin = 'round';
-            this.ctx.globalAlpha = stream.opacity;
-            
-            let firstPoint = true;
-            stream.points.forEach((point, index) => {
-                point.wobble += 0.02;
-                const wobbleOffset = Math.sin(point.wobble) * 15;
-                const angle = point.angle + this.angle * 0.8;
-                const radius = point.baseRadius + wobbleOffset;
-                const x = this.centerX + Math.cos(angle) * radius;
-                const y = this.centerY + Math.sin(angle) * radius;
+    drawOuterSpiral() {
+        this.outerSpiral.forEach(arm => {
+            arm.forEach(particle => {
+                particle.wobble += 0.015;
+                particle.angle = particle.baseAngle + particle.t * Math.PI * 1.2 + this.angle * 0.4;
+                const wobbleOffset = Math.sin(particle.wobble) * 10;
+                const radius = particle.baseRadius + wobbleOffset;
                 
-                if (firstPoint) {
-                    this.ctx.moveTo(x, y);
-                    firstPoint = false;
-                } else {
-                    this.ctx.lineTo(x, y);
-                }
-            });
-            
-            this.ctx.stroke();
-            this.ctx.globalAlpha = 1;
-        });
-    }
-
-    drawAccretionLayers() {
-        this.accretionLayers.forEach(layer => {
-            layer.particles.forEach(particle => {
-                particle.angle += particle.speed;
-                particle.wobble += particle.wobbleSpeed;
+                const x = this.centerX + Math.cos(particle.angle) * radius;
+                const y = this.centerY + Math.sin(particle.angle) * radius;
                 
-                const wobbleOffset = Math.sin(particle.wobble) * 8;
-                const x = this.centerX + Math.cos(particle.angle + this.angle) * (particle.radius + wobbleOffset);
-                const y = this.centerY + Math.sin(particle.angle + this.angle) * (particle.radius + wobbleOffset);
-                
-                const color = layer.color;
                 this.ctx.beginPath();
                 this.ctx.arc(x, y, particle.size, 0, Math.PI * 2);
-                this.ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${particle.opacity})`;
+                this.ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.opacity})`;
                 this.ctx.fill();
             });
         });
     }
 
-    drawDistortionRings() {
-        this.distortionRings.forEach(ring => {
-            ring.wobble += ring.wobbleSpeed;
-            const wobbleOffset = Math.sin(ring.wobble) * 3;
+    drawInnerPlasma() {
+        this.innerPlasma.forEach(particle => {
+            particle.angle += particle.speed;
+            particle.wobble += particle.wobbleSpeed;
+            
+            const wobbleOffset = Math.sin(particle.wobble) * 5;
+            const x = this.centerX + Math.cos(particle.angle + this.angle) * (particle.distance + wobbleOffset);
+            const y = this.centerY + Math.sin(particle.angle + this.angle) * (particle.distance + wobbleOffset);
             
             this.ctx.beginPath();
-            this.ctx.arc(this.centerX, this.centerY, ring.radius + wobbleOffset, 0, Math.PI * 2);
-            this.ctx.strokeStyle = `rgba(255, 255, 255, ${ring.opacity})`;
-            this.ctx.lineWidth = 1;
-            this.ctx.filter = 'blur(2px)';
-            this.ctx.stroke();
+            this.ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${particle.opacity})`;
+            this.ctx.fill();
+        });
+    }
+
+    drawHaloLayers() {
+        this.haloLayers.forEach(halo => {
+            halo.pulsePhase += halo.pulseSpeed;
+            const pulse = 1 + Math.sin(halo.pulsePhase) * 0.1;
+            
+            const gradient = this.ctx.createRadialGradient(
+                this.centerX, this.centerY, halo.radius * 0.8,
+                this.centerX, this.centerY, halo.radius * pulse
+            );
+            gradient.addColorStop(0, halo.color);
+            gradient.addColorStop(0.5, halo.color.replace('0.3', (parseFloat(halo.color.match(/[\d.]+/)[0]) * 0.5).toString()).replace('0.25', (parseFloat(halo.color.match(/[\d.]+/)[0]) * 0.4).toString()).replace('0.2', (parseFloat(halo.color.match(/[\d.]+/)[0]) * 0.35).toString()).replace('0.15', (parseFloat(halo.color.match(/[\d.]+/)[0]) * 0.3).toString()).replace('0.1', (parseFloat(halo.color.match(/[\d.]+/)[0]) * 0.25).toString()));
+            gradient.addColorStop(1, 'transparent');
+            
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, halo.radius * pulse, 0, Math.PI * 2);
+            this.ctx.fillStyle = gradient;
+            this.ctx.filter = 'blur(20px)';
+            this.ctx.fill();
             this.ctx.filter = 'none';
         });
     }
@@ -361,7 +398,7 @@ class BlackHoleUniverse {
             this.centerX, this.centerY, 50
         );
         gradient.addColorStop(0, '#000000');
-        gradient.addColorStop(0.9, '#000000');
+        gradient.addColorStop(0.95, '#000000');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0.999)');
         
         this.ctx.beginPath();
@@ -372,16 +409,16 @@ class BlackHoleUniverse {
         // Halo de distorsion gravitationnelle très subtil
         const distortionHalo = this.ctx.createRadialGradient(
             this.centerX, this.centerY, 50,
-            this.centerX, this.centerY, 80
+            this.centerX, this.centerY, 75
         );
-        distortionHalo.addColorStop(0, 'rgba(255, 200, 150, 0.05)');
-        distortionHalo.addColorStop(0.5, 'rgba(200, 150, 180, 0.03)');
+        distortionHalo.addColorStop(0, 'rgba(74, 26, 107, 0.03)');
+        distortionHalo.addColorStop(0.5, 'rgba(30, 58, 138, 0.02)');
         distortionHalo.addColorStop(1, 'transparent');
         
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 80, 0, Math.PI * 2);
+        this.ctx.arc(this.centerX, this.centerY, 75, 0, Math.PI * 2);
         this.ctx.fillStyle = distortionHalo;
-        this.ctx.filter = 'blur(15px)';
+        this.ctx.filter = 'blur(12px)';
         this.ctx.fill();
         this.ctx.filter = 'none';
     }

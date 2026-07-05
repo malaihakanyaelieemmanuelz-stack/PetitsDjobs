@@ -1,23 +1,30 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Dégradé disque d'accrétion - chaud -->
-    <radialGradient id="accretionWarm" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#ffb480;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#ff9664;stop-opacity:0.8" />
-      <stop offset="100%" style="stop-color:#ff7850;stop-opacity:0.6" />
+    <!-- Dégradé multicolore cosmique -->
+    <linearGradient id="cosmicRainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:1" />
+      <stop offset="20%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="80%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Dégradé radial pour disque d'accrétion -->
+    <radialGradient id="accretionDisk" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.9" />
+      <stop offset="25%" style="stop-color:#1e3a8a;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:0.7" />
+      <stop offset="75%" style="stop-color:#14b8a6;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.5" />
     </radialGradient>
     
-    <!-- Dégradé plasma - violet -->
-    <radialGradient id="plasmaViolet" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#c86496;stop-opacity:0.7" />
-      <stop offset="100%" style="stop-color:#965180;stop-opacity:0.4" />
-    </radialGradient>
-    
-    <!-- Dégradé matière cosmique -->
+    <!-- Dégradé pour matière cosmique -->
     <linearGradient id="cosmicMatter" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffb480;stop-opacity:0.8" />
-      <stop offset="50%" style="stop-color:#c86496;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#965180;stop-opacity:0.4" />
+      <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.7" />
+      <stop offset="33%" style="stop-color:#0891b2;stop-opacity:0.6" />
+      <stop offset="66%" style="stop-color:#14b8a6;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.4" />
     </linearGradient>
     
     <!-- Glow cosmique -->
@@ -31,7 +38,7 @@
   </defs>
   
   <!-- Couche externe - matière cosmique diffuse -->
-  <circle cx="100" cy="100" r="85" fill="url(#plasmaViolet)" opacity="0.3" filter="url(#cosmicGlow)"/>
+  <circle cx="100" cy="100" r="85" fill="url(#cosmicMatter)" opacity="0.25" filter="url(#cosmicGlow)"/>
   
   <!-- Flux de plasma organique 1 -->
   <path d="M100 100 
@@ -41,7 +48,7 @@
            S 50 70 90 50
            S 150 50 180 120" 
         fill="none" 
-        stroke="url(#cosmicMatter)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="4" 
         stroke-linecap="round"
         filter="url(#cosmicGlow)"
@@ -55,7 +62,7 @@
            S 55 85 95 75
            S 145 65 165 125" 
         fill="none" 
-        stroke="url(#cosmicMatter)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="3" 
         stroke-linecap="round"
         filter="url(#cosmicGlow)"
@@ -70,7 +77,7 @@
            S 50 80 90 70
            S 140 60 160 120" 
         fill="none" 
-        stroke="url(#cosmicMatter)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="2.5" 
         stroke-linecap="round"
         filter="url(#cosmicGlow)"
@@ -85,7 +92,7 @@
            S 45 75 95 65
            S 155 55 175 125" 
         fill="none" 
-        stroke="url(#cosmicMatter)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="2" 
         stroke-linecap="round"
         filter="url(#cosmicGlow)"
@@ -100,7 +107,7 @@
            S 53 82 93 72
            S 143 62 163 122" 
         fill="none" 
-        stroke="url(#cosmicMatter)" 
+        stroke="url(#cosmicRainbow)" 
         stroke-width="1.5" 
         stroke-linecap="round"
         filter="url(#cosmicGlow)"
@@ -108,14 +115,14 @@
         transform="rotate(288 100 100)"/>
   
   <!-- Disque d'accrétion - couche proche -->
-  <circle cx="100" cy="100" r="45" fill="url(#accretionWarm)" opacity="0.5" filter="url(#cosmicGlow)"/>
+  <circle cx="100" cy="100" r="45" fill="url(#accretionDisk)" opacity="0.5" filter="url(#cosmicGlow)"/>
   
   <!-- Anneau de distorsion -->
-  <circle cx="100" cy="100" r="38" fill="none" stroke="#ffb480" stroke-width="1.5" opacity="0.4" filter="url(#cosmicGlow)"/>
+  <circle cx="100" cy="100" r="38" fill="none" stroke="url(#cosmicRainbow)" stroke-width="1.5" opacity="0.4" filter="url(#cosmicGlow)"/>
   
   <!-- Centre trou noir -->
   <circle cx="100" cy="100" r="25" fill="#000000"/>
   
   <!-- Halo subtil autour du trou noir -->
-  <circle cx="100" cy="100" r="28" fill="none" stroke="#ffb480" stroke-width="1" opacity="0.3" filter="url(#cosmicGlow)"/>
+  <circle cx="100" cy="100" r="28" fill="none" stroke="url(#cosmicRainbow)" stroke-width="1" opacity="0.3" filter="url(#cosmicGlow)"/>
 </svg>
