@@ -44,11 +44,11 @@ class BlackHoleUniverse {
             this.stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: (0.15 + Math.random() * 0.4) * (1 - depth * 0.4),
-                opacity: (0.08 + Math.random() * 0.15) * (1 - depth * 0.3),
+                size: (0.08 + Math.random() * 0.2) * (1 - depth * 0.4),
+                opacity: (0.015 + Math.random() * 0.025) * (1 - depth * 0.3),
                 depth: depth,
                 twinkle: Math.random() * Math.PI * 2,
-                twinkleSpeed: (0.008 + Math.random() * 0.012) * (1 - depth * 0.4),
+                twinkleSpeed: (0.005 + Math.random() * 0.008) * (1 - depth * 0.4),
                 color: this.getStarColor(depth)
             });
         }
@@ -56,12 +56,12 @@ class BlackHoleUniverse {
 
     getStarColor(depth) {
         const colors = [
-            '#ffffff',
-            '#f0f4ff',
-            '#e8f0ff',
-            '#d8e8ff',
-            '#c8d8ff',
-            '#b8c8ff'
+            '#c8d0e8',
+            '#b8c8e0',
+            '#a8c0d8',
+            '#98b8d0',
+            '#88b0c8',
+            '#78a8c0'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -74,8 +74,8 @@ class BlackHoleUniverse {
             this.cosmicDust.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 0.5 + 0.1,
-                opacity: Math.random() * 0.025 + 0.003,
+                size: Math.random() * 0.3 + 0.05,
+                opacity: Math.random() * 0.006 + 0.001,
                 speedX: (Math.random() - 0.5) * 0.004,
                 speedY: (Math.random() - 0.5) * 0.004
             });
@@ -92,7 +92,7 @@ class BlackHoleUniverse {
                 y: Math.random() * this.canvas.height,
                 radius: 80 + Math.random() * 150,
                 color: this.getNebulaColor(),
-                opacity: Math.random() * 0.015 + 0.005,
+                opacity: Math.random() * 0.003 + 0.001,
                 speedX: (Math.random() - 0.5) * 0.003,
                 speedY: (Math.random() - 0.5) * 0.003
             });
@@ -101,10 +101,10 @@ class BlackHoleUniverse {
 
     getNebulaColor() {
         const colors = [
-            'rgba(74, 26, 107, 0.25)',
-            'rgba(30, 58, 138, 0.2)',
-            'rgba(8, 145, 178, 0.15)',
-            'rgba(20, 184, 166, 0.12)'
+            'rgba(74, 26, 107, 0.08)',
+            'rgba(30, 58, 138, 0.06)',
+            'rgba(8, 145, 178, 0.05)',
+            'rgba(20, 184, 166, 0.04)'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -120,8 +120,8 @@ class BlackHoleUniverse {
                 angle: angle,
                 distance: distance,
                 speed: (0.0008 + Math.random() * 0.0012) * (100 / distance),
-                size: Math.random() * 1.2 + 0.3,
-                opacity: Math.random() * 0.5 + 0.3,
+                size: Math.random() * 0.8 + 0.2,
+                opacity: Math.random() * 0.25 + 0.15,
                 wobble: Math.random() * Math.PI * 2,
                 wobbleSpeed: Math.random() * 0.02 + 0.008,
                 color: this.getPlasmaColor(distance)
@@ -156,8 +156,8 @@ class BlackHoleUniverse {
                     radius: radius,
                     baseRadius: radius,
                     speed: 0.0005 + Math.random() * 0.0003,
-                    size: Math.random() * 1 + 0.2,
-                    opacity: Math.random() * 0.35 + 0.15,
+                    size: Math.random() * 0.6 + 0.1,
+                    opacity: Math.random() * 0.18 + 0.08,
                     wobble: Math.random() * Math.PI * 2,
                     color: this.getSpiralColor(t)
                 });
@@ -186,8 +186,8 @@ class BlackHoleUniverse {
                 angle: angle,
                 distance: distance,
                 speed: (0.0003 + Math.random() * 0.0005) * (450 / distance),
-                size: Math.random() * 0.8 + 0.2,
-                opacity: Math.random() * 0.2 + 0.08,
+                size: Math.random() * 0.4 + 0.1,
+                opacity: Math.random() * 0.08 + 0.03,
                 color: this.getMatterColor()
             });
         }
@@ -211,7 +211,7 @@ class BlackHoleUniverse {
         for (let i = 0; i < layerCount; i++) {
             this.haloLayers.push({
                 radius: 60 + i * 25,
-                opacity: Math.random() * 0.04 + 0.015,
+                opacity: Math.random() * 0.012 + 0.005,
                 pulseSpeed: Math.random() * 0.015 + 0.005,
                 pulsePhase: Math.random() * Math.PI * 2,
                 color: this.getHaloColor(i)
@@ -221,17 +221,20 @@ class BlackHoleUniverse {
 
     getHaloColor(layerIndex) {
         const colors = [
-            'rgba(74, 26, 107, 0.3)',
-            'rgba(30, 58, 138, 0.25)',
-            'rgba(8, 145, 178, 0.2)',
-            'rgba(20, 184, 166, 0.15)',
-            'rgba(34, 197, 94, 0.1)'
+            'rgba(74, 26, 107, 0.12)',
+            'rgba(30, 58, 138, 0.1)',
+            'rgba(8, 145, 178, 0.08)',
+            'rgba(20, 184, 166, 0.06)',
+            'rgba(34, 197, 94, 0.04)'
         ];
         return colors[layerIndex];
     }
 
     animate() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Fond noir profond
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
         this.time += 0.016;
         
         // Dessiner les nébula (arrière-plan)
@@ -411,8 +414,8 @@ class BlackHoleUniverse {
             this.centerX, this.centerY, 50,
             this.centerX, this.centerY, 75
         );
-        distortionHalo.addColorStop(0, 'rgba(74, 26, 107, 0.03)');
-        distortionHalo.addColorStop(0.5, 'rgba(30, 58, 138, 0.02)');
+        distortionHalo.addColorStop(0, 'rgba(74, 26, 107, 0.01)');
+        distortionHalo.addColorStop(0.5, 'rgba(30, 58, 138, 0.008)');
         distortionHalo.addColorStop(1, 'transparent');
         
         this.ctx.beginPath();
