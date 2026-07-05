@@ -55,22 +55,10 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: radial-gradient(ellipse at center, var(--black-tertiary) 0%, var(--black-secondary) 40%, var(--black-deep) 70%, var(--black) 100%);
+    background: #000000;
 }
 
-/* Vignette pour profondeur */
-.cosmic-background::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(0, 0, 0, 0.8) 100%);
-    pointer-events: none;
-}
-
-#starsCanvas {
+#cosmicCanvas {
     width: 100%;
     height: 100%;
 }
