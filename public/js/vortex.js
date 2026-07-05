@@ -58,15 +58,30 @@ class BlackHoleUniverse {
     }
 
     getStarColor(depth) {
+        // Diversité des couleurs d'étoiles comme dans un véritable ciel
         const colors = [
-            '#a0a8b8',
-            '#9098b0',
-            '#8088a8',
-            '#7080a0',
-            '#607898',
-            '#507090',
-            '#b0b8c8',
-            '#c0c8d8'
+            // Étoiles blanches (majorité)
+            '#ffffff',
+            '#f0f4ff',
+            '#e8f0ff',
+            '#f8f8ff',
+            // Étoiles bleu clair
+            '#c8d8ff',
+            '#b8c8f0',
+            '#a8b8e8',
+            '#98a8e0',
+            // Étoiles légèrement dorées (rares)
+            '#fff8e0',
+            '#fff0d0',
+            '#ffe8c0',
+            // Étoiles cyan (très rares)
+            '#d0f0ff',
+            '#c0e8f8',
+            '#b0e0f0',
+            // Étoiles violettes très discrètes (extrêmement rares)
+            '#e8d0f0',
+            '#e0c8e8',
+            '#d8c0e0'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
