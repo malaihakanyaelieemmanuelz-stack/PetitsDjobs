@@ -74,14 +74,19 @@ class BlackHoleUniverse {
             '#fff8e0',
             '#fff0d0',
             '#ffe8c0',
+            '#ffd8b0',
             // Étoiles cyan (très rares)
             '#d0f0ff',
             '#c0e8f8',
             '#b0e0f0',
-            // Étoiles violettes très discrètes (extrêmement rares)
+            // Étoiles légèrement violettes (très rares)
             '#e8d0f0',
             '#e0c8e8',
-            '#d8c0e0'
+            '#d8c0e0',
+            // Étoiles légèrement orangées (extrêmement rares)
+            '#ffe8c8',
+            '#ffd8b8',
+            '#ffc8a8'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -92,17 +97,17 @@ class BlackHoleUniverse {
 
     createShootingStar() {
         const startX = Math.random() * this.canvas.width;
-        const startY = Math.random() * this.canvas.height * 0.4;
-        const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.4;
-        const speed = 10 + Math.random() * 5;
+        const startY = Math.random() * this.canvas.height * 0.6;
+        const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.5;
+        const speed = 12 + Math.random() * 8;
         
         this.shootingStars.push({
             x: startX,
             y: startY,
             angle: angle,
             speed: speed,
-            length: 60 + Math.random() * 40,
-            opacity: 0.2 + Math.random() * 0.1,
+            length: 80 + Math.random() * 60,
+            opacity: 0.35 + Math.random() * 0.2,
             life: 1
         });
     }
@@ -129,13 +134,15 @@ class BlackHoleUniverse {
 
     getNebulaColor() {
         const colors = [
-            'rgba(74, 26, 107, 0.06)',
-            'rgba(30, 58, 138, 0.05)',
-            'rgba(8, 145, 178, 0.04)',
-            'rgba(20, 184, 166, 0.035)',
-            'rgba(34, 197, 94, 0.03)',
-            'rgba(245, 158, 11, 0.025)',
-            'rgba(139, 0, 0, 0.02)'
+            'rgba(74, 26, 107, 0.06)',    // Violet profond
+            'rgba(139, 69, 109, 0.055)',  // Rose cosmique
+            'rgba(30, 58, 138, 0.05)',    // Bleu nuit
+            'rgba(8, 145, 178, 0.045)',   // Bleu électrique
+            'rgba(20, 184, 166, 0.04)',   // Cyan/turquoise
+            'rgba(34, 197, 94, 0.035)',   // Vert émeraude
+            'rgba(245, 158, 11, 0.03)',   // Orange doré
+            'rgba(251, 191, 36, 0.025)',  // Jaune très discret
+            'rgba(139, 0, 0, 0.02)'       // Rouge profond
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -161,11 +168,15 @@ class BlackHoleUniverse {
     }
 
     getPlasmaColor(distance) {
-        if (distance < 60) return { r: 74, g: 26, b: 107 };
-        if (distance < 70) return { r: 30, g: 58, b: 138 };
-        if (distance < 80) return { r: 8, g: 145, b: 178 };
-        if (distance < 90) return { r: 20, g: 184, b: 166 };
-        return { r: 34, g: 197, b: 94 };
+        if (distance < 55) return { r: 74, g: 26, b: 107 };
+        if (distance < 60) return { r: 139, g: 69, b: 109 };
+        if (distance < 65) return { r: 30, g: 58, b: 138 };
+        if (distance < 70) return { r: 8, g: 145, b: 178 };
+        if (distance < 75) return { r: 20, g: 184, b: 166 };
+        if (distance < 80) return { r: 34, g: 197, b: 94 };
+        if (distance < 85) return { r: 245, g: 158, b: 11 };
+        if (distance < 90) return { r: 251, g: 191, b: 36 };
+        return { r: 139, g: 0, b: 0 };
     }
 
     initOuterSpiral() {
@@ -200,12 +211,15 @@ class BlackHoleUniverse {
     }
 
     getSpiralColor(t) {
-        if (t < 0.2) return { r: 8, g: 145, b: 178 };
-        if (t < 0.35) return { r: 20, g: 184, b: 166 };
-        if (t < 0.5) return { r: 34, g: 197, b: 94 };
-        if (t < 0.65) return { r: 245, g: 158, b: 11 };
-        if (t < 0.8) return { r: 139, g: 0, b: 0 };
-        return { r: 74, g: 26, b: 107 };
+        if (t < 0.12) return { r: 74, g: 26, b: 107 };
+        if (t < 0.24) return { r: 139, g: 69, b: 109 };
+        if (t < 0.36) return { r: 30, g: 58, b: 138 };
+        if (t < 0.48) return { r: 8, g: 145, b: 178 };
+        if (t < 0.6) return { r: 20, g: 184, b: 166 };
+        if (t < 0.72) return { r: 34, g: 197, b: 94 };
+        if (t < 0.84) return { r: 245, g: 158, b: 11 };
+        if (t < 0.92) return { r: 251, g: 191, b: 36 };
+        return { r: 139, g: 0, b: 0 };
     }
 
     initCosmicMatter() {
@@ -229,11 +243,13 @@ class BlackHoleUniverse {
     getMatterColor() {
         const colors = [
             { r: 74, g: 26, b: 107 },
+            { r: 139, g: 69, b: 109 },
             { r: 30, g: 58, b: 138 },
             { r: 8, g: 145, b: 178 },
             { r: 20, g: 184, b: 166 },
             { r: 34, g: 197, b: 94 },
             { r: 245, g: 158, b: 11 },
+            { r: 251, g: 191, b: 36 },
             { r: 139, g: 0, b: 0 }
         ];
         return colors[Math.floor(Math.random() * colors.length)];
@@ -257,12 +273,14 @@ class BlackHoleUniverse {
     getHaloColor(layerIndex) {
         const colors = [
             'rgba(74, 26, 107, 0.1)',
-            'rgba(30, 58, 138, 0.08)',
-            'rgba(8, 145, 178, 0.07)',
-            'rgba(20, 184, 166, 0.06)',
-            'rgba(34, 197, 94, 0.05)'
+            'rgba(139, 69, 109, 0.095)',
+            'rgba(30, 58, 138, 0.09)',
+            'rgba(8, 145, 178, 0.085)',
+            'rgba(20, 184, 166, 0.08)',
+            'rgba(34, 197, 94, 0.075)',
+            'rgba(245, 158, 11, 0.07)'
         ];
-        return colors[layerIndex];
+        return colors[layerIndex % colors.length];
     }
 
     animate() {
@@ -344,15 +362,15 @@ class BlackHoleUniverse {
     }
 
     drawShootingStars() {
-        // Créer une étoile filante aléatoirement (toutes les quelques secondes)
-        if (Math.random() < 0.003) { // ~0.3% de chance par frame
+        // Créer une étoile filante aléatoirement (plus fréquent pour plus de visibilité)
+        if (Math.random() < 0.006) { // ~0.6% de chance par frame
             this.createShootingStar();
         }
         
         this.shootingStars = this.shootingStars.filter(star => {
             star.x += Math.cos(star.angle) * star.speed;
             star.y += Math.sin(star.angle) * star.speed;
-            star.life -= 0.012;
+            star.life -= 0.01;
             
             if (star.life <= 0 || star.x > this.canvas.width || star.y > this.canvas.height) {
                 return false;
@@ -364,6 +382,7 @@ class BlackHoleUniverse {
                 star.y - Math.sin(star.angle) * star.length
             );
             gradient.addColorStop(0, `rgba(232, 244, 255, ${star.opacity * star.life})`);
+            gradient.addColorStop(0.3, `rgba(180, 200, 255, ${star.opacity * star.life * 0.7})`);
             gradient.addColorStop(1, 'transparent');
             
             this.ctx.beginPath();
@@ -373,7 +392,7 @@ class BlackHoleUniverse {
                 star.y - Math.sin(star.angle) * star.length
             );
             this.ctx.strokeStyle = gradient;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 1.5;
             this.ctx.stroke();
             
             return true;

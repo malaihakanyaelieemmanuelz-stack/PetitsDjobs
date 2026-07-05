@@ -3,28 +3,35 @@
     <!-- Dégradé multicolore cosmique -->
     <linearGradient id="cosmicRainbow" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:1" />
-      <stop offset="20%" style="stop-color:#1e3a8a;stop-opacity:1" />
-      <stop offset="40%" style="stop-color:#0891b2;stop-opacity:1" />
-      <stop offset="60%" style="stop-color:#14b8a6;stop-opacity:1" />
-      <stop offset="80%" style="stop-color:#22c55e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="12%" style="stop-color:#8b456d;stop-opacity:1" />
+      <stop offset="24%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="36%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="48%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="72%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="84%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b0000;stop-opacity:1" />
     </linearGradient>
     
     <!-- Dégradé radial pour disque d'accrétion -->
     <radialGradient id="accretionDisk" cx="50%" cy="50%" r="50%">
       <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.9" />
-      <stop offset="25%" style="stop-color:#1e3a8a;stop-opacity:0.8" />
-      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:0.7" />
-      <stop offset="75%" style="stop-color:#14b8a6;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.5" />
+      <stop offset="14%" style="stop-color:#8b456d;stop-opacity:0.85" />
+      <stop offset="28%" style="stop-color:#1e3a8a;stop-opacity:0.8" />
+      <stop offset="42%" style="stop-color:#0891b2;stop-opacity:0.75" />
+      <stop offset="56%" style="stop-color:#14b8a6;stop-opacity:0.7" />
+      <stop offset="70%" style="stop-color:#22c55e;stop-opacity:0.65" />
+      <stop offset="84%" style="stop-color:#f59e0b;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0.55" />
     </radialGradient>
     
     <!-- Dégradé pour matière cosmique -->
     <linearGradient id="cosmicMatter" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#4a1a6b;stop-opacity:0.7" />
-      <stop offset="33%" style="stop-color:#0891b2;stop-opacity:0.6" />
-      <stop offset="66%" style="stop-color:#14b8a6;stop-opacity:0.5" />
-      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.4" />
+      <stop offset="25%" style="stop-color:#8b456d;stop-opacity:0.65" />
+      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:0.6" />
+      <stop offset="75%" style="stop-color:#14b8a6;stop-opacity:0.55" />
+      <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0.5" />
     </linearGradient>
     
     <!-- Glow cosmique -->
